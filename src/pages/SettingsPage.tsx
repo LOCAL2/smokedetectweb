@@ -26,7 +26,7 @@ export const SettingsPage = () => {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-      padding: '32px',
+      padding: 'clamp(16px, 4vw, 32px)',
     }}>
       <div style={{
         position: 'fixed',
@@ -71,7 +71,7 @@ export const SettingsPage = () => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
             <div>
-              <h1 style={{ color: '#F8FAFC', fontSize: '28px', fontWeight: 700, margin: 0 }}>
+              <h1 style={{ color: '#F8FAFC', fontSize: 'clamp(22px, 5vw, 28px)', fontWeight: 700, margin: 0 }}>
                 ตั้งค่าระบบ
               </h1>
               <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0' }}>
@@ -89,22 +89,22 @@ export const SettingsPage = () => {
           style={{
             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '32px',
+            borderRadius: '20px',
+            padding: 'clamp(16px, 4vw, 32px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            marginBottom: '24px',
+            marginBottom: '20px',
           }}
         >
           <h2 style={{ 
             color: '#F8FAFC', 
-            fontSize: '20px', 
+            fontSize: 'clamp(16px, 4vw, 20px)', 
             fontWeight: 600, 
             marginBottom: '8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px'
+            gap: '10px'
           }}>
-            <AlertTriangle size={22} color="#F59E0B" />
+            <AlertTriangle size={20} color="#F59E0B" />
             ระดับค่าควัน (PPM)
           </h2>
           <p style={{ color: '#64748B', fontSize: '14px', marginBottom: '32px' }}>
@@ -113,30 +113,32 @@ export const SettingsPage = () => {
 
           {/* Warning Threshold */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
               <div style={{ 
                 background: 'rgba(245, 158, 11, 0.2)', 
                 borderRadius: '12px', 
-                padding: '12px',
-                border: '1px solid rgba(245, 158, 11, 0.3)'
+                padding: '10px',
+                border: '1px solid rgba(245, 158, 11, 0.3)',
+                flexShrink: 0,
               }}>
-                <AlertTriangle size={24} color="#F59E0B" />
+                <AlertTriangle size={22} color="#F59E0B" />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600 }}>
+              <div style={{ flex: 1, minWidth: '150px' }}>
+                <label style={{ color: '#F8FAFC', fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600 }}>
                   ระดับเฝ้าระวัง
                 </label>
-                <p style={{ color: '#64748B', fontSize: '13px', margin: '4px 0 0' }}>
+                <p style={{ color: '#64748B', fontSize: 'clamp(11px, 2.5vw, 13px)', margin: '4px 0 0' }}>
                   ค่าตั้งแต่นี้จะแสดงสถานะสีเหลือง
                 </p>
               </div>
               <div style={{
                 background: 'rgba(245, 158, 11, 0.15)',
                 borderRadius: '12px',
-                padding: '8px 16px',
+                padding: '6px 12px',
                 border: '1px solid rgba(245, 158, 11, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
+                flexShrink: 0,
               }}>
                 <input
                   type="text"
@@ -155,14 +157,14 @@ export const SettingsPage = () => {
                     background: 'transparent',
                     border: 'none',
                     color: '#F59E0B',
-                    fontSize: '28px',
+                    fontSize: 'clamp(20px, 4vw, 28px)',
                     fontWeight: 700,
-                    width: '80px',
+                    width: 'clamp(50px, 10vw, 80px)',
                     textAlign: 'right',
                     outline: 'none',
                   }}
                 />
-                <span style={{ color: '#F59E0B', fontSize: '14px', marginLeft: '4px' }}>PPM</span>
+                <span style={{ color: '#F59E0B', fontSize: '12px', marginLeft: '4px' }}>PPM</span>
               </div>
             </div>
             <input
@@ -189,30 +191,32 @@ export const SettingsPage = () => {
 
           {/* Danger Threshold */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
               <div style={{ 
                 background: 'rgba(239, 68, 68, 0.2)', 
                 borderRadius: '12px', 
-                padding: '12px',
-                border: '1px solid rgba(239, 68, 68, 0.3)'
+                padding: '10px',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                flexShrink: 0,
               }}>
-                <Skull size={24} color="#EF4444" />
+                <Skull size={22} color="#EF4444" />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600 }}>
+              <div style={{ flex: 1, minWidth: '150px' }}>
+                <label style={{ color: '#F8FAFC', fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600 }}>
                   ระดับอันตราย
                 </label>
-                <p style={{ color: '#64748B', fontSize: '13px', margin: '4px 0 0' }}>
+                <p style={{ color: '#64748B', fontSize: 'clamp(11px, 2.5vw, 13px)', margin: '4px 0 0' }}>
                   ค่าตั้งแต่นี้จะแสดงสถานะสีแดงและแจ้งเตือน
                 </p>
               </div>
               <div style={{
                 background: 'rgba(239, 68, 68, 0.15)',
                 borderRadius: '12px',
-                padding: '8px 16px',
+                padding: '6px 12px',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 display: 'flex',
                 alignItems: 'center',
+                flexShrink: 0,
               }}>
                 <input
                   type="text"
@@ -231,14 +235,14 @@ export const SettingsPage = () => {
                     background: 'transparent',
                     border: 'none',
                     color: '#EF4444',
-                    fontSize: '28px',
+                    fontSize: 'clamp(20px, 4vw, 28px)',
                     fontWeight: 700,
-                    width: '80px',
+                    width: 'clamp(50px, 10vw, 80px)',
                     textAlign: 'right',
                     outline: 'none',
                   }}
                 />
-                <span style={{ color: '#EF4444', fontSize: '14px', marginLeft: '4px' }}>PPM</span>
+                <span style={{ color: '#EF4444', fontSize: '12px', marginLeft: '4px' }}>PPM</span>
               </div>
             </div>
             <input
@@ -272,42 +276,39 @@ export const SettingsPage = () => {
             <p style={{ color: '#94A3B8', fontSize: '14px', marginBottom: '16px', fontWeight: 500 }}>
               ตัวอย่างระดับที่ตั้งค่า:
             </p>
-            <div style={{ display: 'flex', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '12px' }}>
               <div style={{ 
-                flex: 1, 
                 textAlign: 'center', 
-                padding: '20px', 
+                padding: 'clamp(12px, 3vw, 20px)', 
                 background: 'rgba(16, 185, 129, 0.15)', 
                 borderRadius: '16px', 
                 border: '1px solid rgba(16, 185, 129, 0.3)' 
               }}>
-                <Shield size={32} color="#10B981" style={{ marginBottom: '8px' }} />
-                <p style={{ color: '#10B981', fontSize: '16px', fontWeight: 600, margin: '0 0 4px' }}>ปลอดภัย</p>
-                <p style={{ color: '#64748B', fontSize: '14px', margin: 0 }}>0 - {(settings.warningThreshold || 10) - 1} PPM</p>
+                <Shield size={28} color="#10B981" style={{ marginBottom: '8px' }} />
+                <p style={{ color: '#10B981', fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, margin: '0 0 4px' }}>ปลอดภัย</p>
+                <p style={{ color: '#64748B', fontSize: 'clamp(12px, 2.5vw, 14px)', margin: 0 }}>0 - {(settings.warningThreshold || 10) - 1} PPM</p>
               </div>
               <div style={{ 
-                flex: 1, 
                 textAlign: 'center', 
-                padding: '20px', 
+                padding: 'clamp(12px, 3vw, 20px)', 
                 background: 'rgba(245, 158, 11, 0.15)', 
                 borderRadius: '16px', 
                 border: '1px solid rgba(245, 158, 11, 0.3)' 
               }}>
-                <AlertTriangle size={32} color="#F59E0B" style={{ marginBottom: '8px' }} />
-                <p style={{ color: '#F59E0B', fontSize: '16px', fontWeight: 600, margin: '0 0 4px' }}>เฝ้าระวัง</p>
-                <p style={{ color: '#64748B', fontSize: '14px', margin: 0 }}>{settings.warningThreshold || 10} - {(settings.dangerThreshold || 50) - 1} PPM</p>
+                <AlertTriangle size={28} color="#F59E0B" style={{ marginBottom: '8px' }} />
+                <p style={{ color: '#F59E0B', fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, margin: '0 0 4px' }}>เฝ้าระวัง</p>
+                <p style={{ color: '#64748B', fontSize: 'clamp(12px, 2.5vw, 14px)', margin: 0 }}>{settings.warningThreshold || 10} - {(settings.dangerThreshold || 50) - 1} PPM</p>
               </div>
               <div style={{ 
-                flex: 1, 
                 textAlign: 'center', 
-                padding: '20px', 
+                padding: 'clamp(12px, 3vw, 20px)', 
                 background: 'rgba(239, 68, 68, 0.15)', 
                 borderRadius: '16px', 
                 border: '1px solid rgba(239, 68, 68, 0.3)' 
               }}>
-                <Skull size={32} color="#EF4444" style={{ marginBottom: '8px' }} />
-                <p style={{ color: '#EF4444', fontSize: '16px', fontWeight: 600, margin: '0 0 4px' }}>อันตราย</p>
-                <p style={{ color: '#64748B', fontSize: '14px', margin: 0 }}>{settings.dangerThreshold || 50}+ PPM</p>
+                <Skull size={28} color="#EF4444" style={{ marginBottom: '8px' }} />
+                <p style={{ color: '#EF4444', fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600, margin: '0 0 4px' }}>อันตราย</p>
+                <p style={{ color: '#64748B', fontSize: 'clamp(12px, 2.5vw, 14px)', margin: 0 }}>{settings.dangerThreshold || 50}+ PPM</p>
               </div>
             </div>
           </div>
@@ -321,55 +322,57 @@ export const SettingsPage = () => {
           style={{
             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '32px',
+            borderRadius: '20px',
+            padding: 'clamp(16px, 4vw, 32px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            marginBottom: '24px',
+            marginBottom: '20px',
           }}
         >
           <h2 style={{ 
             color: '#F8FAFC', 
-            fontSize: '20px', 
+            fontSize: 'clamp(16px, 4vw, 20px)', 
             fontWeight: 600, 
             marginBottom: '8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px'
+            gap: '10px'
           }}>
-            <Clock size={22} color="#3B82F6" />
+            <Clock size={20} color="#3B82F6" />
             การอัพเดทข้อมูล
           </h2>
           <p style={{ color: '#64748B', fontSize: '14px', marginBottom: '32px' }}>
             กำหนดความถี่ในการดึงข้อมูลจากเซ็นเซอร์
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
             <div style={{ 
               background: 'rgba(59, 130, 246, 0.2)', 
               borderRadius: '12px', 
-              padding: '12px',
-              border: '1px solid rgba(59, 130, 246, 0.3)'
+              padding: '10px',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              flexShrink: 0,
             }}>
-              <Clock size={24} color="#3B82F6" />
+              <Clock size={22} color="#3B82F6" />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600 }}>
+            <div style={{ flex: 1, minWidth: '150px' }}>
+              <label style={{ color: '#F8FAFC', fontSize: 'clamp(14px, 3vw, 16px)', fontWeight: 600 }}>
                 ความถี่รีเฟรช
               </label>
-              <p style={{ color: '#64748B', fontSize: '13px', margin: '4px 0 0' }}>
+              <p style={{ color: '#64748B', fontSize: 'clamp(11px, 2.5vw, 13px)', margin: '4px 0 0' }}>
                 ระบบจะดึงข้อมูลใหม่ทุกๆ ช่วงเวลาที่กำหนด
               </p>
             </div>
             <div style={{
               background: 'rgba(59, 130, 246, 0.15)',
               borderRadius: '12px',
-              padding: '12px 24px',
+              padding: '8px 16px',
               border: '1px solid rgba(59, 130, 246, 0.3)',
+              flexShrink: 0,
             }}>
-              <span style={{ color: '#3B82F6', fontSize: '28px', fontWeight: 700 }}>
+              <span style={{ color: '#3B82F6', fontSize: 'clamp(20px, 4vw, 28px)', fontWeight: 700 }}>
                 {settings.pollingInterval / 1000}
               </span>
-              <span style={{ color: '#3B82F6', fontSize: '14px', marginLeft: '4px' }}>วินาที</span>
+              <span style={{ color: '#3B82F6', fontSize: '12px', marginLeft: '4px' }}>วินาที</span>
             </div>
           </div>
           <input
@@ -401,22 +404,22 @@ export const SettingsPage = () => {
           style={{
             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '32px',
+            borderRadius: '20px',
+            padding: 'clamp(16px, 4vw, 32px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            marginBottom: '32px',
+            marginBottom: '20px',
           }}
         >
           <h2 style={{ 
             color: '#F8FAFC', 
-            fontSize: '20px', 
+            fontSize: 'clamp(16px, 4vw, 20px)', 
             fontWeight: 600, 
             marginBottom: '8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px'
+            gap: '10px'
           }}>
-            <Bell size={22} color="#10B981" />
+            <Bell size={20} color="#10B981" />
             การแจ้งเตือน
           </h2>
           <p style={{ color: '#64748B', fontSize: '14px', marginBottom: '32px' }}>
@@ -538,27 +541,27 @@ export const SettingsPage = () => {
           style={{
             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
             backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            padding: '32px',
+            borderRadius: '20px',
+            padding: 'clamp(16px, 4vw, 32px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            marginBottom: '32px',
+            marginBottom: '20px',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-            <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
               <h2 style={{ 
                 color: '#F8FAFC', 
-                fontSize: '20px', 
+                fontSize: 'clamp(16px, 4vw, 20px)', 
                 fontWeight: 600, 
                 marginBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px'
+                gap: '10px'
               }}>
-                <Server size={22} color="#8B5CF6" />
+                <Server size={20} color="#8B5CF6" />
                 API Endpoints
               </h2>
-              <p style={{ color: '#64748B', fontSize: '14px' }}>
+              <p style={{ color: '#64748B', fontSize: 'clamp(12px, 2.5vw, 14px)' }}>
                 จัดการ API สำหรับดึงข้อมูลจากหลายสถานที่
               </p>
             </div>
@@ -614,15 +617,16 @@ export const SettingsPage = () => {
                 <div
                   key={endpoint.id}
                   style={{
-                    padding: '20px',
+                    padding: 'clamp(12px, 3vw, 20px)',
                     background: endpoint.enabled ? 'rgba(139, 92, 246, 0.1)' : 'rgba(255, 255, 255, 0.03)',
                     borderRadius: '16px',
                     border: endpoint.enabled ? '1px solid rgba(139, 92, 246, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                    overflow: 'hidden',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <MapPin size={20} color={endpoint.enabled ? '#8B5CF6' : '#64748B'} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '120px' }}>
+                      <MapPin size={18} color={endpoint.enabled ? '#8B5CF6' : '#64748B'} style={{ flexShrink: 0 }} />
                       <input
                         type="text"
                         value={endpoint.name}
@@ -635,15 +639,16 @@ export const SettingsPage = () => {
                           background: 'transparent',
                           border: 'none',
                           color: '#F8FAFC',
-                          fontSize: '16px',
+                          fontSize: 'clamp(14px, 3vw, 16px)',
                           fontWeight: 600,
                           outline: 'none',
-                          width: '200px',
+                          width: '100%',
+                          minWidth: 0,
                         }}
                         placeholder="ชื่อสถานที่"
                       />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                       {/* Enable Toggle */}
                       <div
                         onClick={() => {
@@ -652,23 +657,24 @@ export const SettingsPage = () => {
                           updateSettings({ apiEndpoints: updated });
                         }}
                         style={{
-                          width: '48px',
-                          height: '26px',
-                          borderRadius: '13px',
+                          width: '44px',
+                          height: '24px',
+                          borderRadius: '12px',
                           background: endpoint.enabled ? '#8B5CF6' : 'rgba(255, 255, 255, 0.1)',
                           position: 'relative',
                           cursor: 'pointer',
                           transition: 'background 0.2s',
+                          flexShrink: 0,
                         }}
                       >
                         <div style={{
-                          width: '22px',
-                          height: '22px',
-                          borderRadius: '11px',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '10px',
                           background: '#FFF',
                           position: 'absolute',
                           top: '2px',
-                          left: endpoint.enabled ? '24px' : '2px',
+                          left: endpoint.enabled ? '22px' : '2px',
                           transition: 'left 0.2s',
                         }} />
                       </div>
@@ -684,9 +690,10 @@ export const SettingsPage = () => {
                           background: 'rgba(239, 68, 68, 0.2)',
                           border: 'none',
                           borderRadius: '8px',
-                          padding: '8px',
+                          padding: '6px',
                           cursor: 'pointer',
                           display: 'flex',
+                          flexShrink: 0,
                         }}
                       >
                         <Trash2 size={16} color="#EF4444" />
@@ -704,13 +711,15 @@ export const SettingsPage = () => {
                     }}
                     placeholder="URL เต็ม (เช่น http://localhost:3000/api/sensor/1)"
                     style={{
+                      width: '100%',
                       background: 'rgba(0, 0, 0, 0.2)',
                       border: '1px solid rgba(255, 255, 255, 0.1)',
                       borderRadius: '10px',
                       padding: '12px 16px',
                       color: '#F8FAFC',
-                      fontSize: '14px',
+                      fontSize: 'clamp(12px, 2.5vw, 14px)',
                       outline: 'none',
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>

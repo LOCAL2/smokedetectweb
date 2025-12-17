@@ -25,7 +25,7 @@ export const Dashboard = () => {
       : [...pinnedSensors, sensorId];
     updateSettings({ pinnedSensors: newPinned });
   };
-  const { sensors, history, sensorHistory, stats, sensorMaxValues, isLoading, error, refetch } = useSensorData(settings);
+  const { sensors, history, sensorHistory, stats, sensorMaxValues, error, refetch } = useSensorData(settings);
   const lastAlertRef = useRef<number>(0);
 
   // Sound alert for danger sensors
@@ -137,7 +137,7 @@ export const Dashboard = () => {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-      padding: '32px',
+      padding: 'clamp(16px, 4vw, 32px)',
     }}>
       <div style={{
         position: 'fixed',
@@ -150,11 +150,7 @@ export const Dashboard = () => {
       }} />
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
-        <Header 
-          onRefresh={refetch} 
-          isLoading={isLoading} 
-          onSettingsClick={() => navigate('/settings')}
-        />
+        <Header onSettingsClick={() => navigate('/settings')} />
         
         <AlertBanner sensors={sensors} settings={settings} />
 
@@ -197,7 +193,7 @@ export const Dashboard = () => {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 380px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
           gap: '24px',
           marginBottom: '32px',
         }}>

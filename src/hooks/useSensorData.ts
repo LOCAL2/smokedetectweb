@@ -147,9 +147,9 @@ export const useSensorData = (settings: SettingsConfig) => {
           // รองรับทั้ง array และ object เดี่ยว
           const rawData = Array.isArray(response.data) ? response.data : [response.data];
           
-          const data: SensorData[] = rawData.map((sensor: SensorData) => ({
+          const data: SensorData[] = rawData.map((sensor: SensorData, index: number) => ({
             ...sensor,
-            id: `${endpoint.id}-${sensor.id}`,
+            id: `${endpoint.id}-${sensor.id || index}`,
             location: sensor.location || endpoint.name,
           }));
           

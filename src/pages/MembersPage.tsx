@@ -182,17 +182,15 @@ export const MembersPage = () => {
         {/* Members Grid - Leader in center */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1.2fr 1fr',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: '24px',
           alignItems: 'center',
         }}>
-          {/* Left Member */}
-          <MemberCard member={members[0]} delay={0.2} />
-          
-          {/* Leader (Center) */}
+          {/* Leader first on mobile */}
           <MemberCard member={leader} isLeader delay={0.1} />
           
-          {/* Right Member */}
+          {/* Members */}
+          <MemberCard member={members[0]} delay={0.2} />
           <MemberCard member={members[1]} delay={0.3} />
         </div>
 
