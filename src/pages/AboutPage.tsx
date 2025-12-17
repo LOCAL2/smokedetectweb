@@ -16,7 +16,7 @@ export const AboutPage = () => {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-      padding: '32px',
+      padding: 'clamp(16px, 4vw, 32px)',
     }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Header */}
@@ -45,10 +45,10 @@ export const AboutPage = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div>
-              <h1 style={{ color: '#F8FAFC', fontSize: '32px', fontWeight: 700, margin: 0 }}>
+              <h1 style={{ color: '#F8FAFC', fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 700, margin: 0 }}>
                 Smoke Detection System
               </h1>
-              <p style={{ color: '#64748B', fontSize: '16px', margin: '4px 0 0' }}>
+              <p style={{ color: '#64748B', fontSize: 'clamp(14px, 3vw, 16px)', margin: '4px 0 0' }}>
                 ระบบตรวจจับควันอัจฉริยะ
               </p>
             </div>
@@ -63,12 +63,12 @@ export const AboutPage = () => {
           style={{
             background: 'rgba(30, 41, 59, 0.6)',
             borderRadius: '20px',
-            padding: '32px',
+            padding: 'clamp(20px, 4vw, 32px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            marginBottom: '24px',
+            marginBottom: '20px',
           }}
         >
-          <h2 style={{ color: '#F8FAFC', fontSize: '20px', fontWeight: 600, marginBottom: '16px' }}>
+          <h2 style={{ color: '#F8FAFC', fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 600, marginBottom: '16px' }}>
             เกี่ยวกับโปรเจค
           </h2>
           <p style={{ color: '#94A3B8', fontSize: '15px', lineHeight: 1.8 }}>
@@ -90,7 +90,7 @@ export const AboutPage = () => {
           transition={{ delay: 0.2 }}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))',
             gap: '16px',
             marginBottom: '24px',
           }}
@@ -124,16 +124,16 @@ export const AboutPage = () => {
           style={{
             background: 'rgba(30, 41, 59, 0.6)',
             borderRadius: '20px',
-            padding: '32px',
+            padding: 'clamp(20px, 4vw, 32px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            marginBottom: '24px',
+            marginBottom: '20px',
           }}
         >
-          <h2 style={{ color: '#F8FAFC', fontSize: '20px', fontWeight: 600, marginBottom: '24px' }}>
+          <h2 style={{ color: '#F8FAFC', fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 600, marginBottom: '20px' }}>
             Tech Stack
           </h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '12px' }}>
             {[
               { name: 'React', color: '#61DAFB' },
               { name: 'TypeScript', color: '#3178C6' },

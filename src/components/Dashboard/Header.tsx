@@ -1,14 +1,12 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, Settings, Info, Users } from 'lucide-react';
+import { Settings, Info, Users } from 'lucide-react';
 
 interface HeaderProps {
-  onRefresh: () => void;
-  isLoading: boolean;
   onSettingsClick: () => void;
 }
 
-export const Header = ({ onRefresh, isLoading, onSettingsClick }: HeaderProps) => {
+export const Header = ({ onSettingsClick }: HeaderProps) => {
   const navigate = useNavigate();
   return (
     <motion.header
@@ -22,15 +20,17 @@ export const Header = ({ onRefresh, isLoading, onSettingsClick }: HeaderProps) =
         marginBottom: '32px',
         paddingBottom: '24px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+        flexWrap: 'wrap',
+        gap: '16px',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <img
           src="/logo.jpg"
           alt="Logo"
           style={{
-            width: '56px',
-            height: '56px',
+            width: '48px',
+            height: '48px',
             borderRadius: '50%',
             objectFit: 'cover',
           }}
@@ -38,107 +38,87 @@ export const Header = ({ onRefresh, isLoading, onSettingsClick }: HeaderProps) =
         <div>
           <h1 style={{ 
             color: '#F8FAFC', 
-            fontSize: '28px', 
+            fontSize: 'clamp(18px, 5vw, 28px)', 
             fontWeight: 700, 
             margin: 0,
             letterSpacing: '-0.02em'
           }}>
             Smoke Detection
           </h1>
-          <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0' }}>
+          <p style={{ color: '#64748B', fontSize: '13px', margin: '2px 0 0', display: 'none' }}>
             ระบบตรวจจับควันอัจฉริยะ
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => navigate('/about')}
           style={{
             background: 'rgba(255, 255, 255, 0.05)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '12px',
+            borderRadius: '10px',
+            padding: '10px 16px',
             color: '#94A3B8',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Info size={20} />
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/members')}
-          style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '12px',
-            color: '#94A3B8',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Users size={20} />
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onRefresh}
-          disabled={isLoading}
-          style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '12px 20px',
-            color: '#F8FAFC',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 500,
             transition: 'all 0.2s ease',
           }}
         >
-          <motion.div
-            animate={isLoading ? { rotate: 360 } : {}}
-            transition={{ duration: 1, repeat: isLoading ? Infinity : 0, ease: 'linear' }}
-          >
-            <RefreshCw size={18} />
-          </motion.div>
-          รีเฟรช
+          <Info size={16} />
+          <span>เกี่ยวกับ</span>
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onSettingsClick}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate('/members')}
           style={{
             background: 'rgba(255, 255, 255, 0.05)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '12px',
+            borderRadius: '10px',
+            padding: '10px 16px',
             color: '#94A3B8',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            fontWeight: 500,
             transition: 'all 0.2s ease',
           }}
         >
-          <Settings size={20} />
+          <Users size={16} />
+          <span>ผู้จัดทำ</span>
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onSettingsClick}
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '10px',
+            padding: '10px 16px',
+            color: '#94A3B8',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '13px',
+            fontWeight: 500,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <Settings size={16} />
+          <span>ตั้งค่า</span>
         </motion.button>
       </div>
     </motion.header>
