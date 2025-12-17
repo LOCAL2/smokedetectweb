@@ -27,7 +27,6 @@ export const Dashboard = () => {
   };
   const { sensors, history, sensorHistory, stats, sensorMaxValues, isLoading, error, refetch } = useSensorData(settings);
   const lastAlertRef = useRef<number>(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Sound alert for danger sensors
   useEffect(() => {
