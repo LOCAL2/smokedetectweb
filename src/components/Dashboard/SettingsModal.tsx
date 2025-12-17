@@ -21,10 +21,10 @@ export const SettingsModal = ({ isOpen, onClose, settings, onSave, onReset }: Se
 
   const handleReset = () => {
     onReset();
-    onClose();
   };
 
-  if (isOpen && JSON.stringify(localSettings) !== JSON.stringify(settings)) {
+  // Sync localSettings when settings change (e.g., after reset)
+  if (JSON.stringify(localSettings) !== JSON.stringify(settings)) {
     setLocalSettings(settings);
   }
 
