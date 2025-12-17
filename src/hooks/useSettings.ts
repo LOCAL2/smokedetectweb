@@ -24,7 +24,7 @@ const getDefaultSettings = (): SettingsConfig => ({
   warningThreshold: Number(import.meta.env.VITE_THRESHOLD_WARNING) || 50,
   dangerThreshold: Number(import.meta.env.VITE_THRESHOLD_DANGER) || 200,
   pollingInterval: Number(import.meta.env.VITE_POLLING_INTERVAL) || 30000,
-  enableSoundAlert: import.meta.env.VITE_ENABLE_SOUND_ALERT === 'true',
+  enableSoundAlert: false,
   enableNotification: import.meta.env.VITE_ENABLE_NOTIFICATION === 'true',
   apiEndpoints: [{
     id: 'default',
