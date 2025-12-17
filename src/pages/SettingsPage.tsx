@@ -10,7 +10,6 @@ import {
   Clock,
   Bell,
   Volume2,
-  Settings,
   Plus,
   Trash2,
   Server,

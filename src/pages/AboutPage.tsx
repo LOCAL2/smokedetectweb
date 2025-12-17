@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Flame, Wifi, Bell, BarChart3, Shield } from 'lucide-react';
+import { ArrowLeft, Wifi, Bell, BarChart3, Shield } from 'lucide-react';
 
 export const AboutPage = () => {
   const navigate = useNavigate();

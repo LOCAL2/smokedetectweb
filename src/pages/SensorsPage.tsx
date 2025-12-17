@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Activity, Search, Pin } from 'lucide-react';
+import { ArrowLeft, Activity, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useSensorData } from '../hooks/useSensorData';
 import { useSettingsContext } from '../context/SettingsContext';
