@@ -19,18 +19,17 @@ export const MembersPage = () => {
     studentId: '66209010031',
   };
 
-  const members: Member[] = [
-    {
-      name: 'นาย ภูมิรพี พรหมมาศ',
-      role: 'Design',
-      studentId: '66209010037',
-    },
-    {
-      name: 'นาย วรเดช พันธ์พืช',
+  const leftMember: Member = {
+    name: 'นาย วรเดช พันธ์พืช',
     role: 'Coding',
-      studentId: '66209010040',
-    },
-  ];
+    studentId: '66209010040',
+  };
+
+  const rightMember: Member = {
+    name: 'นาย ภูมิรพี พรหมมาศ',
+    role: 'Design',
+    studentId: '66209010037',
+  };
 
   const MemberCard = ({ member, isLeader = false, delay = 0 }: { member: Member; isLeader?: boolean; delay?: number }) => (
     <motion.div
@@ -182,16 +181,18 @@ export const MembersPage = () => {
         {/* Members Grid - Leader in center */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           gap: '24px',
           alignItems: 'center',
         }}>
-          {/* Leader first on mobile */}
+          {/* ซ้าย - วรเดช */}
+          <MemberCard member={leftMember} delay={0.2} />
+          
+          {/* กลาง - นภัสพล (หัวหน้า) */}
           <MemberCard member={leader} isLeader delay={0.1} />
           
-          {/* Members */}
-          <MemberCard member={members[0]} delay={0.2} />
-          <MemberCard member={members[1]} delay={0.3} />
+          {/* ขวา - ภูมิรพี */}
+          <MemberCard member={rightMember} delay={0.3} />
         </div>
 
         {/* Project Info */}

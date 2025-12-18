@@ -16,6 +16,7 @@ export interface SettingsConfig {
   enableNotification: boolean;
   apiEndpoints: ApiEndpoint[];
   pinnedSensors: string[];
+  useWebSocket: boolean;
 }
 
 const STORAGE_KEY = 'smoke-detection-settings';
@@ -34,6 +35,7 @@ const getDefaultSettings = (): SettingsConfig => ({
     enabled: true,
   }],
   pinnedSensors: [],
+  useWebSocket: true,
 });
 
 export const useSettings = () => {

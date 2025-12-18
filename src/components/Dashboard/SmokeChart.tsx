@@ -43,10 +43,11 @@ const COLORS = [
 
 export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) => {
   const chartRef = useRef<ChartJS<'line'>>(null);
-  const [viewMode, setViewMode] = useState<'average' | 'individual'>('individual');
+  const [viewMode, setViewMode] = useState<'average' | 'individual' | 'pinned'>('individual');
 
   // Get unique sensors from history
   const sensorIds = Object.keys(sensorHistory);
+  const pinnedSensors = settings.pinnedSensors || [];
   
   // Prepare data based on view mode
   const prepareChartData = () => {
@@ -78,10 +79,14 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
       };
     }
 
-    // Individual sensor view
+    // Individual or Pinned sensor view
+    const displaySensorIds = viewMode === 'pinned' 
+      ? sensorIds.filter(id => pinnedSensors.includes(id))
+      : sensorIds;
+
     // Find all unique timestamps
     const allTimestamps = new Set<string>();
-    sensorIds.forEach(id => {
+    displaySensorIds.forEach(id => {
       sensorHistory[id]?.forEach(h => allTimestamps.add(h.timestamp));
     });
     
@@ -101,7 +106,7 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
       })
     );
 
-    const datasets = sensorIds.slice(0, 10).map((sensorId, index) => {
+    const datasets = displaySensorIds.slice(0, 10).map((sensorId, index) => {
       const sensorData = sensorHistory[sensorId] || [];
       const displayName = sensorData[0]?.location || sensorData[0]?.sensorName || sensorId;
       
@@ -147,7 +152,7 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
     },
     plugins: {
       legend: {
-        display: viewMode === 'individual',
+        display: viewMode !== 'average',
         position: 'bottom' as const,
         labels: {
           color: '#94A3B8',
@@ -248,12 +253,16 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
             กราฟค่าควัน (30 นาทีล่าสุด)
           </h3>
           <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>
-            {viewMode === 'average' ? 'แสดงค่าเฉลี่ยจากเซ็นเซอร์ทั้งหมด' : 'แสดงแยกตามแต่ละเซ็นเซอร์'}
+            {viewMode === 'average' 
+              ? 'แสดงค่าเฉลี่ยจากเซ็นเซอร์ทั้งหมด' 
+              : viewMode === 'pinned'
+                ? `แสดงเฉพาะเซ็นเซอร์ที่ปักหมุด (${pinnedSensors.length})`
+                : 'แสดงแยกตามแต่ละเซ็นเซอร์'}
           </p>
         </div>
         
         {/* View Mode Toggle */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setViewMode('individual')}
             style={{
@@ -269,6 +278,22 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
             }}
           >
             แยกเซ็นเซอร์
+          </button>
+          <button
+            onClick={() => setViewMode('pinned')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '10px',
+              border: 'none',
+              background: viewMode === 'pinned' ? '#8B5CF6' : 'rgba(255,255,255,0.1)',
+              color: viewMode === 'pinned' ? '#FFF' : '#94A3B8',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            ปักหมุด ({pinnedSensors.length})
           </button>
           <button
             onClick={() => setViewMode('average')}
@@ -289,7 +314,7 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
         </div>
       </div>
 
-      <div style={{ height: viewMode === 'individual' ? '350px' : '300px' }}>
+      <div style={{ height: viewMode === 'average' ? '300px' : '350px' }}>
         <Line 
           ref={chartRef} 
           data={chartData} 
