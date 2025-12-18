@@ -22,7 +22,7 @@ export const SensorCard = ({ sensor, index, settings, isPinned = false, onToggle
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
+      transition={{ duration: 0.3 }}
       whileHover={{ scale: 1.02, y: -4 }}
       style={{
         background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
@@ -88,9 +88,7 @@ export const SensorCard = ({ sensor, index, settings, isPinned = false, onToggle
       </div>
 
       <div style={{ textAlign: 'center', padding: '20px 0' }}>
-        <motion.div
-          animate={status === 'danger' ? { scale: [1, 1.05, 1] } : {}}
-          transition={{ duration: 0.8, repeat: status === 'danger' ? Infinity : 0 }}
+        <div
           style={{
             fontSize: '56px',
             fontWeight: 800,
@@ -101,15 +99,13 @@ export const SensorCard = ({ sensor, index, settings, isPinned = false, onToggle
           }}
         >
           {formatNumber(sensor.value)}
-        </motion.div>
+        </div>
         <span style={{ color: '#94A3B8', fontSize: '16px', fontWeight: 500 }}>
           {sensor.unit}
         </span>
       </div>
 
-      <motion.div
-        animate={status === 'danger' ? { scale: [1, 1.05, 1] } : {}}
-        transition={{ duration: 1, repeat: status === 'danger' ? Infinity : 0 }}
+      <div
         style={{
           background: colors.bg,
           border: `1px solid ${colors.primary}50`,
@@ -121,7 +117,7 @@ export const SensorCard = ({ sensor, index, settings, isPinned = false, onToggle
         <span style={{ color: colors.primary, fontWeight: 600, fontSize: '14px' }}>
           {STATUS_LABELS[status]}
         </span>
-      </motion.div>
+      </div>
       <div style={{ marginTop: '16px' }}>
         <div style={{
           height: '6px',
@@ -129,14 +125,13 @@ export const SensorCard = ({ sensor, index, settings, isPinned = false, onToggle
           borderRadius: '3px',
           overflow: 'hidden',
         }}>
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${Math.min((sensor.value / (settings.dangerThreshold * 1.5)) * 100, 100)}%` }}
-            transition={{ duration: 0.8, delay: index * 0.1 }}
+          <div
             style={{
               height: '100%',
+              width: `${Math.min((sensor.value / (settings.dangerThreshold * 1.5)) * 100, 100)}%`,
               background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.primary}80 100%)`,
               borderRadius: '3px',
+              transition: 'width 0.3s ease-out',
             }}
           />
         </div>
