@@ -24,7 +24,7 @@ const STORAGE_KEY = 'smoke-detection-settings';
 const getDefaultSettings = (): SettingsConfig => ({
   warningThreshold: Number(import.meta.env.VITE_THRESHOLD_WARNING) || 50,
   dangerThreshold: Number(import.meta.env.VITE_THRESHOLD_DANGER) || 200,
-  pollingInterval: Number(import.meta.env.VITE_POLLING_INTERVAL) || 1000,
+  pollingInterval: Number(import.meta.env.VITE_POLLING_INTERVAL) || 500,
   enableSoundAlert: false,
   enableNotification: import.meta.env.VITE_ENABLE_NOTIFICATION === 'true',
   apiEndpoints: [{
