@@ -8,7 +8,6 @@ const HISTORY_STORAGE_KEY = 'smoke-sensor-history';
 const SENSOR_MAX_STORAGE_KEY = 'smoke-sensor-max-values';
 const SENSOR_HISTORY_KEY = 'smoke-sensor-individual-history';
 
-// โหลด history จาก localStorage
 const GRAPH_RETENTION_MS = 30 * 60 * 1000; // 30 minutes
 const GRAPH_UPDATE_INTERVAL_MS = 60 * 1000; // 1 minute
 
@@ -68,6 +67,7 @@ const saveSensorHistoryToStorage = (history: SensorHistoryMap) => {
   }
 };
 
+
 // โหลด sensor max values
 interface StoredSensorMax {
   id: string;
@@ -105,6 +105,20 @@ const saveSensorMaxToStorage = (maxMap: Map<string, StoredSensorMax>) => {
   }
 };
 
+// แปลง HTTP URL เป็น WebSocket URL
+const httpToWsUrl = (httpUrl: string): string => {
+  try {
+    const url = new URL(httpUrl);
+    const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    // ESP32 ใช้ port 81 สำหรับ WebSocket
+    const wsPort = url.port === '3000' ? '3000' : '81';
+    return `${wsProtocol}//${url.hostname}:${wsPort}/`;
+  } catch {
+    return '';
+  }
+};
+
+
 export const useSensorData = (settings: SettingsConfig) => {
   const [sensors, setSensors] = useState<SensorData[]>([]);
   const [history, setHistory] = useState<SensorHistory[]>(loadHistoryFromStorage);
@@ -119,11 +133,230 @@ export const useSensorData = (settings: SettingsConfig) => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  
   const intervalRef = useRef<number | null>(null);
   const historyRef = useRef<SensorHistory[]>(loadHistoryFromStorage());
   const sensorHistoryRef = useRef<SensorHistoryMap>(loadSensorHistoryFromStorage());
   const sensorMaxRef = useRef<Map<string, StoredSensorMax>>(loadSensorMaxFromStorage());
+  const wsRef = useRef<Map<string, WebSocket>>(new Map());
+  const sensorsRef = useRef<Map<string, SensorData>>(new Map());
 
+  // Process incoming sensor data (shared between HTTP and WebSocket)
+  const processSensorData = useCallback((allData: SensorData[]) => {
+    if (allData.length === 0) return;
+
+    setSensors(allData);
+
+    const now = Date.now();
+    const oneDayAgo = now - 24 * 60 * 60 * 1000;
+    
+    allData.forEach(sensor => {
+      const locationKey = sensor.location || sensor.id;
+      
+      // Update max values
+      const existing = sensorMaxRef.current.get(locationKey);
+      if (!existing || existing.timestamp < oneDayAgo || sensor.value > existing.maxValue) {
+        sensorMaxRef.current.set(locationKey, {
+          id: locationKey,
+          name: sensor.name,
+          location: sensor.location,
+          maxValue: existing && existing.timestamp > oneDayAgo 
+            ? Math.max(existing.maxValue, sensor.value) 
+            : sensor.value,
+          timestamp: now,
+        });
+      }
+
+      // Update individual sensor history
+      if (!sensorHistoryRef.current[locationKey]) {
+        sensorHistoryRef.current[locationKey] = [];
+      }
+      
+      const sensorHist = sensorHistoryRef.current[locationKey];
+      const lastEntry = sensorHist[sensorHist.length - 1];
+      const shouldAdd = !lastEntry || (now - new Date(lastEntry.timestamp).getTime()) >= GRAPH_UPDATE_INTERVAL_MS;
+      const cutoffTime = now - GRAPH_RETENTION_MS;
+      
+      if (shouldAdd) {
+        sensorHistoryRef.current[locationKey] = [
+          ...sensorHist.filter(h => new Date(h.timestamp).getTime() > cutoffTime),
+          {
+            timestamp: new Date(now).toISOString(),
+            value: sensor.value,
+            sensorId: locationKey,
+            sensorName: sensor.name,
+            location: sensor.location,
+          }
+        ].slice(-500);
+      }
+    });
+    
+    // Clean old max values
+    sensorMaxRef.current.forEach((value, key) => {
+      if (value.timestamp < oneDayAgo) {
+        sensorMaxRef.current.delete(key);
+      }
+    });
+    
+    saveSensorMaxToStorage(sensorMaxRef.current);
+    saveSensorHistoryToStorage(sensorHistoryRef.current);
+    setSensorHistory({ ...sensorHistoryRef.current });
+    
+    // Sort max values
+    const sortedMaxValues: SensorMaxValue[] = Array.from(sensorMaxRef.current.values())
+      .map(item => ({
+        id: item.id,
+        name: item.name,
+        location: item.location,
+        maxValue: item.maxValue,
+      }))
+      .sort((a, b) => b.maxValue - a.maxValue);
+    
+    setSensorMaxValues(sortedMaxValues);
+
+    // Calculate stats
+    const onlineSensors = allData.filter(s => s.isOnline);
+    const values = onlineSensors.map(s => s.value);
+    const avgValue = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    const maxValue = values.length > 0 ? Math.max(...values) : 0;
+    const alertCount = allData.filter(s => 
+      getSensorStatusWithSettings(s.value, settings.warningThreshold, settings.dangerThreshold) !== 'safe'
+    ).length;
+
+    setStats({
+      totalSensors: allData.length,
+      onlineSensors: onlineSensors.length,
+      averageValue: Math.round(avgValue),
+      maxValue,
+      alertCount,
+    });
+
+    // Save average history
+    const historyNow = new Date();
+    const lastHistEntry = historyRef.current[historyRef.current.length - 1];
+    const shouldAddEntry = !lastHistEntry || 
+      (historyNow.getTime() - new Date(lastHistEntry.timestamp).getTime()) >= GRAPH_UPDATE_INTERVAL_MS;
+    
+    if (shouldAddEntry && avgValue > 0) {
+      const newHistoryPoint: SensorHistory = {
+        timestamp: historyNow.toISOString(),
+        value: Math.round(avgValue),
+      };
+      
+      const cutoffTime = historyNow.getTime() - GRAPH_RETENTION_MS;
+      const filteredHistory = historyRef.current.filter(
+        item => new Date(item.timestamp).getTime() > cutoffTime
+      );
+      
+      historyRef.current = [...filteredHistory, newHistoryPoint];
+      setHistory(historyRef.current);
+      saveHistoryToStorage(historyRef.current);
+    }
+
+    setError(null);
+    setIsLoading(false);
+  }, [settings.warningThreshold, settings.dangerThreshold]);
+
+
+  // Track if we've fallen back to HTTP (stop trying WebSocket)
+  const usingHttpFallbackRef = useRef(false);
+  const wsReconnectTimeoutRef = useRef<Map<string, number>>(new Map());
+
+  // Connect to WebSocket endpoint with fallback to HTTP
+  const connectWebSocket = useCallback((endpoint: { id: string; url: string; name: string; enabled: boolean }, onFallback: () => void) => {
+    // Don't try WebSocket if already using HTTP fallback
+    if (usingHttpFallbackRef.current) {
+      return;
+    }
+
+    const wsUrl = httpToWsUrl(endpoint.url);
+    if (!wsUrl) {
+      onFallback();
+      return;
+    }
+
+    // Close existing connection
+    const existingWs = wsRef.current.get(endpoint.id);
+    if (existingWs) {
+      existingWs.close();
+    }
+
+    // Clear any pending reconnect
+    const existingTimeout = wsReconnectTimeoutRef.current.get(endpoint.id);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    console.log(`Connecting WebSocket to ${wsUrl}`);
+    const ws = new WebSocket(wsUrl);
+    let hasConnected = false;
+
+    ws.onopen = () => {
+      hasConnected = true;
+      console.log(`WebSocket connected: ${endpoint.name}`);
+      setConnectionStatus('connected');
+      setError(null);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const rawData = JSON.parse(event.data);
+        const dataArray = Array.isArray(rawData) ? rawData : [rawData];
+        
+        // Update sensors map (without triggering re-render)
+        dataArray.forEach((sensor: SensorData) => {
+          const sensorId = `${endpoint.id}-${sensor.id || 'default'}`;
+          sensorsRef.current.set(sensorId, {
+            ...sensor,
+            id: sensorId,
+            location: sensor.location || endpoint.name,
+          });
+        });
+
+        // Process immediately - no throttle
+        const allSensors = Array.from(sensorsRef.current.values());
+        processSensorData(allSensors);
+      } catch (err) {
+        console.error('WebSocket message error:', err);
+      }
+    };
+
+    ws.onerror = () => {
+      // Silent - onclose will handle fallback
+    };
+
+    ws.onclose = () => {
+      console.log(`WebSocket closed: ${endpoint.name}`);
+      wsRef.current.delete(endpoint.id);
+      
+      // Don't do anything if already using HTTP fallback
+      if (usingHttpFallbackRef.current) {
+        return;
+      }
+      
+      // If never connected, fallback to HTTP permanently
+      if (!hasConnected) {
+        console.log(`WebSocket failed for ${endpoint.name}, switching to HTTP polling`);
+        usingHttpFallbackRef.current = true;
+        setConnectionStatus('disconnected');
+        onFallback();
+      } else {
+        // Was connected before, try to reconnect after 3 seconds
+        setConnectionStatus('disconnected');
+        const timeoutId = window.setTimeout(() => {
+          if (endpoint.enabled && !usingHttpFallbackRef.current) {
+            connectWebSocket(endpoint, onFallback);
+          }
+        }, 3000);
+        wsReconnectTimeoutRef.current.set(endpoint.id, timeoutId);
+      }
+    };
+
+    wsRef.current.set(endpoint.id, ws);
+  }, [processSensorData]);
+
+  // Fetch via HTTP (only for endpoints not connected via WebSocket)
   const fetchSensorData = useCallback(async () => {
     try {
       const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
@@ -134,173 +367,147 @@ export const useSensorData = (settings: SettingsConfig) => {
         return;
       }
 
-      // ดึงข้อมูลจากทุก endpoint
-      const allData: SensorData[] = [];
+      // Only fetch from endpoints that don't have active WebSocket
+      const endpointsToFetch = enabledEndpoints.filter(ep => !wsRef.current.has(ep.id));
       
-      for (const endpoint of enabledEndpoints) {
+      for (const endpoint of endpointsToFetch) {
         try {
-          // ใช้ URL ตรงๆ ไม่ต่อ /sensor อัตโนมัติ
           const response = await axios.get(endpoint.url, {
             headers: endpoint.apiKey ? { 'Authorization': `Bearer ${endpoint.apiKey}` } : {},
           });
           
-          // รองรับทั้ง array และ object เดี่ยว
-          const rawData = Array.isArray(response.data) ? response.data : [response.data];
+          let rawData: SensorData[] = [];
           
-          const data: SensorData[] = rawData.map((sensor: SensorData, index: number) => ({
-            ...sensor,
-            id: `${endpoint.id}-${sensor.id || index}`,
-            location: sensor.location || endpoint.name,
-          }));
+          // Handle different response formats
+          if (Array.isArray(response.data)) {
+            // Normal array format
+            rawData = response.data;
+          } else if (response.data && typeof response.data === 'object') {
+            // Firebase format: { "sensor-001": {...}, "sensor-002": {...} }
+            // Or single object format
+            if (response.data.id || response.data.value !== undefined) {
+              // Single sensor object
+              rawData = [response.data];
+            } else {
+              // Firebase object format - convert to array
+              rawData = Object.values(response.data).filter(
+                (item): item is SensorData => item !== null && typeof item === 'object'
+              );
+            }
+          }
           
-          allData.push(...data);
+          // Update sensorsRef (merge with existing)
+          rawData.forEach((sensor: SensorData, index: number) => {
+            const sensorId = `${endpoint.id}-${sensor.id || index}`;
+            sensorsRef.current.set(sensorId, {
+              ...sensor,
+              id: sensorId,
+              location: sensor.location || endpoint.name,
+            });
+          });
         } catch (err) {
           console.error(`Error fetching from ${endpoint.name}:`, err);
         }
       }
 
-      if (allData.length === 0) {
+      // Process all sensors from ref
+      const allSensors = Array.from(sensorsRef.current.values());
+      
+      if (allSensors.length === 0) {
         setError('ไม่สามารถเชื่อมต่อกับเซ็นเซอร์ได้');
         setIsLoading(false);
         return;
       }
 
-      setSensors(allData);
-
-      // อัพเดท max values และ individual history
-      const now = Date.now();
-      const oneDayAgo = now - 24 * 60 * 60 * 1000;
-      
-      allData.forEach(sensor => {
-        // ใช้ location เป็น key เพื่อไม่ให้ซ้ำ
-        const locationKey = sensor.location || sensor.id;
-        
-        // Update max values - ใช้ location เป็น key
-        const existing = sensorMaxRef.current.get(locationKey);
-        if (!existing || existing.timestamp < oneDayAgo || sensor.value > existing.maxValue) {
-          sensorMaxRef.current.set(locationKey, {
-            id: locationKey,
-            name: sensor.name,
-            location: sensor.location,
-            maxValue: existing && existing.timestamp > oneDayAgo 
-              ? Math.max(existing.maxValue, sensor.value) 
-              : sensor.value,
-            timestamp: now,
-          });
-        }
-
-        // Update individual sensor history - ใช้ location เป็น key
-        if (!sensorHistoryRef.current[locationKey]) {
-          sensorHistoryRef.current[locationKey] = [];
-        }
-        
-        const sensorHist = sensorHistoryRef.current[locationKey];
-        const lastEntry = sensorHist[sensorHist.length - 1];
-        const shouldAdd = !lastEntry || (now - new Date(lastEntry.timestamp).getTime()) >= GRAPH_UPDATE_INTERVAL_MS;
-        const cutoffTime = now - GRAPH_RETENTION_MS;
-        
-        if (shouldAdd) {
-          sensorHistoryRef.current[locationKey] = [
-            ...sensorHist.filter(h => new Date(h.timestamp).getTime() > cutoffTime),
-            {
-              timestamp: new Date(now).toISOString(),
-              value: sensor.value,
-              sensorId: locationKey,
-              sensorName: sensor.name,
-              location: sensor.location,
-            }
-          ].slice(-500); // Keep max 500 entries per sensor
-        }
-      });
-      
-      // Clean old max values
-      sensorMaxRef.current.forEach((value, key) => {
-        if (value.timestamp < oneDayAgo) {
-          sensorMaxRef.current.delete(key);
-        }
-      });
-      
-      saveSensorMaxToStorage(sensorMaxRef.current);
-      saveSensorHistoryToStorage(sensorHistoryRef.current);
-      setSensorHistory({ ...sensorHistoryRef.current });
-      
-      // Sort max values
-      const sortedMaxValues: SensorMaxValue[] = Array.from(sensorMaxRef.current.values())
-        .map(item => ({
-          id: item.id,
-          name: item.name,
-          location: item.location,
-          maxValue: item.maxValue,
-        }))
-        .sort((a, b) => b.maxValue - a.maxValue);
-      
-      setSensorMaxValues(sortedMaxValues);
-
-      // Calculate stats
-      const onlineSensors = allData.filter(s => s.isOnline);
-      const values = onlineSensors.map(s => s.value);
-      const avgValue = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-      const maxValue = values.length > 0 ? Math.max(...values) : 0;
-      const alertCount = allData.filter(s => 
-        getSensorStatusWithSettings(s.value, settings.warningThreshold, settings.dangerThreshold) !== 'safe'
-      ).length;
-
-      setStats({
-        totalSensors: allData.length,
-        onlineSensors: onlineSensors.length,
-        averageValue: Math.round(avgValue),
-        maxValue,
-        alertCount,
-      });
-
-      // Save average history
-      const historyNow = new Date();
-      const lastEntry = historyRef.current[historyRef.current.length - 1];
-      const shouldAddEntry = !lastEntry || 
-        (historyNow.getTime() - new Date(lastEntry.timestamp).getTime()) >= GRAPH_UPDATE_INTERVAL_MS;
-      
-      if (shouldAddEntry && avgValue > 0) {
-        const newHistoryPoint: SensorHistory = {
-          timestamp: historyNow.toISOString(),
-          value: Math.round(avgValue),
-        };
-        
-        const cutoffTime = historyNow.getTime() - GRAPH_RETENTION_MS;
-        const filteredHistory = historyRef.current.filter(
-          item => new Date(item.timestamp).getTime() > cutoffTime
-        );
-        
-        historyRef.current = [...filteredHistory, newHistoryPoint];
-        setHistory(historyRef.current);
-        saveHistoryToStorage(historyRef.current);
-      }
-
-      setError(null);
+      processSensorData(allSensors);
     } catch (err) {
       setError('ไม่สามารถเชื่อมต่อกับเซ็นเซอร์ได้');
       console.error('Fetch error:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [settings.apiEndpoints, settings.warningThreshold, settings.dangerThreshold]);
+  }, [settings.apiEndpoints, processSensorData]);
 
-  useEffect(() => {
+
+  // Start HTTP polling for specific endpoints or all
+  const startHttpPolling = useCallback(() => {
+    // Initial fetch
     fetchSensorData();
-  }, [fetchSensorData]);
-
-  useEffect(() => {
+    
+    // Clear existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
     
+    // Start polling
     intervalRef.current = window.setInterval(fetchSensorData, settings.pollingInterval);
-    
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
   }, [fetchSensorData, settings.pollingInterval]);
 
-  return { sensors, history, sensorHistory, stats, sensorMaxValues, isLoading, error, refetch: fetchSensorData };
+  // Setup connections based on settings
+  useEffect(() => {
+    const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
+    
+    if (enabledEndpoints.length === 0) {
+      setError('ไม่มี API endpoint ที่เปิดใช้งาน');
+      setIsLoading(false);
+      return;
+    }
+
+    // Reset fallback tracking on settings change
+    usingHttpFallbackRef.current = false;
+
+    // Check if using WebSocket mode
+    if (settings.useWebSocket) {
+      let fallbackStarted = false;
+      
+      // Try WebSocket first, fallback to HTTP if fails
+      const startFallback = () => {
+        if (!fallbackStarted) {
+          fallbackStarted = true;
+          console.log('Falling back to HTTP polling');
+          startHttpPolling();
+        }
+      };
+
+      // Connect via WebSocket
+      enabledEndpoints.forEach(endpoint => {
+        connectWebSocket(endpoint, startFallback);
+      });
+
+      return () => {
+        // Cleanup WebSocket connections
+        wsRef.current.forEach(ws => ws.close());
+        wsRef.current.clear();
+        sensorsRef.current.clear();
+        wsReconnectTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
+        wsReconnectTimeoutRef.current.clear();
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+    } else {
+      // Use HTTP polling directly
+      startHttpPolling();
+      
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+      };
+    }
+  }, [settings.apiEndpoints, settings.useWebSocket, settings.pollingInterval, connectWebSocket, startHttpPolling, processSensorData]);
+
+  return { 
+    sensors, 
+    history, 
+    sensorHistory, 
+    stats, 
+    sensorMaxValues, 
+    isLoading, 
+    error, 
+    connectionStatus,
+    refetch: fetchSensorData 
+  };
 };

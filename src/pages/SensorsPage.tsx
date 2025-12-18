@@ -23,8 +23,8 @@ export const SensorsPage = () => {
 
   const filteredSensors = sensors.filter((sensor) => {
     const matchesSearch =
-      sensor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sensor.location.toLowerCase().includes(searchTerm.toLowerCase());
+      (sensor.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (sensor.location || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
 

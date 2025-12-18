@@ -25,6 +25,7 @@ export const Dashboard = () => {
       : [...pinnedSensors, sensorId];
     updateSettings({ pinnedSensors: newPinned });
   };
+
   const { sensors, history, sensorHistory, stats, sensorMaxValues, error, refetch } = useSensorData(settings);
   const lastAlertRef = useRef<number>(0);
 
