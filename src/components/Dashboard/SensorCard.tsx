@@ -14,7 +14,7 @@ interface SensorCardProps {
   onTogglePin?: (sensorId: string) => void;
 }
 
-export const SensorCard = ({ sensor, index, settings, isPinned = false, onTogglePin }: SensorCardProps) => {
+export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin }: SensorCardProps) => {
   const status = getSensorStatusWithSettings(sensor.value, settings.warningThreshold, settings.dangerThreshold);
   const colors = STATUS_COLORS[status];
 
