@@ -108,7 +108,17 @@ const saveSensorMaxToStorage = (maxMap: Map<string, StoredSensorMax>) => {
 // แปลง HTTP URL เป็น WebSocket URL
 const httpToWsUrl = (httpUrl: string): string => {
   try {
+    // ถ้าเว็บโหลดผ่าน HTTPS แต่ API เป็น HTTP จะไม่สามารถใช้ ws:// ได้ (Mixed Content)
+    const isPageHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
     const url = new URL(httpUrl);
+    const isApiHttp = url.protocol === 'http:';
+    
+    // ถ้าเว็บเป็น HTTPS แต่ API เป็น HTTP ให้ return empty เพื่อ fallback ไป HTTP polling
+    if (isPageHttps && isApiHttp) {
+      console.log('HTTPS page cannot connect to ws:// - using HTTP polling instead');
+      return '';
+    }
+    
     const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
     // ESP32 ใช้ port 81 สำหรับ WebSocket
     const wsPort = url.port === '3000' ? '3000' : '81';
