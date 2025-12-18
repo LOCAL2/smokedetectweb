@@ -290,11 +290,10 @@ export const Dashboard = () => {
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: '20px',
               }}>
-                {pinnedSensors.map((sensor, index) => (
+                {pinnedSensors.map((sensor) => (
                   <SensorCard 
                     key={sensor.id} 
                     sensor={sensor} 
-                    index={index} 
                     settings={settings}
                     isPinned={true}
                     onTogglePin={handleTogglePin}

@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { MapPin, Wifi, WifiOff, Pin } from 'lucide-react';
 import type { SensorData } from '../../types/sensor';
 import type { SettingsConfig } from '../../hooks/useSettings';
@@ -8,7 +7,6 @@ import { formatNumber } from '../../utils/format';
 
 interface SensorCardProps {
   sensor: SensorData;
-  index: number;
   settings: SettingsConfig;
   isPinned?: boolean;
   onTogglePin?: (sensorId: string) => void;
@@ -19,11 +17,7 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin }: 
   const colors = STATUS_COLORS[status];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ scale: 1.02, y: -4 }}
+    <div
       style={{
         background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
         backdropFilter: 'blur(20px)',
@@ -33,17 +27,23 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin }: 
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.02) translateY(-4px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1) translateY(0)';
       }}
     >
       {status === 'danger' && (
-        <motion.div
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+        <div
           style={{
             position: 'absolute',
             inset: 0,
             background: `radial-gradient(circle at center, ${colors.primary}15 0%, transparent 70%)`,
             pointerEvents: 'none',
+            animation: 'pulse 1.5s infinite',
           }}
         />
       )}
@@ -136,6 +136,6 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin }: 
           />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
