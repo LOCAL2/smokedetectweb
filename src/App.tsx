@@ -5,6 +5,8 @@ import { SettingsPage } from './pages/SettingsPage';
 import { AboutPage } from './pages/AboutPage';
 import { MembersPage } from './pages/MembersPage';
 import { SensorsPage } from './pages/SensorsPage';
+import { GuidePage } from './pages/GuidePage';
+import { DownloadPage } from './pages/DownloadPage';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/members" element={<MembersPage />} />
           <Route path="/sensors" element={<SensorsPage />} />
+          <Route path="/guide" element={<GuidePage />} />
+          <Route path="/download" element={<DownloadPage />} />
         </Routes>
       </SettingsProvider>
     </BrowserRouter>

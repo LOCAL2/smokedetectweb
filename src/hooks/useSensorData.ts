@@ -68,12 +68,15 @@ const saveSensorHistoryToStorage = (history: SensorHistoryMap) => {
 };
 
 
-// โหลด sensor max values
+// โหลด sensor stats (max, min, sum, count สำหรับ 24 ชั่วโมง)
 interface StoredSensorMax {
   id: string;
   name: string;
   location: string;
   maxValue: number;
+  minValue: number;
+  sumValue: number;
+  count: number;
   timestamp: number;
 }
 
@@ -164,16 +167,28 @@ export const useSensorData = (settings: SettingsConfig) => {
     allData.forEach(sensor => {
       const locationKey = sensor.location || sensor.id;
       
-      // Update max values
+      // Update stats (max, min, avg)
       const existing = sensorMaxRef.current.get(locationKey);
-      if (!existing || existing.timestamp < oneDayAgo || sensor.value > existing.maxValue) {
+      if (!existing || existing.timestamp < oneDayAgo) {
+        // Reset stats if older than 24h or new sensor
         sensorMaxRef.current.set(locationKey, {
           id: locationKey,
           name: sensor.name,
           location: sensor.location,
-          maxValue: existing && existing.timestamp > oneDayAgo 
-            ? Math.max(existing.maxValue, sensor.value) 
-            : sensor.value,
+          maxValue: sensor.value,
+          minValue: sensor.value,
+          sumValue: sensor.value,
+          count: 1,
+          timestamp: now,
+        });
+      } else {
+        // Update existing stats
+        sensorMaxRef.current.set(locationKey, {
+          ...existing,
+          maxValue: Math.max(existing.maxValue, sensor.value),
+          minValue: Math.min(existing.minValue, sensor.value),
+          sumValue: existing.sumValue + sensor.value,
+          count: existing.count + 1,
           timestamp: now,
         });
       }
@@ -213,13 +228,15 @@ export const useSensorData = (settings: SettingsConfig) => {
     saveSensorHistoryToStorage(sensorHistoryRef.current);
     setSensorHistory({ ...sensorHistoryRef.current });
     
-    // Sort max values
+    // Sort max values with min/avg
     const sortedMaxValues: SensorMaxValue[] = Array.from(sensorMaxRef.current.values())
       .map(item => ({
         id: item.id,
         name: item.name,
         location: item.location,
         maxValue: item.maxValue,
+        minValue: item.minValue,
+        avgValue: item.count > 0 ? Math.round(item.sumValue / item.count) : 0,
       }))
       .sort((a, b) => b.maxValue - a.maxValue);
     
@@ -241,6 +258,8 @@ export const useSensorData = (settings: SettingsConfig) => {
       maxValue,
       alertCount,
     });
+
+    // LINE notification ถูกย้ายไปทำที่ ESP32 แล้ว (ทำงาน 24/7)
 
     // Save average history
     const historyNow = new Date();
@@ -466,58 +485,46 @@ export const useSensorData = (settings: SettingsConfig) => {
     // Reset fallback tracking on settings change
     usingHttpFallbackRef.current = false;
 
-    // Check if using WebSocket mode
-    if (settings.useWebSocket) {
-      let fallbackStarted = false;
-      
-      // Try WebSocket first, fallback to HTTP if fails
-      const startFallback = () => {
-        if (!fallbackStarted) {
-          fallbackStarted = true;
-          console.log('Falling back to HTTP polling');
-          startHttpPolling();
-        }
-      };
+    // Separate endpoints by connection type
+    const wsEndpoints = enabledEndpoints.filter(ep => ep.connectionType === 'websocket');
+    const httpEndpoints = enabledEndpoints.filter(ep => ep.connectionType === 'http');
 
-      // Connect via WebSocket
-      enabledEndpoints.forEach(endpoint => {
-        connectWebSocket(endpoint, startFallback);
+    // Connect WebSocket endpoints
+    wsEndpoints.forEach(endpoint => {
+      connectWebSocket(endpoint, () => {
+        // On WebSocket fail, this endpoint will be fetched via HTTP polling
+        console.log(`WebSocket failed for ${endpoint.name}, will use HTTP polling`);
       });
+    });
 
-      return () => {
-        // Cleanup WebSocket connections
-        wsRef.current.forEach(ws => ws.close());
-        wsRef.current.clear();
-        sensorsRef.current.clear();
-        wsReconnectTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
-        wsReconnectTimeoutRef.current.clear();
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      };
-    } else {
-      // Use HTTP polling directly
+    // Start HTTP polling if there are HTTP endpoints or as fallback
+    if (httpEndpoints.length > 0 || wsEndpoints.length > 0) {
       startHttpPolling();
-      
-      return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-      };
     }
-  }, [settings.apiEndpoints, settings.useWebSocket, settings.pollingInterval, connectWebSocket, startHttpPolling, processSensorData]);
 
-  return { 
-    sensors, 
-    history, 
-    sensorHistory, 
-    stats, 
-    sensorMaxValues, 
-    isLoading, 
-    error, 
+    return () => {
+      // Cleanup WebSocket connections
+      wsRef.current.forEach(ws => ws.close());
+      wsRef.current.clear();
+      sensorsRef.current.clear();
+      wsReconnectTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
+      wsReconnectTimeoutRef.current.clear();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [settings.apiEndpoints, settings.pollingInterval, connectWebSocket, startHttpPolling, processSensorData]);
+
+  return {
+    sensors,
+    history,
+    sensorHistory,
+    stats,
+    sensorMaxValues,
+    isLoading,
+    error,
     connectionStatus,
-    refetch: fetchSensorData 
+    refetch: fetchSensorData,
   };
 };

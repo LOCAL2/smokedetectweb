@@ -394,61 +394,6 @@ export const SettingsPage = () => {
             <span style={{ color: '#64748B', fontSize: '12px' }}>1 วินาที (เร็ว)</span>
             <span style={{ color: '#64748B', fontSize: '12px' }}>30 วินาที (ประหยัด)</span>
           </div>
-
-          {/* WebSocket Toggle */}
-          <div
-            onClick={() => updateSettings({ useWebSocket: !settings.useWebSocket })}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              padding: '20px',
-              marginTop: '24px',
-              background: settings.useWebSocket ? 'rgba(59, 130, 246, 0.1)' : 'rgba(255, 255, 255, 0.03)',
-              borderRadius: '16px',
-              border: settings.useWebSocket ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            <div style={{
-              background: settings.useWebSocket ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '12px',
-              padding: '12px',
-            }}>
-              <Server size={24} color={settings.useWebSocket ? '#3B82F6' : '#64748B'} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: 0 }}>
-                ใช้ WebSocket (Real-time)
-              </p>
-              <p style={{ color: '#64748B', fontSize: '13px', margin: '4px 0 0' }}>
-                {settings.useWebSocket 
-                  ? 'รับข้อมูลแบบ real-time จาก ESP32' 
-                  : 'ใช้ HTTP polling ตามความถี่ที่ตั้งไว้'}
-              </p>
-            </div>
-            <div style={{
-              width: '56px',
-              height: '32px',
-              borderRadius: '16px',
-              background: settings.useWebSocket ? '#3B82F6' : 'rgba(255, 255, 255, 0.1)',
-              position: 'relative',
-              transition: 'background 0.2s',
-            }}>
-              <div style={{
-                width: '26px',
-                height: '26px',
-                borderRadius: '13px',
-                background: '#FFF',
-                position: 'absolute',
-                top: '3px',
-                left: settings.useWebSocket ? '27px' : '3px',
-                transition: 'left 0.2s',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              }} />
-            </div>
-          </div>
         </motion.section>
 
         {/* Alert Settings Section */}
@@ -630,6 +575,7 @@ export const SettingsPage = () => {
                   url: '',
                   apiKey: '',
                   enabled: true,
+                  connectionType: 'websocket',
                 };
                 updateSettings({ apiEndpoints: [...(settings.apiEndpoints || []), newEndpoint] });
               }}
@@ -764,7 +710,7 @@ export const SettingsPage = () => {
                       updated[index] = { ...endpoint, url: e.target.value };
                       updateSettings({ apiEndpoints: updated });
                     }}
-                    placeholder="URL เต็ม (เช่น http://localhost:3000/api/sensor/1)"
+                    placeholder="URL เต็ม (เช่น http://192.168.0.111/api/sensor)"
                     style={{
                       width: '100%',
                       background: 'rgba(0, 0, 0, 0.2)',
@@ -777,6 +723,60 @@ export const SettingsPage = () => {
                       boxSizing: 'border-box',
                     }}
                   />
+                  
+                  {/* Connection Type Selector */}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <button
+                      onClick={() => {
+                        const updated = [...settings.apiEndpoints];
+                        updated[index] = { ...endpoint, connectionType: 'websocket' };
+                        updateSettings({ apiEndpoints: updated });
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        border: (endpoint.connectionType || 'websocket') === 'websocket' 
+                          ? '2px solid #10B981' 
+                          : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: (endpoint.connectionType || 'websocket') === 'websocket' 
+                          ? 'rgba(16, 185, 129, 0.15)' 
+                          : 'rgba(255, 255, 255, 0.03)',
+                        color: (endpoint.connectionType || 'websocket') === 'websocket' ? '#10B981' : '#94A3B8',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      ⚡ WebSocket (Real-time)
+                    </button>
+                    <button
+                      onClick={() => {
+                        const updated = [...settings.apiEndpoints];
+                        updated[index] = { ...endpoint, connectionType: 'http' };
+                        updateSettings({ apiEndpoints: updated });
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        border: endpoint.connectionType === 'http' 
+                          ? '2px solid #3B82F6' 
+                          : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: endpoint.connectionType === 'http' 
+                          ? 'rgba(59, 130, 246, 0.15)' 
+                          : 'rgba(255, 255, 255, 0.03)',
+                        color: endpoint.connectionType === 'http' ? '#3B82F6' : '#94A3B8',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      🔄 HTTP Polling
+                    </button>
+                  </div>
                 </div>
               ))
             )}

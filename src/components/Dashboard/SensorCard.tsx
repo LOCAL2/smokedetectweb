@@ -10,14 +10,16 @@ interface SensorCardProps {
   settings: SettingsConfig;
   isPinned?: boolean;
   onTogglePin?: (sensorId: string) => void;
+  onClick?: () => void;
 }
 
-export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin }: SensorCardProps) => {
+export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, onClick }: SensorCardProps) => {
   const status = getSensorStatusWithSettings(sensor.value, settings.warningThreshold, settings.dangerThreshold);
   const colors = STATUS_COLORS[status];
 
   return (
     <div
+      onClick={onClick}
       style={{
         background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
         backdropFilter: 'blur(20px)',
