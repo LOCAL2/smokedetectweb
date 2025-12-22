@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Wifi, AlertTriangle, Gauge } from 'lucide-react';
+import { Activity, Wifi, Gauge } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSensorData } from '../../hooks/useSensorData';
 import { useSettingsContext } from '../../context/SettingsContext';
@@ -13,10 +13,13 @@ import { SensorCard } from './SensorCard';
 import { AlertBanner } from './AlertBanner';
 import { SmokeChart } from './SmokeChart';
 import { SensorRanking } from './SensorRanking';
+import { SensorDetailPanel } from './SensorDetailPanel';
+import type { SensorData } from '../../types/sensor';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { settings, updateSettings } = useSettingsContext();
+  const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
 
   const handleTogglePin = (sensorId: string) => {
     const pinnedSensors = settings.pinnedSensors || [];
@@ -26,7 +29,7 @@ export const Dashboard = () => {
     updateSettings({ pinnedSensors: newPinned });
   };
 
-  const { sensors, history, sensorHistory, stats, sensorMaxValues, error, refetch } = useSensorData(settings);
+  const { sensors, history, sensorHistory, stats, sensorMaxValues } = useSensorData(settings);
   const lastAlertRef = useRef<number>(0);
 
   // Sound alert for danger sensors
@@ -74,65 +77,6 @@ export const Dashboard = () => {
       }
     }
   }, [sensors, settings.enableSoundAlert, settings.warningThreshold, settings.dangerThreshold]);
-
-  if (error) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#0F172A',
-      }}>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          style={{
-            background: 'rgba(239, 68, 68, 0.1)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: '20px',
-            padding: '40px',
-            textAlign: 'center',
-            maxWidth: '400px',
-          }}
-        >
-          <AlertTriangle size={48} color="#EF4444" style={{ marginBottom: '16px' }} />
-          <h2 style={{ color: '#FCA5A5', margin: '0 0 8px' }}>เกิดข้อผิดพลาด</h2>
-          <p style={{ color: '#FDA4AF', marginBottom: '24px' }}>{error}</p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-            <button
-              onClick={() => navigate('/settings')}
-              style={{
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '12px 24px',
-                color: '#FFF',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              ไปตั้งค่า API
-            </button>
-            <button
-              onClick={refetch}
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '12px',
-                padding: '12px 24px',
-                color: '#FFF',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              ลองใหม่
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div style={{
@@ -297,6 +241,7 @@ export const Dashboard = () => {
                     settings={settings}
                     isPinned={true}
                     onTogglePin={handleTogglePin}
+                    onClick={() => setSelectedSensor(sensor)}
                   />
                 ))}
               </div>
@@ -321,6 +266,27 @@ export const Dashboard = () => {
         </motion.footer>
       </div>
 
+      {/* Sensor Detail Panel */}
+      {selectedSensor && (
+        <SensorDetailPanel
+          sensor={selectedSensor}
+          stats={(() => {
+            const sensorStats = sensorMaxValues.find(s => 
+              s.id === selectedSensor.location || s.id === selectedSensor.id
+            );
+            if (sensorStats) {
+              return {
+                max24h: sensorStats.maxValue,
+                min24h: sensorStats.minValue,
+                avg24h: sensorStats.avgValue,
+              };
+            }
+            return null;
+          })()}
+          settings={settings}
+          onClose={() => setSelectedSensor(null)}
+        />
+      )}
     </div>
   );
 };

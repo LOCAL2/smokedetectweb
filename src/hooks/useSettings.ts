@@ -1,11 +1,23 @@
 import { useState, useCallback } from 'react';
 
+export type ConnectionType = 'websocket' | 'http';
+
 export interface ApiEndpoint {
   id: string;
   name: string;
   url: string;
   apiKey?: string;
   enabled: boolean;
+  connectionType: ConnectionType;
+}
+
+export interface LineNotifySettings {
+  enabled: boolean;
+  channelAccessToken: string;
+  notifyOnWarning: boolean;
+  notifyOnDanger: boolean;
+  cooldownMinutes: number; // ป้องกันส่งซ้ำถี่เกินไป
+  lastNotifyTime?: number;
 }
 
 export interface SettingsConfig {
@@ -16,7 +28,7 @@ export interface SettingsConfig {
   enableNotification: boolean;
   apiEndpoints: ApiEndpoint[];
   pinnedSensors: string[];
-  useWebSocket: boolean;
+  lineNotify: LineNotifySettings;
 }
 
 const STORAGE_KEY = 'smoke-detection-settings';
@@ -33,9 +45,16 @@ const getDefaultSettings = (): SettingsConfig => ({
     url: import.meta.env.VITE_API_BASE_URL || 'http://118.173.113.78:3000/api/sensor',
     apiKey: import.meta.env.VITE_API_KEY || '',
     enabled: true,
+    connectionType: 'websocket',
   }],
   pinnedSensors: [],
-  useWebSocket: true,
+  lineNotify: {
+    enabled: false,
+    channelAccessToken: '',
+    notifyOnWarning: false,
+    notifyOnDanger: true,
+    cooldownMinutes: 5,
+  },
 });
 
 export const useSettings = () => {

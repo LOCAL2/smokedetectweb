@@ -5,13 +5,16 @@ import { useState } from 'react';
 import { useSensorData } from '../hooks/useSensorData';
 import { useSettingsContext } from '../context/SettingsContext';
 import { SensorCard } from '../components/Dashboard/SensorCard';
+import { SensorDetailPanel } from '../components/Dashboard/SensorDetailPanel';
+import type { SensorData } from '../types/sensor';
 
 export const SensorsPage = () => {
   const navigate = useNavigate();
   const { settings, updateSettings } = useSettingsContext();
-  const { sensors, isLoading } = useSensorData(settings);
+  const { sensors, sensorMaxValues, isLoading } = useSensorData(settings);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'online' | 'warning' | 'danger' | 'pinned'>('all');
+  const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
 
   const handleTogglePin = (sensorId: string) => {
     const pinnedSensors = settings.pinnedSensors || [];
@@ -165,14 +168,14 @@ export const SensorsPage = () => {
               gap: '20px',
             }}
           >
-            {filteredSensors.map((sensor, index) => (
+            {filteredSensors.map((sensor) => (
               <SensorCard 
                 key={sensor.id} 
                 sensor={sensor} 
-                index={index} 
                 settings={settings}
                 isPinned={(settings.pinnedSensors || []).includes(sensor.id)}
                 onTogglePin={handleTogglePin}
+                onClick={() => setSelectedSensor(sensor)}
               />
             ))}
           </div>
@@ -193,6 +196,28 @@ export const SensorsPage = () => {
           © 2024 Smoke Detection System
         </motion.p>
       </div>
+
+      {/* Sensor Detail Panel */}
+      {selectedSensor && (
+        <SensorDetailPanel
+          sensor={selectedSensor}
+          stats={(() => {
+            const sensorStats = sensorMaxValues.find(s => 
+              s.id === selectedSensor.location || s.id === selectedSensor.id
+            );
+            if (sensorStats) {
+              return {
+                max24h: sensorStats.maxValue,
+                min24h: sensorStats.minValue,
+                avg24h: sensorStats.avgValue,
+              };
+            }
+            return null;
+          })()}
+          settings={settings}
+          onClose={() => setSelectedSensor(null)}
+        />
+      )}
     </div>
   );
 };

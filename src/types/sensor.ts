@@ -29,4 +29,12 @@ export interface SensorMaxValue {
   name: string;
   location: string;
   maxValue: number;
+  minValue: number;
+  avgValue: number;
+}
+
+export interface SensorStats {
+  max24h: number;
+  min24h: number;
+  avg24h: number;
 }
