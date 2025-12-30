@@ -1,6 +1,19 @@
 {
   "updates": [
     {
+      "version": "1.5.0",
+      "date": "2025-12-31",
+      "title": "หน้า Maintenance Mode",
+      "type": "feature",
+      "changes": [
+        "เพิ่มหน้า Maintenance สำหรับแจ้งผู้ใช้เมื่อระบบกำลังพัฒนา",
+        "ออกแบบ UI ระดับ Production พร้อม animated gradient background",
+        "แสดง Logo พร้อม spinning rings effect",
+        "แสดงเวลา Server แบบ Real-time",
+        "เปิด/ปิดได้ผ่าน Environment Variable VITE_MAINTENANCE_MODE"
+      ]
+    },
+    {
       "version": "1.4.2",
       "date": "2025-12-30",
       "title": "ปรับปรุง Export PDF",
