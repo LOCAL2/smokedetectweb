@@ -18,22 +18,15 @@ type Platform = 'android' | 'windows';
 export const DownloadPage = () => {
   const navigate = useNavigate();
   const [activePlatform, setActivePlatform] = useState<Platform>('android');
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = () => {
-    setIsDownloading(true);
     const link = document.createElement('a');
     if (activePlatform === 'android') {
       link.href = 'https://github.com/LOCAL2/smokedetectweb/releases/download/v1.0.0/SmokeDetect.apk';
-      link.download = 'SmokeDetect.apk';
     } else {
       link.href = 'https://github.com/LOCAL2/smokedetectweb/releases/download/v1.0.0/SmokeDetection_Setup_v1.0.0.exe';
-      link.download = 'SmokeDetection_Setup_v1.0.0.exe';
     }
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-    setTimeout(() => setIsDownloading(false), 2000);
   };
 
   const platformData = {
@@ -285,7 +278,6 @@ export const DownloadPage = () => {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleDownload}
-                disabled={isDownloading}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -301,27 +293,12 @@ export const DownloadPage = () => {
                   color: '#FFF',
                   fontSize: '16px',
                   fontWeight: 600,
-                  cursor: isDownloading ? 'default' : 'pointer',
+                  cursor: 'pointer',
                   boxShadow: `0 8px 32px ${current.color}50`,
-                  opacity: isDownloading ? 0.8 : 1,
                 }}
               >
-                {isDownloading ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    >
-                      <Download size={20} />
-                    </motion.div>
-                    กำลังดาวน์โหลด...
-                  </>
-                ) : (
-                  <>
-                    <Download size={20} />
-                    {current.buttonText}
-                  </>
-                )}
+                <Download size={20} />
+                {current.buttonText}
               </motion.button>
             </div>
           </motion.div>
