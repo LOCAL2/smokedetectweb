@@ -24,10 +24,10 @@ export const DownloadPage = () => {
     setIsDownloading(true);
     const link = document.createElement('a');
     if (activePlatform === 'android') {
-      link.href = '/APK/SmokeDetect.apk';
+      link.href = 'https://github.com/LOCAL2/smokedetectweb/releases/download/v1.0.0/SmokeDetect.apk';
       link.download = 'SmokeDetect.apk';
     } else {
-      link.href = '/EXE/SmokeDetection_Setup_v1.0.0.exe';
+      link.href = 'https://github.com/LOCAL2/smokedetectweb/releases/download/v1.0.0/SmokeDetection_Setup_v1.0.0.exe';
       link.download = 'SmokeDetection_Setup_v1.0.0.exe';
     }
     document.body.appendChild(link);
