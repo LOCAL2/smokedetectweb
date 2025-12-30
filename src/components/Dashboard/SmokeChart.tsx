@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Maximize2, X } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,6 +35,8 @@ interface SmokeChartProps {
   data: SensorHistory[];
   sensorHistory: SensorHistoryMap;
   settings: SettingsConfig;
+  initialViewMode?: 'average' | 'individual' | 'pinned';
+  initialFullscreen?: boolean;
 }
 
 const COLORS = [
@@ -41,9 +44,10 @@ const COLORS = [
   '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1',
 ];
 
-export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) => {
+export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'individual', initialFullscreen = false }: SmokeChartProps) => {
   const chartRef = useRef<ChartJS<'line'>>(null);
-  const [viewMode, setViewMode] = useState<'average' | 'individual' | 'pinned'>('individual');
+  const [viewMode, setViewMode] = useState<'average' | 'individual' | 'pinned'>(initialViewMode);
+  const [isFullscreen, setIsFullscreen] = useState(initialFullscreen);
 
   // Get unique sensors from history
   const sensorIds = Object.keys(sensorHistory);
@@ -67,14 +71,18 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
           label: 'ค่าเฉลี่ย (PPM)',
           data: values,
           borderColor: '#3B82F6',
-          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
           fill: true,
-          tension: 0.3,
+          tension: 0.4,
           pointRadius: 4,
           pointBackgroundColor: '#3B82F6',
-          pointBorderColor: '#FFF',
+          pointBorderColor: '#1E293B',
           pointBorderWidth: 2,
-          pointHoverRadius: 6,
+          pointHoverRadius: 7,
+          pointHoverBackgroundColor: '#3B82F6',
+          pointHoverBorderColor: '#FFF',
+          pointHoverBorderWidth: 2,
+          borderWidth: 2.5,
         }],
       };
     }
@@ -92,17 +100,11 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
     
     const sortedTimestamps = Array.from(allTimestamps).sort();
     
-    // Check time range to decide format
-    const timeRange = sortedTimestamps.length > 1 
-      ? new Date(sortedTimestamps[sortedTimestamps.length - 1]).getTime() - new Date(sortedTimestamps[0]).getTime()
-      : 0;
-    const showSeconds = timeRange < 10 * 60 * 1000; // Show seconds if range < 10 minutes
-    
     const labels = sortedTimestamps.map(ts => 
       new Date(ts).toLocaleTimeString('th-TH', { 
         hour: '2-digit', 
         minute: '2-digit',
-        ...(showSeconds && { second: '2-digit' }),
+        second: '2-digit',
       })
     );
 
@@ -115,19 +117,24 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
       sensorData.forEach(h => valueMap.set(h.timestamp, h.value));
       
       const values = sortedTimestamps.map(ts => valueMap.get(ts) ?? null);
+      const color = COLORS[index % COLORS.length];
       
       return {
         label: displayName,
         data: values,
-        borderColor: COLORS[index % COLORS.length],
-        backgroundColor: `${COLORS[index % COLORS.length]}20`,
+        borderColor: color,
+        backgroundColor: `${color}15`,
         fill: false,
-        tension: 0.3,
-        pointRadius: 3,
-        pointBackgroundColor: COLORS[index % COLORS.length],
-        pointBorderColor: '#FFF',
-        pointBorderWidth: 1,
-        pointHoverRadius: 5,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: color,
+        pointBorderColor: '#1E293B',
+        pointBorderWidth: 2,
+        pointHoverRadius: 7,
+        pointHoverBackgroundColor: color,
+        pointHoverBorderColor: '#FFF',
+        pointHoverBorderWidth: 2,
+        borderWidth: 2.5,
         spanGaps: true,
       };
     });
@@ -140,15 +147,13 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    interaction: {
-      mode: 'nearest' as const,
-      intersect: true,
+    animation: {
+      duration: 750,
+      easing: 'easeInOutQuart' as const,
     },
-    onHover: (event: any, elements: any[]) => {
-      const canvas = event.native?.target as HTMLCanvasElement;
-      if (canvas) {
-        canvas.style.cursor = elements.length > 0 ? 'pointer' : 'default';
-      }
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
     },
     plugins: {
       legend: {
@@ -157,38 +162,65 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
         labels: {
           color: '#94A3B8',
           usePointStyle: true,
-          padding: 15,
-          font: { size: 11 },
+          pointStyle: 'circle',
+          padding: 20,
+          font: { size: 12, weight: 500 as const },
         },
       },
       tooltip: {
+        enabled: true,
         backgroundColor: 'rgba(15, 23, 42, 0.95)',
-        titleColor: '#94A3B8',
-        bodyColor: '#F8FAFC',
-        bodyFont: { size: 14 },
-        padding: 12,
+        titleColor: '#F8FAFC',
+        titleFont: { size: 13, weight: 600 as const },
+        bodyColor: '#94A3B8',
+        bodyFont: { size: 12 },
+        padding: 14,
         cornerRadius: 12,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        displayColors: true,
+        boxWidth: 8,
+        boxHeight: 8,
+        boxPadding: 4,
+        usePointStyle: true,
         callbacks: {
-          label: (item: any) => `${item.dataset.label}: ${item.raw} PPM`,
+          title: (items: any) => `🕐 ${items[0]?.label || ''}`,
+          label: (item: any) => {
+            const value = item.raw;
+            let status = '🟢';
+            if (value >= settings.dangerThreshold) status = '🔴';
+            else if (value >= settings.warningThreshold) status = '🟡';
+            return ` ${item.dataset.label}: ${value} PPM ${status}`;
+          },
         },
       },
     },
     scales: {
       x: {
-        grid: { display: false },
+        grid: { 
+          display: true,
+          color: 'rgba(255, 255, 255, 0.03)',
+          drawTicks: false,
+        },
         ticks: {
           color: '#64748B',
-          font: { size: 10 },
-          maxTicksLimit: 8,
+          font: { size: 11 },
+          maxTicksLimit: 6,
+          padding: 8,
         },
         border: { display: false },
       },
       y: {
         min: 0,
-        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+        grid: { 
+          color: 'rgba(255, 255, 255, 0.05)',
+          drawTicks: false,
+        },
         ticks: {
           color: '#64748B',
           font: { size: 11 },
+          padding: 12,
+          callback: (value: any) => `${value}`,
         },
         border: { display: false },
       },
@@ -207,9 +239,9 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
       if (warningY >= yAxis.top && warningY <= yAxis.bottom) {
         ctx.save();
         ctx.strokeStyle = '#F59E0B';
-        ctx.setLineDash([5, 5]);
-        ctx.lineWidth = 1;
-        ctx.globalAlpha = 0.6;
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.7;
         ctx.beginPath();
         ctx.moveTo(xAxis.left, warningY);
         ctx.lineTo(xAxis.right, warningY);
@@ -222,9 +254,9 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
       if (dangerY >= yAxis.top && dangerY <= yAxis.bottom) {
         ctx.save();
         ctx.strokeStyle = '#EF4444';
-        ctx.setLineDash([5, 5]);
-        ctx.lineWidth = 1;
-        ctx.globalAlpha = 0.6;
+        ctx.setLineDash([6, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.7;
         ctx.beginPath();
         ctx.moveTo(xAxis.left, dangerY);
         ctx.lineTo(xAxis.right, dangerY);
@@ -243,13 +275,13 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
         background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
         backdropFilter: 'blur(20px)',
         borderRadius: '24px',
-        padding: '24px',
+        padding: 'clamp(16px, 4vw, 28px)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h3 style={{ color: '#F8FAFC', fontSize: '18px', fontWeight: 600, margin: 0 }}>
+          <h3 style={{ color: '#F8FAFC', fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: 600, margin: 0 }}>
             กราฟค่าควัน (30 นาทีล่าสุด)
           </h3>
           <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>
@@ -261,15 +293,15 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
           </p>
         </div>
         
-        {/* View Mode Toggle */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {/* View Mode Toggle & Fullscreen */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
             onClick={() => setViewMode('individual')}
             style={{
               padding: '8px 16px',
               borderRadius: '10px',
-              border: 'none',
-              background: viewMode === 'individual' ? '#3B82F6' : 'rgba(255,255,255,0.1)',
+              border: viewMode === 'individual' ? 'none' : '1px solid rgba(255,255,255,0.1)',
+              background: viewMode === 'individual' ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' : 'rgba(255,255,255,0.05)',
               color: viewMode === 'individual' ? '#FFF' : '#94A3B8',
               fontSize: '13px',
               fontWeight: 500,
@@ -284,8 +316,8 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
             style={{
               padding: '8px 16px',
               borderRadius: '10px',
-              border: 'none',
-              background: viewMode === 'pinned' ? '#8B5CF6' : 'rgba(255,255,255,0.1)',
+              border: viewMode === 'pinned' ? 'none' : '1px solid rgba(255,255,255,0.1)',
+              background: viewMode === 'pinned' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255,255,255,0.05)',
               color: viewMode === 'pinned' ? '#FFF' : '#94A3B8',
               fontSize: '13px',
               fontWeight: 500,
@@ -300,8 +332,8 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
             style={{
               padding: '8px 16px',
               borderRadius: '10px',
-              border: 'none',
-              background: viewMode === 'average' ? '#3B82F6' : 'rgba(255,255,255,0.1)',
+              border: viewMode === 'average' ? 'none' : '1px solid rgba(255,255,255,0.1)',
+              background: viewMode === 'average' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'rgba(255,255,255,0.05)',
               color: viewMode === 'average' ? '#FFF' : '#94A3B8',
               fontSize: '13px',
               fontWeight: 500,
@@ -311,10 +343,37 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
           >
             ค่าเฉลี่ย
           </button>
+          
+          {/* Fullscreen Button */}
+          <button
+            onClick={() => setIsFullscreen(true)}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '10px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#94A3B8',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <Maximize2 size={16} />
+            <span className="fullscreen-text">ขยาย</span>
+          </button>
         </div>
       </div>
 
-      <div style={{ height: viewMode === 'average' ? '300px' : '350px' }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .fullscreen-text { display: none; }
+        }
+      `}</style>
+
+      <div style={{ height: viewMode === 'average' ? '320px' : '380px', position: 'relative' }}>
         <Line 
           ref={chartRef} 
           data={chartData} 
@@ -329,17 +388,229 @@ export const SmokeChart = ({ data, sensorHistory, settings }: SmokeChartProps) =
         gap: '24px', 
         marginTop: '16px',
         paddingTop: '16px',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '12px', height: '3px', background: '#F59E0B', borderRadius: '2px' }} />
-          <span style={{ color: '#94A3B8', fontSize: '12px' }}>เฝ้าระวัง ({settings.warningThreshold} PPM)</span>
+          <div style={{ 
+            width: '24px', 
+            height: '2px', 
+            background: '#F59E0B', 
+            borderRadius: '2px',
+            boxShadow: '0 0 8px rgba(245, 158, 11, 0.5)',
+          }} />
+          <span style={{ color: '#F59E0B', fontSize: '12px', fontWeight: 500 }}>
+            เฝ้าระวัง ({settings.warningThreshold} PPM)
+          </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '12px', height: '3px', background: '#EF4444', borderRadius: '2px' }} />
-          <span style={{ color: '#94A3B8', fontSize: '12px' }}>อันตราย ({settings.dangerThreshold} PPM)</span>
+          <div style={{ 
+            width: '24px', 
+            height: '2px', 
+            background: '#EF4444', 
+            borderRadius: '2px',
+            boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)',
+          }} />
+          <span style={{ color: '#EF4444', fontSize: '12px', fontWeight: 500 }}>
+            อันตราย ({settings.dangerThreshold} PPM)
+          </span>
         </div>
       </div>
+
+      {/* Fullscreen Modal */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+              zIndex: 1000,
+              display: 'flex',
+              flexDirection: 'column',
+              padding: 'clamp(16px, 4vw, 32px)',
+            }}
+          >
+            {/* Header */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '24px',
+              paddingBottom: '16px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            }}>
+              <div>
+                <h3 style={{ color: '#F8FAFC', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 600, margin: 0 }}>
+                  กราฟค่าควัน
+                </h3>
+                <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0' }}>
+                  ข้อมูลย้อนหลัง 30 นาที • {viewMode === 'average' ? 'ค่าเฉลี่ย' : viewMode === 'pinned' ? `ปักหมุด ${pinnedSensors.length} ตัว` : `${sensorIds.length} เซ็นเซอร์`}
+                </p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsFullscreen(false)}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  color: '#EF4444',
+                  cursor: 'pointer',
+                  display: 'flex',
+                }}
+              >
+                <X size={22} />
+              </motion.button>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '10px', 
+              marginBottom: '24px', 
+              flexWrap: 'wrap',
+              background: 'rgba(30, 41, 59, 0.5)',
+              padding: '8px',
+              borderRadius: '14px',
+              width: 'fit-content',
+            }}>
+              <button onClick={() => setViewMode('individual')}
+                style={{ 
+                  padding: '12px 24px', 
+                  borderRadius: '10px', 
+                  border: 'none',
+                  background: viewMode === 'individual' ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' : 'transparent', 
+                  color: viewMode === 'individual' ? '#FFF' : '#94A3B8', 
+                  fontSize: '14px', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}>
+                แยกเซ็นเซอร์
+              </button>
+              <button onClick={() => setViewMode('pinned')}
+                style={{ 
+                  padding: '12px 24px', 
+                  borderRadius: '10px', 
+                  border: 'none',
+                  background: viewMode === 'pinned' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'transparent', 
+                  color: viewMode === 'pinned' ? '#FFF' : '#94A3B8', 
+                  fontSize: '14px', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}>
+                ปักหมุด ({pinnedSensors.length})
+              </button>
+              <button onClick={() => setViewMode('average')}
+                style={{ 
+                  padding: '12px 24px', 
+                  borderRadius: '10px', 
+                  border: 'none',
+                  background: viewMode === 'average' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'transparent', 
+                  color: viewMode === 'average' ? '#FFF' : '#94A3B8', 
+                  fontSize: '14px', 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}>
+                ค่าเฉลี่ย
+              </button>
+            </div>
+
+            {/* Chart Container */}
+            <div style={{ 
+              flex: 1, 
+              minHeight: 0,
+              background: 'rgba(30, 41, 59, 0.4)',
+              borderRadius: '20px',
+              padding: 'clamp(16px, 3vw, 24px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              overflow: 'hidden',
+            }}>
+              <div style={{ height: '100%', borderRadius: '12px', overflow: 'hidden' }}>
+                <Line 
+                  data={chartData} 
+                  options={{
+                    ...options,
+                    animation: { duration: 500 },
+                    plugins: {
+                      ...options.plugins,
+                      legend: {
+                        ...options.plugins.legend,
+                        labels: {
+                          ...options.plugins.legend.labels,
+                          font: { size: 13, weight: 500 as const },
+                          padding: 24,
+                        },
+                      },
+                    },
+                    scales: {
+                      ...options.scales,
+                      x: {
+                        ...options.scales.x,
+                        ticks: {
+                          ...options.scales.x.ticks,
+                          font: { size: 12 },
+                          maxTicksLimit: 10,
+                        },
+                      },
+                      y: {
+                      ...options.scales.y,
+                      ticks: {
+                        ...options.scales.y.ticks,
+                        font: { size: 12 },
+                      },
+                    },
+                  },
+                }} 
+                plugins={[thresholdPlugin]} 
+              />
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '32px', 
+              marginTop: '20px', 
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ 
+                  width: '32px', 
+                  height: '3px', 
+                  background: '#F59E0B', 
+                  borderRadius: '2px',
+                  boxShadow: '0 0 10px rgba(245, 158, 11, 0.5)',
+                }} />
+                <span style={{ color: '#F59E0B', fontSize: '14px', fontWeight: 500 }}>
+                  เฝ้าระวัง ({settings.warningThreshold} PPM)
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ 
+                  width: '32px', 
+                  height: '3px', 
+                  background: '#EF4444', 
+                  borderRadius: '2px',
+                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)',
+                }} />
+                <span style={{ color: '#EF4444', fontSize: '14px', fontWeight: 500 }}>
+                  อันตราย ({settings.dangerThreshold} PPM)
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

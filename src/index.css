@@ -1,4 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-slate-950: #0B0F1A;
+}
 
 * {
   margin: 0;
@@ -18,6 +23,12 @@ body {
   color: #F8FAFC;
   line-height: 1.5;
   overflow-x: hidden;
+}
+
+/* Shimmer animation for loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Custom Scrollbar */

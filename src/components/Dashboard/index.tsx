@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Wifi, Gauge } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useSensorData } from '../../hooks/useSensorData';
+import { useSensorDataContext } from '../../context/SensorDataContext';
 import { useSettingsContext } from '../../context/SettingsContext';
 import { getSensorStatusWithSettings } from '../../hooks/useSettings';
+import type { DashboardComponent, LayoutPosition } from '../../hooks/useSettings';
 import { formatNumber } from '../../utils/format';
 import { Header } from './Header';
 import { StatusCard } from './StatusCard';
@@ -14,7 +15,15 @@ import { AlertBanner } from './AlertBanner';
 import { SmokeChart } from './SmokeChart';
 import { SensorRanking } from './SensorRanking';
 import { SensorDetailPanel } from './SensorDetailPanel';
+import { DashboardSkeleton } from './Skeleton';
 import type { SensorData } from '../../types/sensor';
+
+const defaultPositions: Record<LayoutPosition, DashboardComponent | null> = {
+  top: 'statusCards',
+  middleLeft: 'chart',
+  middleRight: 'ranking',
+  bottom: 'pinnedSensors',
+};
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -29,8 +38,16 @@ export const Dashboard = () => {
     updateSettings({ pinnedSensors: newPinned });
   };
 
-  const { sensors, history, sensorHistory, stats, sensorMaxValues } = useSensorData(settings);
+  const { sensors, history, sensorHistory, stats, sensorMaxValues, isLoading } = useSensorDataContext();
   const lastAlertRef = useRef<number>(0);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  // Track initial load
+  useEffect(() => {
+    if (sensors.length > 0 && initialLoad) {
+      setInitialLoad(false);
+    }
+  }, [sensors, initialLoad]);
 
   // Sound alert for danger sensors
   useEffect(() => {
@@ -97,155 +114,202 @@ export const Dashboard = () => {
       <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
         <Header onSettingsClick={() => navigate('/settings')} />
         
-        <AlertBanner sensors={sensors} settings={settings} />
+        {/* Show Skeleton on initial load */}
+        {initialLoad && isLoading ? (
+          <DashboardSkeleton />
+        ) : (
+          <>
+            <AlertBanner sensors={sensors} settings={settings} />
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '20px',
-          marginBottom: '32px',
-        }}>
-          <StatusCard
-            title="เซ็นเซอร์ทั้งหมด"
-            value={stats.totalSensors}
-            subtitle="จุดตรวจวัด"
-            icon={Activity}
-            color="#3B82F6"
-            delay={0}
-          />
-          <StatusCard
-            title="ออนไลน์"
-            value={stats.onlineSensors}
-            subtitle={`${Math.round((stats.onlineSensors / stats.totalSensors) * 100) || 0}% พร้อมใช้งาน`}
-            icon={Wifi}
-            color="#10B981"
-            delay={0.1}
-          />
-          <StatusCard
-            title="ค่าเฉลี่ย"
-            value={`${formatNumber(stats.averageValue)} PPM`}
-            subtitle="จากเซ็นเซอร์ทั้งหมด"
-            icon={Gauge}
-            color="#8B5CF6"
-            delay={0.2}
-          />
-          <AlertStatusCard
-            sensors={sensors}
-            settings={settings}
-            delay={0.3}
-          />
-        </div>
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
-          gap: '24px',
-          marginBottom: '32px',
-        }}>
-          <SmokeChart data={history} sensorHistory={sensorHistory} settings={settings} />
-          <SensorRanking data={sensorMaxValues} settings={settings} />
-        </div>
-
-        {/* Pinned Sensors Section */}
+        {/* Render components based on layout positions */}
         {(() => {
-          const pinnedSensors = sensors.filter(s => (settings.pinnedSensors || []).includes(s.id));
+          const positions = settings.dashboardLayout?.positions || defaultPositions;
           
-          if (pinnedSensors.length === 0) {
-            return (
-              <div style={{
-                background: 'rgba(30, 41, 59, 0.5)',
-                borderRadius: '20px',
-                padding: '40px',
-                textAlign: 'center',
-                border: '1px dashed rgba(255, 255, 255, 0.1)',
-              }}>
-                <Activity size={40} color="#475569" style={{ marginBottom: '16px' }} />
-                <h3 style={{ color: '#94A3B8', fontSize: '16px', fontWeight: 600, margin: '0 0 8px' }}>
-                  ยังไม่มีเซ็นเซอร์ที่ปักหมุด
-                </h3>
-                <p style={{ color: '#64748B', fontSize: '14px', margin: '0 0 20px' }}>
-                  ไปที่หน้าเซ็นเซอร์ทั้งหมดเพื่อปักหมุดเซ็นเซอร์ที่ต้องการแสดงที่หน้าหลัก
-                </p>
-                <button
-                  onClick={() => navigate('/sensors')}
-                  style={{
-                    background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-                    border: 'none',
-                    borderRadius: '12px',
-                    padding: '12px 24px',
-                    color: '#FFF',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  ไปปักหมุดเซ็นเซอร์
-                </button>
-              </div>
-            );
-          }
-
+          const renderComponent = (componentId: DashboardComponent | null) => {
+            if (!componentId) return null;
+            
+            switch (componentId) {
+              case 'statusCards':
+                return (
+                  <>
+                    <div className="status-grid" style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+                      gap: '20px',
+                    }}>
+                      <StatusCard
+                        title="เซ็นเซอร์ทั้งหมด"
+                        value={stats.totalSensors}
+                        subtitle="จุดตรวจวัด"
+                        icon={Activity}
+                        color="#3B82F6"
+                        delay={0}
+                      />
+                      <StatusCard
+                        title="ออนไลน์"
+                        value={stats.onlineSensors}
+                        subtitle={`พร้อมใช้งาน ${Math.round((stats.onlineSensors / stats.totalSensors) * 100) || 0}%`}
+                        icon={Wifi}
+                        color="#10B981"
+                        delay={0.1}
+                      />
+                      <StatusCard
+                        title="ค่าเฉลี่ย"
+                        value={`${formatNumber(stats.averageValue)} PPM`}
+                        subtitle="จากเซ็นเซอร์ทั้งหมด"
+                        icon={Gauge}
+                        color="#8B5CF6"
+                        delay={0.2}
+                      />
+                      <AlertStatusCard
+                        sensors={sensors}
+                        settings={settings}
+                        delay={0.3}
+                      />
+                    </div>
+                    <style>{`
+                      @media (max-width: 640px) {
+                        .status-grid { grid-template-columns: 1fr !important; }
+                      }
+                    `}</style>
+                  </>
+                );
+              case 'chart':
+                return <SmokeChart data={history} sensorHistory={sensorHistory} settings={settings} />;
+              case 'ranking':
+                return <SensorRanking data={sensorMaxValues} settings={settings} />;
+              case 'pinnedSensors':
+                const pinnedSensors = sensors.filter(s => (settings.pinnedSensors || []).includes(s.id));
+                if (pinnedSensors.length === 0) {
+                  return (
+                    <div style={{
+                      background: 'rgba(30, 41, 59, 0.5)',
+                      borderRadius: '20px',
+                      padding: '60px 40px',
+                      textAlign: 'center',
+                      border: '1px dashed rgba(255, 255, 255, 0.1)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: '250px',
+                    }}>
+                      <Activity size={48} color="#475569" style={{ marginBottom: '20px' }} />
+                      <h3 style={{ color: '#94A3B8', fontSize: '18px', fontWeight: 600, margin: '0 0 10px' }}>
+                        ยังไม่มีเซ็นเซอร์ที่ปักหมุด
+                      </h3>
+                      <p style={{ color: '#64748B', fontSize: '14px', margin: '0 0 24px', maxWidth: '400px' }}>
+                        ไปที่หน้าเซ็นเซอร์ทั้งหมดเพื่อปักหมุดเซ็นเซอร์ที่ต้องการแสดง
+                      </p>
+                      <button
+                        onClick={() => navigate('/sensors')}
+                        style={{
+                          background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '14px 28px',
+                          color: '#FFF',
+                          fontSize: '15px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ไปปักหมุดเซ็นเซอร์
+                      </button>
+                    </div>
+                  );
+                }
+                return (
+                  <div>
+                    <div style={{ 
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginBottom: '20px',
+                    }}>
+                      <h2 style={{ 
+                        color: '#F8FAFC', 
+                        fontSize: '20px', 
+                        fontWeight: 600, 
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}>
+                        <Activity size={22} color="#3B82F6" />
+                        เซ็นเซอร์ที่ปักหมุด
+                        <span style={{ color: '#64748B', fontSize: '14px', fontWeight: 400 }}>
+                          ({pinnedSensors.length})
+                        </span>
+                      </h2>
+                      <button
+                        onClick={() => navigate('/sensors')}
+                        style={{
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: '10px',
+                          padding: '10px 20px',
+                          color: '#60A5FA',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        จัดการเซ็นเซอร์ →
+                      </button>
+                    </div>
+                    <div className="sensor-grid" style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                      gap: '20px',
+                    }}>
+                      {pinnedSensors.map((sensor) => (
+                        <SensorCard 
+                          key={sensor.id} 
+                          sensor={sensor} 
+                          settings={settings}
+                          isPinned={true}
+                          onTogglePin={handleTogglePin}
+                          onClick={() => setSelectedSensor(sensor)}
+                        />
+                      ))}
+                    </div>
+                    <style>{`
+                      @media (max-width: 640px) {
+                        .sensor-grid { grid-template-columns: 1fr !important; }
+                      }
+                    `}</style>
+                  </div>
+                );
+              default:
+                return null;
+            }
+          };
+          
           return (
-            <div>
-              <div style={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '20px',
-              }}>
-                <h2 style={{ 
-                  color: '#F8FAFC', 
-                  fontSize: '20px', 
-                  fontWeight: 600, 
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px'
-                }}>
-                  <Activity size={22} color="#3B82F6" />
-                  เซ็นเซอร์ที่ปักหมุด
-                  <span style={{ 
-                    color: '#64748B', 
-                    fontSize: '14px', 
-                    fontWeight: 400 
-                  }}>
-                    ({pinnedSensors.length})
-                  </span>
-                </h2>
-                <button
-                  onClick={() => navigate('/sensors')}
-                  style={{
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    borderRadius: '10px',
-                    padding: '10px 20px',
-                    color: '#60A5FA',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  จัดการเซ็นเซอร์ →
-                </button>
+            <>
+              {/* Top Row */}
+              <div style={{ marginBottom: '32px' }}>
+                {renderComponent(positions.top)}
               </div>
+              
+              {/* Middle Row - 2 Columns */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: '20px',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
+                gap: '24px',
+                marginBottom: '32px',
               }}>
-                {pinnedSensors.map((sensor) => (
-                  <SensorCard 
-                    key={sensor.id} 
-                    sensor={sensor} 
-                    settings={settings}
-                    isPinned={true}
-                    onTogglePin={handleTogglePin}
-                    onClick={() => setSelectedSensor(sensor)}
-                  />
-                ))}
+                {renderComponent(positions.middleLeft)}
+                {renderComponent(positions.middleRight)}
               </div>
-            </div>
+              
+              {/* Bottom Row */}
+              <div style={{ marginBottom: '32px' }}>
+                {renderComponent(positions.bottom)}
+              </div>
+            </>
           );
         })()}
 
@@ -264,6 +328,8 @@ export const Dashboard = () => {
             © 2024 Smoke Detection System | โปรเจค ปวช.3
           </p>
         </motion.footer>
+          </>
+        )}
       </div>
 
       {/* Sensor Detail Panel */}

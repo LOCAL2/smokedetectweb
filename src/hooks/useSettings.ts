@@ -1,6 +1,4 @@
-import { useState, useCallback } from 'react';
-
-export type ConnectionType = 'websocket' | 'http';
+import { useState, useCallback, useEffect } from 'react';
 
 export interface ApiEndpoint {
   id: string;
@@ -8,7 +6,13 @@ export interface ApiEndpoint {
   url: string;
   apiKey?: string;
   enabled: boolean;
-  connectionType: ConnectionType;
+}
+
+export interface SensorCoordinates {
+  sensorId: string;
+  lat: number;
+  lng: number;
+  address?: string;
 }
 
 export interface LineNotifySettings {
@@ -20,6 +24,14 @@ export interface LineNotifySettings {
   lastNotifyTime?: number;
 }
 
+export type DashboardComponent = 'statusCards' | 'chart' | 'ranking' | 'pinnedSensors';
+
+export type LayoutPosition = 'top' | 'middleLeft' | 'middleRight' | 'bottom';
+
+export interface LayoutSettings {
+  positions: Record<LayoutPosition, DashboardComponent | null>;
+}
+
 export interface SettingsConfig {
   warningThreshold: number;
   dangerThreshold: number;
@@ -28,10 +40,22 @@ export interface SettingsConfig {
   enableNotification: boolean;
   apiEndpoints: ApiEndpoint[];
   pinnedSensors: string[];
+  sensorCoordinates: SensorCoordinates[];
   lineNotify: LineNotifySettings;
+  demoMode: boolean;
+  dashboardLayout: LayoutSettings;
 }
 
 const STORAGE_KEY = 'smoke-detection-settings';
+const SETTINGS_BROADCAST_CHANNEL = 'smoke-settings-sync';
+
+// BroadcastChannel for real-time cross-tab sync
+let settingsBroadcastChannel: BroadcastChannel | null = null;
+try {
+  settingsBroadcastChannel = new BroadcastChannel(SETTINGS_BROADCAST_CHANNEL);
+} catch (e) {
+  console.log('BroadcastChannel not supported for settings');
+}
 
 const getDefaultSettings = (): SettingsConfig => ({
   warningThreshold: Number(import.meta.env.VITE_THRESHOLD_WARNING) || 50,
@@ -45,15 +69,24 @@ const getDefaultSettings = (): SettingsConfig => ({
     url: import.meta.env.VITE_API_BASE_URL || 'http://118.173.113.78:3000/api/sensor',
     apiKey: import.meta.env.VITE_API_KEY || '',
     enabled: true,
-    connectionType: 'websocket',
   }],
   pinnedSensors: [],
+  sensorCoordinates: [],
   lineNotify: {
     enabled: false,
     channelAccessToken: '',
     notifyOnWarning: false,
     notifyOnDanger: true,
     cooldownMinutes: 5,
+  },
+  demoMode: false,
+  dashboardLayout: {
+    positions: {
+      top: 'statusCards',
+      middleLeft: 'chart',
+      middleRight: 'ranking',
+      bottom: 'pinnedSensors',
+    },
   },
 });
 
@@ -70,10 +103,48 @@ export const useSettings = () => {
     return getDefaultSettings();
   });
 
+  // Listen for cross-tab settings changes
+  useEffect(() => {
+    const handleBroadcastMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'settings-update' && event.data?.settings) {
+        setSettings(event.data.settings);
+      }
+    };
+    
+    if (settingsBroadcastChannel) {
+      settingsBroadcastChannel.addEventListener('message', handleBroadcastMessage);
+    }
+    
+    // Fallback: Listen for localStorage changes
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY && event.newValue) {
+        try {
+          const newSettings = { ...getDefaultSettings(), ...JSON.parse(event.newValue) };
+          setSettings(newSettings);
+        } catch (e) {
+          console.error('Error parsing settings:', e);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      if (settingsBroadcastChannel) {
+        settingsBroadcastChannel.removeEventListener('message', handleBroadcastMessage);
+      }
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const updateSettings = useCallback((newSettings: Partial<SettingsConfig>) => {
     setSettings(prev => {
       const updated = { ...prev, ...newSettings };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      // Broadcast to other tabs
+      if (settingsBroadcastChannel) {
+        settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: updated });
+      }
       return updated;
     });
   }, []);
@@ -82,6 +153,10 @@ export const useSettings = () => {
     const defaults = getDefaultSettings();
     localStorage.removeItem(STORAGE_KEY);
     setSettings(defaults);
+    // Broadcast reset to other tabs
+    if (settingsBroadcastChannel) {
+      settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: defaults });
+    }
   }, []);
 
   return { settings, updateSettings, resetSettings };

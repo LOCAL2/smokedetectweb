@@ -91,6 +91,9 @@ export const AlertStatusCard = ({ sensors, settings, delay = 0 }: AlertStatusCar
           borderRadius: '14px',
           padding: '12px',
           border: `1px solid ${color}40`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}>
           <AlertTriangle size={24} color={color} />
         </div>

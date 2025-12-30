@@ -1,37 +1,87 @@
 {
   "name": "smokedetectweb",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
+  "author": "Barron Nelly",
+  "description": "ระบบตรวจจับควันอัจฉริยะ Real-time",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "vite build && electron .",
+    "electron:build": "vite build && electron-builder --win"
+  },
+  "build": {
+    "appId": "com.smokedetect.app",
+    "productName": "Smoke Detection",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "public/icon.ico"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Smoke Detection",
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico"
+    }
   },
   "dependencies": {
+    "@radix-ui/react-hover-card": "^1.1.15",
+    "@types/leaflet": "^1.9.21",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
+    "clsx": "^2.1.1",
+    "electron-squirrel-startup": "^1.0.1",
     "framer-motion": "^12.23.26",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.561.0",
+    "qss": "^3.0.0",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",
+    "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.10.1",
-    "recharts": "^3.6.0"
+    "recharts": "^3.6.0",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
+    "autoprefixer": "^10.4.23",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "png-to-ico": "^3.0.1",
+    "postcss": "^8.5.6",
+    "rcedit": "^5.0.2",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.1.18",
+    "to-ico": "^1.1.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0"
   }
 }

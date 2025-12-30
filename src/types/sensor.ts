@@ -6,6 +6,10 @@ export interface SensorData {
   unit: string;
   timestamp: string;
   isOnline: boolean;
+  // GPS coordinates (optional)
+  lat?: number;
+  lng?: number;
+  address?: string;
 }
 
 export interface SensorHistory {

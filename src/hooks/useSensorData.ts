@@ -3,13 +3,74 @@ import axios from 'axios';
 import type { SensorData, SensorHistory, DashboardStats, SensorMaxValue } from '../types/sensor';
 import type { SettingsConfig } from './useSettings';
 import { getSensorStatusWithSettings } from './useSettings';
+import { generateMockSensorData, resetMockData } from '../utils/mockData';
 
 const HISTORY_STORAGE_KEY = 'smoke-sensor-history';
 const SENSOR_MAX_STORAGE_KEY = 'smoke-sensor-max-values';
 const SENSOR_HISTORY_KEY = 'smoke-sensor-individual-history';
+const SENSOR_DATA_KEY = 'smoke-sensor-current-data';
+const SENSOR_BROADCAST_CHANNEL = 'smoke-sensor-sync';
 
 const GRAPH_RETENTION_MS = 30 * 60 * 1000; // 30 minutes
 const GRAPH_UPDATE_INTERVAL_MS = 60 * 1000; // 1 minute
+
+// Sound alert
+const playAlertSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    gainNode.gain.value = 0.3;
+    
+    oscillator.start();
+    
+    // Beep pattern: beep-beep-beep
+    setTimeout(() => { gainNode.gain.value = 0; }, 150);
+    setTimeout(() => { gainNode.gain.value = 0.3; }, 250);
+    setTimeout(() => { gainNode.gain.value = 0; }, 400);
+    setTimeout(() => { gainNode.gain.value = 0.3; }, 500);
+    setTimeout(() => { gainNode.gain.value = 0; }, 650);
+    setTimeout(() => { 
+      oscillator.stop();
+      audioContext.close();
+    }, 700);
+  } catch (e) {
+    console.error('Error playing alert sound:', e);
+  }
+};
+
+// Browser notification
+const showNotification = (title: string, body: string) => {
+  if (!('Notification' in window)) return;
+  
+  if (Notification.permission === 'granted') {
+    new Notification(title, {
+      body,
+      icon: '/logo.jpg',
+      badge: '/logo.jpg',
+      tag: 'smoke-alert',
+      requireInteraction: true,
+    });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        new Notification(title, {
+          body,
+          icon: '/logo.jpg',
+          badge: '/logo.jpg',
+          tag: 'smoke-alert',
+          requireInteraction: true,
+        });
+      }
+    });
+  }
+};
 
 // โหลด history จาก localStorage
 const loadHistoryFromStorage = (): SensorHistory[] => {
@@ -67,6 +128,81 @@ const saveSensorHistoryToStorage = (history: SensorHistoryMap) => {
   }
 };
 
+// Save/Load current sensor data for cross-tab sync
+const saveSensorDataToStorage = (sensors: SensorData[]) => {
+  try {
+    localStorage.setItem(SENSOR_DATA_KEY, JSON.stringify({
+      sensors,
+      timestamp: Date.now()
+    }));
+  } catch (e) {
+    console.error('Error saving sensor data:', e);
+  }
+};
+
+const loadSensorDataFromStorage = (): { sensors: SensorData[]; timestamp: number } | null => {
+  try {
+    const saved = localStorage.getItem(SENSOR_DATA_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Error loading sensor data:', e);
+  }
+  return null;
+};
+
+// BroadcastChannel for real-time cross-tab sync
+let broadcastChannel: BroadcastChannel | null = null;
+try {
+  broadcastChannel = new BroadcastChannel(SENSOR_BROADCAST_CHANNEL);
+} catch (e) {
+  console.log('BroadcastChannel not supported, using localStorage fallback');
+}
+
+// Primary tab management - only one tab should fetch/generate data
+const PRIMARY_TAB_KEY = 'smoke-sensor-primary-tab';
+const TAB_ID = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+const claimPrimaryTab = (): boolean => {
+  const existing = localStorage.getItem(PRIMARY_TAB_KEY);
+  if (existing) {
+    try {
+      const data = JSON.parse(existing);
+      // If existing primary tab is still alive (heartbeat within 3 seconds), don't claim
+      if (Date.now() - data.heartbeat < 3000) {
+        return false;
+      }
+    } catch (e) {}
+  }
+  // Claim as primary
+  localStorage.setItem(PRIMARY_TAB_KEY, JSON.stringify({ tabId: TAB_ID, heartbeat: Date.now() }));
+  return true;
+};
+
+const updateHeartbeat = () => {
+  const existing = localStorage.getItem(PRIMARY_TAB_KEY);
+  if (existing) {
+    try {
+      const data = JSON.parse(existing);
+      if (data.tabId === TAB_ID) {
+        localStorage.setItem(PRIMARY_TAB_KEY, JSON.stringify({ tabId: TAB_ID, heartbeat: Date.now() }));
+      }
+    } catch (e) {}
+  }
+};
+
+const releasePrimaryTab = () => {
+  const existing = localStorage.getItem(PRIMARY_TAB_KEY);
+  if (existing) {
+    try {
+      const data = JSON.parse(existing);
+      if (data.tabId === TAB_ID) {
+        localStorage.removeItem(PRIMARY_TAB_KEY);
+      }
+    } catch (e) {}
+  }
+};
 
 // โหลด sensor stats (max, min, sum, count สำหรับ 24 ชั่วโมง)
 interface StoredSensorMax {
@@ -108,30 +244,6 @@ const saveSensorMaxToStorage = (maxMap: Map<string, StoredSensorMax>) => {
   }
 };
 
-// แปลง HTTP URL เป็น WebSocket URL
-const httpToWsUrl = (httpUrl: string): string => {
-  try {
-    // ถ้าเว็บโหลดผ่าน HTTPS แต่ API เป็น HTTP จะไม่สามารถใช้ ws:// ได้ (Mixed Content)
-    const isPageHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-    const url = new URL(httpUrl);
-    const isApiHttp = url.protocol === 'http:';
-    
-    // ถ้าเว็บเป็น HTTPS แต่ API เป็น HTTP ให้ return empty เพื่อ fallback ไป HTTP polling
-    if (isPageHttps && isApiHttp) {
-      console.log('HTTPS page cannot connect to ws:// - using HTTP polling instead');
-      return '';
-    }
-    
-    const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-    // ESP32 ใช้ port 81 สำหรับ WebSocket
-    const wsPort = url.port === '3000' ? '3000' : '81';
-    return `${wsProtocol}//${url.hostname}:${wsPort}/`;
-  } catch {
-    return '';
-  }
-};
-
-
 export const useSensorData = (settings: SettingsConfig) => {
   const [sensors, setSensors] = useState<SensorData[]>([]);
   const [history, setHistory] = useState<SensorHistory[]>(loadHistoryFromStorage);
@@ -149,17 +261,28 @@ export const useSensorData = (settings: SettingsConfig) => {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   
   const intervalRef = useRef<number | null>(null);
+  const heartbeatRef = useRef<number | null>(null);
   const historyRef = useRef<SensorHistory[]>(loadHistoryFromStorage());
   const sensorHistoryRef = useRef<SensorHistoryMap>(loadSensorHistoryFromStorage());
   const sensorMaxRef = useRef<Map<string, StoredSensorMax>>(loadSensorMaxFromStorage());
-  const wsRef = useRef<Map<string, WebSocket>>(new Map());
   const sensorsRef = useRef<Map<string, SensorData>>(new Map());
+  const lastAlertTimeRef = useRef<number>(0);
+  const wasInDangerRef = useRef<boolean>(false);
+  const isPrimaryTabRef = useRef<boolean>(false);
 
-  // Process incoming sensor data (shared between HTTP and WebSocket)
-  const processSensorData = useCallback((allData: SensorData[]) => {
+  // Process incoming sensor data
+  const processSensorData = useCallback((allData: SensorData[], fromBroadcast = false) => {
     if (allData.length === 0) return;
 
     setSensors(allData);
+    
+    // Save to localStorage and broadcast to other tabs (only if this is the source)
+    if (!fromBroadcast) {
+      saveSensorDataToStorage(allData);
+      if (broadcastChannel) {
+        broadcastChannel.postMessage({ type: 'sensor-update', sensors: allData });
+      }
+    }
 
     const now = Date.now();
     const oneDayAgo = now - 24 * 60 * 60 * 1000;
@@ -170,7 +293,6 @@ export const useSensorData = (settings: SettingsConfig) => {
       // Update stats (max, min, avg)
       const existing = sensorMaxRef.current.get(locationKey);
       if (!existing || existing.timestamp < oneDayAgo) {
-        // Reset stats if older than 24h or new sensor
         sensorMaxRef.current.set(locationKey, {
           id: locationKey,
           name: sensor.name,
@@ -182,7 +304,6 @@ export const useSensorData = (settings: SettingsConfig) => {
           timestamp: now,
         });
       } else {
-        // Update existing stats
         sensorMaxRef.current.set(locationKey, {
           ...existing,
           maxValue: Math.max(existing.maxValue, sensor.value),
@@ -259,7 +380,36 @@ export const useSensorData = (settings: SettingsConfig) => {
       alertCount,
     });
 
-    // LINE notification ถูกย้ายไปทำที่ ESP32 แล้ว (ทำงาน 24/7)
+    // Check for danger alerts and trigger notifications
+    const dangerSensors = allData.filter(s => 
+      getSensorStatusWithSettings(s.value, settings.warningThreshold, settings.dangerThreshold) === 'danger'
+    );
+    
+    const isInDanger = dangerSensors.length > 0;
+    const timeSinceLastAlert = now - lastAlertTimeRef.current;
+    const alertCooldown = 30000; // 30 seconds between alerts
+    
+    // Only alert when entering danger state (not continuously)
+    if (isInDanger && !wasInDangerRef.current && timeSinceLastAlert > alertCooldown) {
+      lastAlertTimeRef.current = now;
+      
+      // Play sound alert
+      if (settings.enableSoundAlert) {
+        playAlertSound();
+      }
+      
+      // Show browser notification
+      if (settings.enableNotification) {
+        const sensorNames = dangerSensors.map(s => s.location || s.name || s.id).join(', ');
+        const maxDangerValue = Math.max(...dangerSensors.map(s => s.value));
+        showNotification(
+          'ตรวจพบควันระดับอันตราย!',
+          `${sensorNames} - ค่าสูงสุด ${maxDangerValue.toFixed(0)} PPM`
+        );
+      }
+    }
+    
+    wasInDangerRef.current = isInDanger;
 
     // Save average history
     const historyNow = new Date();
@@ -287,105 +437,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     setIsLoading(false);
   }, [settings.warningThreshold, settings.dangerThreshold]);
 
-
-  // Track if we've fallen back to HTTP (stop trying WebSocket)
-  const usingHttpFallbackRef = useRef(false);
-  const wsReconnectTimeoutRef = useRef<Map<string, number>>(new Map());
-
-  // Connect to WebSocket endpoint with fallback to HTTP
-  const connectWebSocket = useCallback((endpoint: { id: string; url: string; name: string; enabled: boolean }, onFallback: () => void) => {
-    // Don't try WebSocket if already using HTTP fallback
-    if (usingHttpFallbackRef.current) {
-      return;
-    }
-
-    const wsUrl = httpToWsUrl(endpoint.url);
-    if (!wsUrl) {
-      onFallback();
-      return;
-    }
-
-    // Close existing connection
-    const existingWs = wsRef.current.get(endpoint.id);
-    if (existingWs) {
-      existingWs.close();
-    }
-
-    // Clear any pending reconnect
-    const existingTimeout = wsReconnectTimeoutRef.current.get(endpoint.id);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
-
-    console.log(`Connecting WebSocket to ${wsUrl}`);
-    const ws = new WebSocket(wsUrl);
-    let hasConnected = false;
-
-    ws.onopen = () => {
-      hasConnected = true;
-      console.log(`WebSocket connected: ${endpoint.name}`);
-      setConnectionStatus('connected');
-      setError(null);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const rawData = JSON.parse(event.data);
-        const dataArray = Array.isArray(rawData) ? rawData : [rawData];
-        
-        // Update sensors map (without triggering re-render)
-        dataArray.forEach((sensor: SensorData) => {
-          const sensorId = `${endpoint.id}-${sensor.id || 'default'}`;
-          sensorsRef.current.set(sensorId, {
-            ...sensor,
-            id: sensorId,
-            location: sensor.location || endpoint.name,
-          });
-        });
-
-        // Process immediately - no throttle
-        const allSensors = Array.from(sensorsRef.current.values());
-        processSensorData(allSensors);
-      } catch (err) {
-        console.error('WebSocket message error:', err);
-      }
-    };
-
-    ws.onerror = () => {
-      // Silent - onclose will handle fallback
-    };
-
-    ws.onclose = () => {
-      console.log(`WebSocket closed: ${endpoint.name}`);
-      wsRef.current.delete(endpoint.id);
-      
-      // Don't do anything if already using HTTP fallback
-      if (usingHttpFallbackRef.current) {
-        return;
-      }
-      
-      // If never connected, fallback to HTTP permanently
-      if (!hasConnected) {
-        console.log(`WebSocket failed for ${endpoint.name}, switching to HTTP polling`);
-        usingHttpFallbackRef.current = true;
-        setConnectionStatus('disconnected');
-        onFallback();
-      } else {
-        // Was connected before, try to reconnect after 3 seconds
-        setConnectionStatus('disconnected');
-        const timeoutId = window.setTimeout(() => {
-          if (endpoint.enabled && !usingHttpFallbackRef.current) {
-            connectWebSocket(endpoint, onFallback);
-          }
-        }, 3000);
-        wsReconnectTimeoutRef.current.set(endpoint.id, timeoutId);
-      }
-    };
-
-    wsRef.current.set(endpoint.id, ws);
-  }, [processSensorData]);
-
-  // Fetch via HTTP (only for endpoints not connected via WebSocket)
+  // Fetch via HTTP
   const fetchSensorData = useCallback(async () => {
     try {
       const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
@@ -396,10 +448,10 @@ export const useSensorData = (settings: SettingsConfig) => {
         return;
       }
 
-      // Only fetch from endpoints that don't have active WebSocket
-      const endpointsToFetch = enabledEndpoints.filter(ep => !wsRef.current.has(ep.id));
-      
-      for (const endpoint of endpointsToFetch) {
+      // Clear old sensors and rebuild from fresh data each fetch
+      const newSensorsMap = new Map<string, SensorData>();
+
+      for (const endpoint of enabledEndpoints) {
         try {
           const response = await axios.get(endpoint.url, {
             headers: endpoint.apiKey ? { 'Authorization': `Bearer ${endpoint.apiKey}` } : {},
@@ -409,40 +461,41 @@ export const useSensorData = (settings: SettingsConfig) => {
           
           // Handle different response formats
           if (Array.isArray(response.data)) {
-            // Normal array format
             rawData = response.data;
           } else if (response.data && typeof response.data === 'object') {
-            // Firebase format: { "sensor-001": {...}, "sensor-002": {...} }
-            // Or single object format
             if (response.data.id || response.data.value !== undefined) {
-              // Single sensor object
               rawData = [response.data];
             } else {
-              // Firebase object format - convert to array
               rawData = Object.values(response.data).filter(
                 (item): item is SensorData => item !== null && typeof item === 'object'
               );
             }
           }
           
-          // Update sensorsRef (merge with existing)
+          // Add to new sensors map (only sensors that responded)
           rawData.forEach((sensor: SensorData, index: number) => {
             const sensorId = `${endpoint.id}-${sensor.id || index}`;
-            sensorsRef.current.set(sensorId, {
+            newSensorsMap.set(sensorId, {
               ...sensor,
               id: sensorId,
               location: sensor.location || endpoint.name,
             });
           });
+
+          setConnectionStatus('connected');
         } catch (err) {
           console.error(`Error fetching from ${endpoint.name}:`, err);
+          setConnectionStatus('disconnected');
         }
       }
 
-      // Process all sensors from ref
-      const allSensors = Array.from(sensorsRef.current.values());
+      // Replace sensorsRef with only the sensors that responded
+      sensorsRef.current = newSensorsMap;
+      const allSensors = Array.from(newSensorsMap.values());
       
       if (allSensors.length === 0) {
+        // Clear sensors state when no data
+        setSensors([]);
         setError('ไม่สามารถเชื่อมต่อกับเซ็นเซอร์ได้');
         setIsLoading(false);
         return;
@@ -451,70 +504,149 @@ export const useSensorData = (settings: SettingsConfig) => {
       processSensorData(allSensors);
     } catch (err) {
       setError('ไม่สามารถเชื่อมต่อกับเซ็นเซอร์ได้');
+      setConnectionStatus('disconnected');
       console.error('Fetch error:', err);
     } finally {
       setIsLoading(false);
     }
   }, [settings.apiEndpoints, processSensorData]);
 
-
-  // Start HTTP polling for specific endpoints or all
+  // Start HTTP polling
   const startHttpPolling = useCallback(() => {
-    // Initial fetch
     fetchSensorData();
     
-    // Clear existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
     
-    // Start polling
     intervalRef.current = window.setInterval(fetchSensorData, settings.pollingInterval);
   }, [fetchSensorData, settings.pollingInterval]);
 
+  // Demo mode: generate mock data
+  const startDemoMode = useCallback(() => {
+    console.log('🎮 Demo Mode: Starting with mock sensor data');
+    resetMockData();
+    setConnectionStatus('connected');
+    setError(null);
+    
+    const updateMockData = () => {
+      const mockSensors = generateMockSensorData();
+      // Clear and rebuild sensorsRef for demo mode too
+      sensorsRef.current.clear();
+      mockSensors.forEach(sensor => {
+        sensorsRef.current.set(sensor.id, sensor);
+      });
+      processSensorData(mockSensors);
+    };
+    
+    updateMockData();
+    setIsLoading(false);
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    intervalRef.current = window.setInterval(updateMockData, settings.pollingInterval);
+  }, [processSensorData, settings.pollingInterval]);
+
   // Setup connections based on settings
   useEffect(() => {
-    const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
+    // Listen for cross-tab updates via BroadcastChannel
+    const handleBroadcastMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'sensor-update' && event.data?.sensors) {
+        processSensorData(event.data.sensors, true);
+        setConnectionStatus('connected');
+        setIsLoading(false);
+      }
+    };
     
-    if (enabledEndpoints.length === 0) {
-      setError('ไม่มี API endpoint ที่เปิดใช้งาน');
-      setIsLoading(false);
-      return;
+    if (broadcastChannel) {
+      broadcastChannel.addEventListener('message', handleBroadcastMessage);
+    }
+    
+    // Check if another tab already has data (load from localStorage on mount)
+    const existingData = loadSensorDataFromStorage();
+    if (existingData && existingData.sensors.length > 0) {
+      const dataAge = Date.now() - existingData.timestamp;
+      // Use existing data if it's less than 2x polling interval old
+      if (dataAge < settings.pollingInterval * 2) {
+        processSensorData(existingData.sensors, true);
+        setConnectionStatus('connected');
+        setIsLoading(false);
+      }
     }
 
-    // Reset fallback tracking on settings change
-    usingHttpFallbackRef.current = false;
+    // Try to become primary tab
+    isPrimaryTabRef.current = claimPrimaryTab();
+    
+    // Start heartbeat if primary
+    if (isPrimaryTabRef.current) {
+      heartbeatRef.current = window.setInterval(() => {
+        updateHeartbeat();
+      }, 1000);
+    }
+    
+    // If not primary, try to claim periodically (in case primary tab closes)
+    const tryClaimInterval = !isPrimaryTabRef.current ? window.setInterval(() => {
+      if (!isPrimaryTabRef.current && claimPrimaryTab()) {
+        isPrimaryTabRef.current = true;
+        // Start heartbeat
+        if (!heartbeatRef.current) {
+          heartbeatRef.current = window.setInterval(() => {
+            updateHeartbeat();
+          }, 1000);
+        }
+        // Start data fetching
+        if (settings.demoMode) {
+          startDemoMode();
+        } else {
+          startHttpPolling();
+        }
+      }
+    }, 2000) : null;
 
-    // Separate endpoints by connection type
-    const wsEndpoints = enabledEndpoints.filter(ep => ep.connectionType === 'websocket');
-    const httpEndpoints = enabledEndpoints.filter(ep => ep.connectionType === 'http');
-
-    // Connect WebSocket endpoints
-    wsEndpoints.forEach(endpoint => {
-      connectWebSocket(endpoint, () => {
-        // On WebSocket fail, this endpoint will be fetched via HTTP polling
-        console.log(`WebSocket failed for ${endpoint.name}, will use HTTP polling`);
-      });
-    });
-
-    // Start HTTP polling if there are HTTP endpoints or as fallback
-    if (httpEndpoints.length > 0 || wsEndpoints.length > 0) {
-      startHttpPolling();
+    // Only primary tab fetches/generates data
+    if (isPrimaryTabRef.current) {
+      if (settings.demoMode) {
+        sensorsRef.current.clear();
+        startDemoMode();
+      } else {
+        const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
+        if (enabledEndpoints.length === 0) {
+          setError('ไม่มี API endpoint ที่เปิดใช้งาน');
+          setIsLoading(false);
+        } else {
+          startHttpPolling();
+        }
+      }
+    } else {
+      // Non-primary tab just waits for broadcasts
+      setIsLoading(false);
+      if (existingData && existingData.sensors.length > 0) {
+        setConnectionStatus('connected');
+      }
     }
 
     return () => {
-      // Cleanup WebSocket connections
-      wsRef.current.forEach(ws => ws.close());
-      wsRef.current.clear();
       sensorsRef.current.clear();
-      wsReconnectTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
-      wsReconnectTimeoutRef.current.clear();
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+      if (tryClaimInterval) {
+        clearInterval(tryClaimInterval);
+      }
+      if (broadcastChannel) {
+        broadcastChannel.removeEventListener('message', handleBroadcastMessage);
+      }
+      // Release primary tab on unmount
+      releasePrimaryTab();
     };
-  }, [settings.apiEndpoints, settings.pollingInterval, connectWebSocket, startHttpPolling, processSensorData]);
+  }, [settings.apiEndpoints, settings.pollingInterval, settings.demoMode, startHttpPolling, startDemoMode, processSensorData]);
 
   return {
     sensors,

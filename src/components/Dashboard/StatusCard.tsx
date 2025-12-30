@@ -68,6 +68,9 @@ export const StatusCard = ({ title, value, subtitle, icon: Icon, color, delay = 
           borderRadius: '14px',
           padding: '12px',
           border: `1px solid ${color}40`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}>
           <Icon size={24} color={color} />
         </div>

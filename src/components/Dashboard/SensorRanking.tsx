@@ -44,7 +44,7 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minHeight: '300px' }}>
         {data.length === 0 ? (
           <div style={{ 
             display: 'flex', 
@@ -52,7 +52,8 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
             alignItems: 'center', 
             justifyContent: 'center',
             padding: '40px 20px',
-            color: '#64748B'
+            color: '#64748B',
+            flex: 1,
           }}>
             <svg 
               width="80" 
@@ -108,7 +109,8 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
                   width: '32px',
                   height: '32px',
                   borderRadius: '10px',
-                  background: index < 3 ? `${getRankColor(index)}20` : 'rgba(255,255,255,0.05)',
+                  background: index < 3 ? `${getRankColor(index)}20` : 'rgba(100, 116, 139, 0.15)',
+                  border: `2px solid ${getRankColor(index)}`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

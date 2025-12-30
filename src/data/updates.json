@@ -1,0 +1,87 @@
+{
+  "updates": [
+    {
+      "version": "1.3.3",
+      "date": "2025-12-30",
+      "title": "แก้ไข GPS Sensor พริบ",
+      "type": "fix",
+      "changes": [
+        "แก้ไขรายการ GPS เซ็นเซอร์พริบไปมาเมื่อเปิด Demo Mode",
+        "ใช้ useRef เก็บ sensor keys เพื่อป้องกัน re-render ที่ไม่จำเป็น"
+      ]
+    },
+    {
+      "version": "1.3.2",
+      "date": "2025-12-30",
+      "title": "ปรับปรุง Animation ChatBot Popup",
+      "type": "improvement",
+      "changes": [
+        "UI Chat โผล่ขึ้นมาจากปุ่มแทนที่จะทับปุ่ม",
+        "ปุ่มเปลี่ยนเป็นสีแดงพร้อมไอคอน X เมื่อเปิด Chat",
+        "เพิ่ม Spring animation ให้ลื่นไหลขึ้น"
+      ]
+    },
+    {
+      "version": "1.3.1",
+      "date": "2025-12-30",
+      "title": "ปรับปรุง ChatBot Popup",
+      "type": "improvement",
+      "changes": [
+        "ออกแบบปุ่ม ChatBot popup ใหม่ให้ดูมืออาชีพขึ้น",
+        "เปลี่ยนจากปุ่มกลมเป็นสี่เหลี่ยมมุมโค้งพร้อม gradient",
+        "เพิ่ม pulse animation effect",
+        "Sync ฟังก์ชัน ChatBot popup ให้เหมือน /chat"
+      ]
+    },
+    {
+      "version": "1.3.0",
+      "date": "2025-12-30",
+      "title": "หน้า Updates Timeline",
+      "type": "feature",
+      "changes": [
+        "เพิ่มหน้า /updates แสดงประวัติการอัพเดทแบบ Timeline",
+        "แก้ไข Map zoom reset เมื่อ sensor data อัพเดท",
+        "แก้ไข Ranking badge ให้แสดง border ทุกอันดับ",
+        "ปรับปรุง empty state ให้อยู่กลาง"
+      ]
+    },
+    {
+      "version": "1.2.0",
+      "date": "2025-12-30",
+      "title": "AI Chat ใหม่",
+      "type": "feature",
+      "changes": [
+        "เพิ่มการแสดงแผนที่ Sensor ผ่าน AI Chat",
+        "เพิ่มการแสดงกราฟแบบค่าเฉลี่ย/ขยาย ผ่าน AI Chat",
+        "เพิ่มการดาวน์โหลด App ผ่าน AI Chat",
+        "ปรับปรุง ChatBot popup ให้นำทางไปหน้า Chat อัตโนมัติ",
+        "เพิ่มการพิมพ์คำถามรอไว้ขณะ AI กำลังตอบ"
+      ]
+    },
+    {
+      "version": "1.1.0",
+      "date": "2025-12-29",
+      "title": "ปรับปรุง UI/UX",
+      "type": "improvement",
+      "changes": [
+        "ปรับปรุงหน้า Download ให้สวยขึ้น",
+        "เพิ่ม Lamp effect ในหน้าต่างๆ",
+        "ปรับปรุง responsive สำหรับมือถือ",
+        "แก้ไข GPS flickering ใน Settings"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2025-12-28",
+      "title": "เปิดตัวระบบ",
+      "type": "release",
+      "changes": [
+        "ระบบตรวจจับควันแบบ Real-time",
+        "Dashboard แสดงค่า Sensor",
+        "กราฟแสดงประวัติค่าควัน",
+        "AI Assistant ช่วยตอบคำถาม",
+        "รองรับ Demo Mode"
+      ]
+    }
+  ]
+}

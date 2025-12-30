@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, X, MapPin, Clock } from 'lucide-react';
+import { AlertTriangle, X, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import type { SensorData } from '../../types/sensor';
 import type { SettingsConfig } from '../../hooks/useSettings';
@@ -46,227 +46,173 @@ export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -20, scale: 0.95 }}
         style={{
-          background: 'linear-gradient(135deg, #1a0a0a 0%, #2d1010 100%)',
-          border: '1px solid #7f1d1d',
-          borderRadius: '16px',
+          background: 'linear-gradient(135deg, rgba(127, 29, 29, 0.95) 0%, rgba(153, 27, 27, 0.9) 50%, rgba(127, 29, 29, 0.95) 100%)',
+          borderRadius: '20px',
           marginBottom: '24px',
           overflow: 'hidden',
-          boxShadow: '0 4px 24px rgba(239, 68, 68, 0.15)',
+          boxShadow: '0 8px 32px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
         }}
       >
-        {/* Top accent bar */}
-        <div
-          style={{
-            height: '3px',
-            background: 'linear-gradient(90deg, #ef4444, #dc2626, #ef4444)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 2s infinite linear',
-          }}
-        />
-
         <div style={{ padding: '20px 24px' }}>
-          {/* Header */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
+          {/* Main Alert Header */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '20px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.15, 1],
+                  boxShadow: [
+                    '0 0 0 0 rgba(239, 68, 68, 0.4)',
+                    '0 0 0 12px rgba(239, 68, 68, 0)',
+                    '0 0 0 0 rgba(239, 68, 68, 0)'
+                  ]
+                }}
+                transition={{ duration: 1.5, repeat: Infinity }}
                 style={{
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  borderRadius: '10px',
-                  padding: '10px',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  borderRadius: '14px',
+                  padding: '14px',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }}
               >
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                >
-                  <AlertTriangle size={22} color="#ef4444" />
-                </motion.div>
-              </div>
+                <AlertTriangle size={26} color="#fff" />
+              </motion.div>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span
-                    style={{
-                      background: '#ef4444',
-                      color: '#fff',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    Critical
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                  <span style={{
+                    background: '#fff',
+                    color: '#991B1B',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}>
+                    อันตราย
                   </span>
-                  <h4
-                    style={{
-                      color: '#fecaca',
-                      fontSize: '15px',
-                      fontWeight: 600,
-                      margin: 0,
-                    }}
-                  >
-                    ตรวจพบค่าควันเกินระดับอันตราย
-                  </h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={13} color="rgba(255,255,255,0.7)" />
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px' }}>
+                      {currentTime.toLocaleTimeString('th-TH')}
+                    </span>
+                  </div>
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    marginTop: '4px',
-                  }}
-                >
-                  <Clock size={12} color="#a1a1aa" />
-                  <span style={{ color: '#a1a1aa', fontSize: '12px' }}>
-                    {currentTime.toLocaleTimeString('th-TH')}
-                  </span>
-                </div>
+                <h4 style={{
+                  color: '#fff',
+                  fontSize: '17px',
+                  fontWeight: 600,
+                  margin: 0,
+                }}>
+                  ตรวจพบค่าควันเกินระดับอันตราย {dangerSensors.length} จุด
+                </h4>
               </div>
             </div>
 
             <button
               onClick={() => setIsVisible(false)}
               style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                padding: '8px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '10px',
                 cursor: 'pointer',
                 display: 'flex',
                 transition: 'all 0.2s',
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)')
-              }
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
             >
-              <X size={16} color="#a1a1aa" />
+              <X size={18} color="#fff" />
             </button>
           </div>
 
-          {/* Alert Items */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '12px',
-            }}
-          >
+          {/* Sensor Cards - Horizontal Scroll */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            overflowX: 'auto',
+            paddingBottom: '8px',
+            marginBottom: '16px',
+          }}>
             {dangerSensors.map((sensor) => (
-              <div
+              <motion.div
                 key={sensor.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 style={{
-                  background: 'rgba(239, 68, 68, 0.08)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  borderRadius: '12px',
-                  padding: '14px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
+                  background: sensor.value === maxValue 
+                    ? 'rgba(255, 255, 255, 0.2)' 
+                    : 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '14px',
+                  padding: '16px 20px',
+                  minWidth: '180px',
+                  flexShrink: 0,
+                  border: sensor.value === maxValue 
+                    ? '2px solid rgba(255, 255, 255, 0.4)' 
+                    : '1px solid rgba(255, 255, 255, 0.15)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <MapPin size={16} color="#f87171" />
-                  <div>
-                    <p
-                      style={{
-                        color: '#fecaca',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        margin: 0,
-                      }}
-                    >
-                      {sensor.location || sensor.name}
-                    </p>
-                    <p style={{ color: '#71717a', fontSize: '11px', margin: '2px 0 0' }}>
-                      {sensor.name}
-                    </p>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <MapPin size={14} color="rgba(255,255,255,0.8)" />
+                  <span style={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>
+                    {sensor.location || sensor.name}
+                  </span>
                 </div>
-                <div
-                  style={{
-                    background:
-                      sensor.value === maxValue
-                        ? 'rgba(239, 68, 68, 0.3)'
-                        : 'rgba(239, 68, 68, 0.15)',
-                    borderRadius: '8px',
-                    padding: '6px 12px',
-                    border:
-                      sensor.value === maxValue
-                        ? '1px solid rgba(239, 68, 68, 0.5)'
-                        : 'none',
-                  }}
-                >
-                  <span
-                    style={{
-                      color: '#f87171',
-                      fontSize: '18px',
-                      fontWeight: 700,
-                    }}
-                  >
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                  <span style={{
+                    color: '#fff',
+                    fontSize: '32px',
+                    fontWeight: 800,
+                    lineHeight: 1,
+                  }}>
                     {formatNumber(sensor.value)}
                   </span>
-                  <span
-                    style={{
-                      color: '#f87171',
-                      fontSize: '11px',
-                      marginLeft: '3px',
-                      opacity: 0.8,
-                    }}
-                  >
+                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
                     PPM
                   </span>
                 </div>
-              </div>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px', margin: '6px 0 0' }}>
+                  {sensor.name}
+                </p>
+              </motion.div>
             ))}
           </div>
 
           {/* Footer */}
-          <div
-            style={{
-              marginTop: '16px',
-              paddingTop: '14px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <p style={{ color: '#71717a', fontSize: '12px', margin: 0 }}>
-              ค่าเกินเกณฑ์ {formatNumber(settings.dangerThreshold)} PPM • {dangerSensors.length} จุด
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: '14px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          }}>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', margin: 0 }}>
+              ค่าเกินเกณฑ์ {formatNumber(settings.dangerThreshold)} PPM • สูงสุด {formatNumber(maxValue)} PPM
             </p>
-            <span
+            <motion.span
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
               style={{
-                color: '#fca5a5',
-                fontSize: '12px',
-                fontWeight: 500,
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
+              <AlertCircle size={14} />
               กรุณาตรวจสอบทันที
-            </span>
+            </motion.span>
           </div>
         </div>
       </motion.div>
-
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
     </AnimatePresence>
   );
 };

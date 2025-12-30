@@ -40,12 +40,11 @@ export const MembersPage = () => {
         background: isLeader
           ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)'
           : 'rgba(30, 41, 59, 0.6)',
-        borderRadius: '24px',
-        padding: isLeader ? '40px 32px' : '32px 24px',
+        borderRadius: 'clamp(16px, 3vw, 24px)',
+        padding: isLeader ? 'clamp(28px, 5vw, 40px) clamp(20px, 4vw, 32px)' : 'clamp(24px, 4vw, 32px) clamp(16px, 3vw, 24px)',
         border: isLeader ? '2px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
         textAlign: 'center',
         position: 'relative',
-        transform: isLeader ? 'scale(1.05)' : 'scale(1)',
       }}
     >
       {isLeader && (
@@ -65,8 +64,8 @@ export const MembersPage = () => {
 
       {/* Avatar */}
       <div style={{
-        width: isLeader ? '120px' : '100px',
-        height: isLeader ? '120px' : '100px',
+        width: isLeader ? 'clamp(90px, 20vw, 120px)' : 'clamp(80px, 18vw, 100px)',
+        height: isLeader ? 'clamp(90px, 20vw, 120px)' : 'clamp(80px, 18vw, 100px)',
         borderRadius: '50%',
         background: isLeader
           ? 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)'
@@ -97,7 +96,7 @@ export const MembersPage = () => {
       {/* Info */}
       <h3 style={{
         color: '#F8FAFC',
-        fontSize: isLeader ? '22px' : '18px',
+        fontSize: isLeader ? 'clamp(18px, 4vw, 22px)' : 'clamp(16px, 3.5vw, 18px)',
         fontWeight: 700,
         margin: '0 0 8px',
       }}>
@@ -129,14 +128,14 @@ export const MembersPage = () => {
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
-      padding: '32px',
+      padding: 'clamp(16px, 4vw, 32px)',
     }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          style={{ marginBottom: '48px' }}
+          style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}
         >
           <button
             onClick={() => navigate('/')}
@@ -144,13 +143,18 @@ export const MembersPage = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              background: 'none',
-              border: 'none',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '10px',
+              padding: '10px 16px',
               color: '#94A3B8',
               fontSize: '14px',
               cursor: 'pointer',
-              marginBottom: '32px',
+              marginBottom: 'clamp(20px, 4vw, 32px)',
+              transition: 'all 0.2s',
             }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
           >
             <ArrowLeft size={18} />
             กลับหน้าหลัก
@@ -162,38 +166,62 @@ export const MembersPage = () => {
               alignItems: 'center',
               gap: '12px',
               background: 'rgba(59, 130, 246, 0.1)',
-              padding: '12px 24px',
+              padding: 'clamp(10px, 2vw, 12px) clamp(16px, 3vw, 24px)',
               borderRadius: '50px',
               marginBottom: '16px',
             }}>
               <Users size={24} color="#3B82F6" />
               <span style={{ color: '#60A5FA', fontSize: '14px', fontWeight: 600 }}>ทีมพัฒนา</span>
             </div>
-            <h1 style={{ color: '#F8FAFC', fontSize: '36px', fontWeight: 700, margin: '0 0 8px' }}>
+            <h1 style={{ color: '#F8FAFC', fontSize: 'clamp(24px, 6vw, 36px)', fontWeight: 700, margin: '0 0 8px' }}>
               ผู้จัดทำโปรเจค
             </h1>
-            <p style={{ color: '#64748B', fontSize: '16px', margin: 0 }}>
+            <p style={{ color: '#64748B', fontSize: 'clamp(14px, 3vw, 16px)', margin: 0 }}>
               Smoke Detection System | ปวช.3
             </p>
           </div>
         </motion.div>
 
-        {/* Members Grid - Leader in center */}
-        <div style={{
+        {/* Members Grid - Responsive */}
+        {/* Desktop: หัวหน้าอยู่ตรงกลาง | Mobile: หัวหน้าอยู่บนสุด */}
+        <div className="members-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '24px',
+          gap: 'clamp(16px, 3vw, 24px)',
           alignItems: 'center',
         }}>
           {/* ซ้าย - วรเดช */}
-          <MemberCard member={leftMember} delay={0.2} />
+          <div className="member-left">
+            <MemberCard member={leftMember} delay={0.2} />
+          </div>
           
           {/* กลาง - นภัสพล (หัวหน้า) */}
-          <MemberCard member={leader} isLeader delay={0.1} />
+          <div className="member-center">
+            <MemberCard member={leader} isLeader delay={0.1} />
+          </div>
           
           {/* ขวา - ภูมิรพี */}
-          <MemberCard member={rightMember} delay={0.3} />
+          <div className="member-right">
+            <MemberCard member={rightMember} delay={0.3} />
+          </div>
         </div>
+
+        <style>{`
+          .members-grid {
+            grid-template-columns: 1fr;
+          }
+          .member-left { order: 2; }
+          .member-center { order: 1; }
+          .member-right { order: 3; }
+          
+          @media (min-width: 768px) {
+            .members-grid {
+              grid-template-columns: 1fr 1.2fr 1fr;
+            }
+            .member-left { order: 1; }
+            .member-center { order: 2; }
+            .member-right { order: 3; }
+          }
+        `}</style>
 
         {/* Project Info */}
         <motion.div
@@ -201,9 +229,9 @@ export const MembersPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           style={{
-            marginTop: '48px',
+            marginTop: 'clamp(32px, 6vw, 48px)',
             textAlign: 'center',
-            padding: '32px',
+            padding: 'clamp(20px, 4vw, 32px)',
             background: 'rgba(30, 41, 59, 0.4)',
             borderRadius: '20px',
             border: '1px solid rgba(255, 255, 255, 0.05)',

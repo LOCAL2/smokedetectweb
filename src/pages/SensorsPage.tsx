@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Activity, Search } from 'lucide-react';
 import { useState } from 'react';
-import { useSensorData } from '../hooks/useSensorData';
+import { useSensorDataContext } from '../context/SensorDataContext';
 import { useSettingsContext } from '../context/SettingsContext';
 import { SensorCard } from '../components/Dashboard/SensorCard';
 import { SensorDetailPanel } from '../components/Dashboard/SensorDetailPanel';
@@ -11,7 +11,7 @@ import type { SensorData } from '../types/sensor';
 export const SensorsPage = () => {
   const navigate = useNavigate();
   const { settings, updateSettings } = useSettingsContext();
-  const { sensors, sensorMaxValues, isLoading } = useSensorData(settings);
+  const { sensors, sensorMaxValues, isLoading } = useSensorDataContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'online' | 'warning' | 'danger' | 'pinned'>('all');
   const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
@@ -56,13 +56,18 @@ export const SensorsPage = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              background: 'none',
-              border: 'none',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '10px',
+              padding: '10px 16px',
               color: '#94A3B8',
               fontSize: '14px',
               cursor: 'pointer',
               marginBottom: '24px',
+              transition: 'all 0.2s',
             }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
           >
             <ArrowLeft size={18} />
             กลับหน้าหลัก
@@ -149,17 +154,72 @@ export const SensorsPage = () => {
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '60px', color: '#64748B' }}>กำลังโหลด...</div>
         ) : filteredSensors.length === 0 ? (
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             style={{
               textAlign: 'center',
-              padding: '60px',
+              padding: '80px 40px',
               background: 'rgba(30, 41, 59, 0.5)',
-              borderRadius: '20px',
+              borderRadius: '24px',
               border: '1px solid rgba(255, 255, 255, 0.1)',
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <p style={{ color: '#64748B', fontSize: '16px' }}>ไม่พบเซ็นเซอร์ที่ตรงกับเงื่อนไข</p>
-          </div>
+            <div
+              style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                background: 'rgba(99, 102, 241, 0.1)',
+                border: '2px solid rgba(99, 102, 241, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '24px',
+              }}
+            >
+              <Activity size={48} color="#6366F1" style={{ opacity: 0.7 }} />
+            </div>
+            <h3 style={{ color: '#F8FAFC', fontSize: '22px', fontWeight: 600, margin: '0 0 12px' }}>
+              ไม่พบเซ็นเซอร์
+            </h3>
+            <p style={{ color: '#64748B', fontSize: '16px', margin: '0 0 32px', maxWidth: '400px', lineHeight: 1.6 }}>
+              {filter === 'pinned' 
+                ? 'ยังไม่มีเซ็นเซอร์ที่ปักหมุด กดไอคอนหมุดบนการ์ดเซ็นเซอร์เพื่อปักหมุด'
+                : filter === 'warning'
+                ? 'ไม่มีเซ็นเซอร์ที่อยู่ในสถานะเฝ้าระวัง'
+                : filter === 'danger'
+                ? 'ไม่มีเซ็นเซอร์ที่อยู่ในสถานะอันตราย'
+                : filter === 'online'
+                ? 'ไม่มีเซ็นเซอร์ที่ออนไลน์อยู่ในขณะนี้'
+                : searchTerm
+                ? `ไม่พบเซ็นเซอร์ที่ตรงกับ "${searchTerm}"`
+                : 'ยังไม่มีเซ็นเซอร์ในระบบ กรุณาเชื่อมต่อเซ็นเซอร์หรือเปิด Demo Mode'}
+            </p>
+            {(filter !== 'all' || searchTerm) && (
+              <button
+                onClick={() => { setFilter('all'); setSearchTerm(''); }}
+                style={{
+                  padding: '12px 24px',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  borderRadius: '12px',
+                  color: '#A5B4FC',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                ดูเซ็นเซอร์ทั้งหมด
+              </button>
+            )}
+          </motion.div>
         ) : (
           <div
             style={{
