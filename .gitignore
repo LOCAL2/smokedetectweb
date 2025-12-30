@@ -12,6 +12,18 @@ dist
 dist-ssr
 *.local
 
+# Backup files
+*.bak
+
+# Release builds
+release/
+
+# Large binary files
+public/APK/
+public/EXE/
+*.exe
+*.apk
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
