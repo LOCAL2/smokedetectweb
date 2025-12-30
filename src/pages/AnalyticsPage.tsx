@@ -424,6 +424,7 @@ export const AnalyticsPage = () => {
         >
           <button
             onClick={handleExportPDF}
+            disabled={summary.length === 0}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -431,11 +432,12 @@ export const AnalyticsPage = () => {
               padding: '12px 20px',
               borderRadius: '10px',
               border: '1px solid rgba(239, 68, 68, 0.3)',
-              background: 'rgba(239, 68, 68, 0.1)',
-              color: '#F87171',
+              background: summary.length === 0 ? 'rgba(100, 116, 139, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+              color: summary.length === 0 ? '#64748B' : '#F87171',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: summary.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: summary.length === 0 ? 0.5 : 1,
             }}
           >
             <FileDown size={18} />
@@ -443,6 +445,7 @@ export const AnalyticsPage = () => {
           </button>
           <button
             onClick={handleExportText}
+            disabled={summary.length === 0}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -450,11 +453,12 @@ export const AnalyticsPage = () => {
               padding: '12px 20px',
               borderRadius: '10px',
               border: '1px solid rgba(59, 130, 246, 0.3)',
-              background: 'rgba(59, 130, 246, 0.1)',
-              color: '#60A5FA',
+              background: summary.length === 0 ? 'rgba(100, 116, 139, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+              color: summary.length === 0 ? '#64748B' : '#60A5FA',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: summary.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: summary.length === 0 ? 0.5 : 1,
             }}
           >
             <FileText size={18} />
@@ -462,6 +466,7 @@ export const AnalyticsPage = () => {
           </button>
           <button
             onClick={handleExportJSON}
+            disabled={summary.length === 0}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -469,11 +474,12 @@ export const AnalyticsPage = () => {
               padding: '12px 20px',
               borderRadius: '10px',
               border: '1px solid rgba(16, 185, 129, 0.3)',
-              background: 'rgba(16, 185, 129, 0.1)',
-              color: '#34D399',
+              background: summary.length === 0 ? 'rgba(100, 116, 139, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+              color: summary.length === 0 ? '#64748B' : '#34D399',
               fontSize: '14px',
               fontWeight: 500,
-              cursor: 'pointer',
+              cursor: summary.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: summary.length === 0 ? 0.5 : 1,
             }}
           >
             <Download size={18} />
