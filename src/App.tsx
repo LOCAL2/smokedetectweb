@@ -11,10 +11,19 @@ import { DownloadPage } from './pages/DownloadPage';
 import { ChatBotPage } from './pages/ChatBotPage';
 import { UpdatesPage } from './pages/UpdatesPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
+import { MaintenancePage } from './pages/MaintenancePage';
 import { ChatBot } from './components/ChatBot/ChatBot';
 import { UpdateButton } from './components/UpdateButton';
 
+// Check maintenance mode from environment variable
+const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+
 function App() {
+  // Show maintenance page if enabled
+  if (isMaintenanceMode) {
+    return <MaintenancePage />;
+  }
+
   return (
     <BrowserRouter>
       <SettingsProvider>
