@@ -396,11 +396,17 @@ export const AnalyticsPage = () => {
               </div>
               <span style={{ color: '#94A3B8', fontSize: '14px' }}>แจ้งเตือน</span>
             </div>
-            <p style={{ color: '#F8FAFC', fontSize: '28px', fontWeight: 700, margin: 0 }}>
-              <span style={{ color: '#EF4444' }}>{totalDanger}</span>
-              <span style={{ color: '#64748B', fontSize: '16px' }}> / </span>
-              <span style={{ color: '#F59E0B' }}>{totalWarning}</span>
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ color: '#EF4444', fontSize: '24px', fontWeight: 700, margin: 0 }}>{totalDanger}</p>
+                <p style={{ color: '#64748B', fontSize: '11px', margin: 0 }}>อันตราย</p>
+              </div>
+              <span style={{ color: '#475569', fontSize: '20px' }}>/</span>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ color: '#F59E0B', fontSize: '24px', fontWeight: 700, margin: 0 }}>{totalWarning}</p>
+                <p style={{ color: '#64748B', fontSize: '11px', margin: 0 }}>เฝ้าระวัง</p>
+              </div>
+            </div>
           </div>
         </motion.div>
 
