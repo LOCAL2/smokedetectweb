@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Info, Users, BookOpen, Download, Bot, Menu, X, History } from 'lucide-react';
+import { Settings, Info, Users, BookOpen, Download, Bot, Menu, X, History, BarChart3 } from 'lucide-react';
 import { useSettingsContext } from '../../context/SettingsContext';
 
 interface HeaderProps {
@@ -15,6 +15,7 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
 
   const menuItems = [
     { icon: Bot, label: 'AI Chat', onClick: () => navigate('/chat'), highlight: true },
+    { icon: BarChart3, label: 'Analytics', onClick: () => navigate('/analytics'), color: '#8B5CF6' },
     { icon: BookOpen, label: 'คู่มือ', onClick: () => navigate('/guide') },
     { icon: Download, label: 'App', onClick: () => navigate('/download'), color: '#10B981' },
     { icon: History, label: 'Changelog', onClick: () => navigate('/updates') },

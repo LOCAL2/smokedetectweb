@@ -40,14 +40,9 @@ export const Dashboard = () => {
 
   const { sensors, history, sensorHistory, stats, sensorMaxValues, isLoading } = useSensorDataContext();
   const lastAlertRef = useRef<number>(0);
-  const [initialLoad, setInitialLoad] = useState(true);
 
-  // Track initial load
-  useEffect(() => {
-    if (sensors.length > 0 && initialLoad) {
-      setInitialLoad(false);
-    }
-  }, [sensors, initialLoad]);
+  // Show skeleton only during actual loading, not waiting for data
+  const showSkeleton = isLoading && sensors.length === 0;
 
   // Sound alert for danger sensors
   useEffect(() => {
@@ -115,7 +110,7 @@ export const Dashboard = () => {
         <Header onSettingsClick={() => navigate('/settings')} />
         
         {/* Show Skeleton on initial load */}
-        {initialLoad && isLoading ? (
+        {showSkeleton ? (
           <DashboardSkeleton />
         ) : (
           <>

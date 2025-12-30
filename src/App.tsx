@@ -10,6 +10,7 @@ import { GuidePage } from './pages/GuidePage';
 import { DownloadPage } from './pages/DownloadPage';
 import { ChatBotPage } from './pages/ChatBotPage';
 import { UpdatesPage } from './pages/UpdatesPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { ChatBot } from './components/ChatBot/ChatBot';
 import { UpdateButton } from './components/UpdateButton';
 
@@ -28,6 +29,7 @@ function App() {
             <Route path="/download" element={<DownloadPage />} />
             <Route path="/chat" element={<ChatBotPage />} />
             <Route path="/updates" element={<UpdatesPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
           </Routes>
           <ChatBot />
           <UpdateButton />
