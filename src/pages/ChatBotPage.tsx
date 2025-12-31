@@ -222,15 +222,21 @@ const checkSensorQuery = (input: string): boolean => {
 
 const checkShowChart = (input: string): boolean => {
   const lower = input.toLowerCase();
-  // ต้องมีคำที่ชัดเจนว่าต้องการดูกราฟ ไม่ใช่แค่คำว่า "ประวัติ" เฉยๆ
-  const chartKeywords = ['กราฟ', 'graph', 'chart', 'แสดงกราฟ', 'ดูกราฟ', 'เปิดกราฟ', 'แนวโน้ม', 'trend'];
-  const historyChartKeywords = ['ประวัติค่า', 'ประวัติควัน', 'ดูประวัติ', 'แสดงประวัติ'];
   
-  // ถ้ามีคำว่า "ล้าง", "ลบ", "reset", "clear" ไม่ใช่การขอดูกราฟ
+  // ถ้ามีคำว่า "ล้าง", "ลบ", "reset", "clear", "วิธี" ไม่ใช่การขอดูกราฟ
   const excludeKeywords = ['ล้าง', 'ลบ', 'reset', 'clear', 'วิธี', 'ยังไง', 'อย่างไร'];
   if (excludeKeywords.some(k => lower.includes(k))) return false;
   
-  return chartKeywords.some(k => lower.includes(k)) || historyChartKeywords.some(k => lower.includes(k));
+  // คำกริยาที่บ่งบอกว่าต้องการดู
+  const actionVerbs = ['แสดง', 'ดู', 'โชว์', 'show', 'display', 'ทำการแสดง', 'ขอดู', 'เปิด', 'ขอ'];
+  // คำที่หมายถึงกราฟ
+  const chartWords = ['กราฟ', 'graph', 'chart', 'แนวโน้ม', 'trend', 'ประวัติค่า', 'ประวัติควัน'];
+  
+  const hasAction = actionVerbs.some(v => lower.includes(v));
+  const hasChartWord = chartWords.some(c => lower.includes(c));
+  
+  // มีคำกราฟโดยตรง หรือ action + chart word
+  return hasChartWord || (hasAction && hasChartWord);
 };
 
 // Check chart view mode from user input
@@ -263,13 +269,22 @@ const checkChartFullscreen = (input: string): boolean => {
 const checkShowMap = (input: string): boolean => {
   const lower = input.toLowerCase();
   // ถ้ามีคำว่า "ล้าง", "ลบ", "reset", "clear" ไม่ใช่การขอดูแผนที่
-  const excludeKeywords = ['ล้าง', 'ลบ', 'reset', 'clear'];
+  const excludeKeywords = ['ล้าง', 'ลบ', 'reset', 'clear', 'วิธี', 'ยังไง', 'อย่างไร'];
   if (excludeKeywords.some(k => lower.includes(k))) return false;
   
-  const keywords = ['แผนที่', 'map', 'ตำแหน่ง', 'location', 'พิกัด', 'gps', 'ที่ตั้ง', 'อยู่ไหน', 'อยู่ที่ไหน'];
-  // "สถานที่" ต้องมีคำอื่นประกอบ เช่น "แสดงสถานที่", "ดูสถานที่"
-  const locationKeywords = ['แสดงสถานที่', 'ดูสถานที่', 'เปิดสถานที่'];
-  return keywords.some(k => lower.includes(k)) || locationKeywords.some(k => lower.includes(k));
+  // คำกริยาที่บ่งบอกว่าต้องการดู
+  const actionVerbs = ['แสดง', 'ดู', 'โชว์', 'show', 'display', 'ทำการแสดง', 'ขอดู', 'เปิด', 'ขอ'];
+  // คำที่หมายถึงแผนที่
+  const mapWords = ['แผนที่', 'แมพ', 'map', 'ตำแหน่ง', 'location', 'พิกัด', 'gps', 'ที่ตั้ง'];
+  // คำถามเกี่ยวกับตำแหน่ง
+  const locationQuestions = ['อยู่ไหน', 'อยู่ที่ไหน', 'อยู่ตรงไหน', 'ตั้งอยู่'];
+  
+  const hasAction = actionVerbs.some(v => lower.includes(v));
+  const hasMapWord = mapWords.some(m => lower.includes(m));
+  const hasLocationQuestion = locationQuestions.some(q => lower.includes(q));
+  
+  // มีคำแผนที่โดยตรง หรือ action + map word หรือ ถามตำแหน่ง
+  return hasMapWord || (hasAction && hasMapWord) || hasLocationQuestion;
 };
 
 // Check if user wants map with specific sensor filter
@@ -323,21 +338,53 @@ const checkMapSensorFilter = (input: string, sensors: SensorData[]): SensorData[
 };
 
 const checkShowAllSensors = (input: string): boolean => {
-  const lower = input.toLowerCase();
-  const keywords = ['แสดง sensor ทั้งหมด', 'แสดงเซ็นเซอร์ทั้งหมด', 'sensor ทั้งหมด', 'เซ็นเซอร์ทั้งหมด', 'ดู sensor ทั้งหมด', 'list sensor', 'list all sensor'];
-  return keywords.some(k => lower.includes(k));
+  const lower = input.toLowerCase().trim();
+  
+  // คำกริยาที่บ่งบอกว่าต้องการดู
+  const actionVerbs = ['แสดง', 'ดู', 'โชว์', 'show', 'display', 'ทำการแสดง', 'ขอดู', 'เปิด', 'ขอ', 'list', 'ลิสต์'];
+  // คำที่หมายถึง sensor (รวมคำที่พิมพ์ไม่ครบ/พิมพ์ผิด)
+  const sensorWords = [
+    'sensor', 'sensors', 
+    'เซ็นเซอร์', 'เซนเซอร์', 'เซ็นเซอ', 'เซนเซอ', 'เซ็นเซ', 'เซนเซ',
+    'เซอเซอร์', 'เซอเซอ', 'เซอร์เซอร์', 'เซ็น', 'เซน'
+  ];
+  // คำที่บ่งบอกว่าต้องการดูเฉพาะที่ (ถ้ามีคำเหล่านี้ ไม่ใช่การขอดูทั้งหมด)
+  const locationKeywords = ['โรงรถ', 'ห้องนั่งเล่น', 'ห้องครัว', 'ห้องนอนใหญ่', 'ห้องนอนเล็ก', 'ห้องนอน', 'ชั้น 1', 'ชั้น 2', 'ชั้น1', 'ชั้น2'];
+  
+  const hasAction = actionVerbs.some(v => lower.includes(v));
+  const hasSensor = sensorWords.some(s => lower.includes(s));
+  const hasLocation = locationKeywords.some(l => lower.includes(l.toLowerCase()));
+  
+  // ถ้ามีชื่อสถานที่ ไม่ใช่การขอดูทั้งหมด
+  if (hasLocation) return false;
+  
+  // ถ้าพิมพ์แค่คำ sensor เฉยๆ (หรือคำที่คล้ายกัน) ก็แสดง sensor grid เลย
+  const isSensorOnly = sensorWords.some(s => lower === s || lower === s + 's');
+  if (isSensorOnly) return true;
+  
+  // ถ้ามี action + sensor ก็แสดง sensor grid เลย
+  // ยกเว้นถ้ามีคำถามเช่น "วิธี", "ยังไง" 
+  const excludeKeywords = ['วิธี', 'ยังไง', 'อย่างไร', 'ตั้งค่า', 'เพิ่ม', 'ลบ', 'แก้ไข'];
+  if (excludeKeywords.some(k => lower.includes(k))) return false;
+  
+  return hasAction && hasSensor;
 };
 
 // Check if user wants specific sensor
 const checkSpecificSensor = (input: string, sensors: SensorData[]): SensorData | null => {
   const lower = input.toLowerCase();
-  // Check if asking for specific sensor
-  const sensorKeywords = ['แสดง sensor', 'แสดงเซ็นเซอร์', 'ดู sensor', 'ค่า sensor', 'sensor', 'เซ็นเซอร์'];
+  
+  // คำที่หมายถึง sensor (รวมคำที่พิมพ์ไม่ครบ)
+  const sensorKeywords = [
+    'sensor', 'sensors', 'แสดง sensor', 'ดู sensor', 'ค่า sensor',
+    'เซ็นเซอร์', 'เซนเซอร์', 'เซ็นเซอ', 'เซนเซอ', 'เซ็นเซ', 'เซนเซ',
+    'เซอเซอร์', 'เซอเซอ', 'เซ็น', 'เซน'
+  ];
   const hasSensorKeyword = sensorKeywords.some(k => lower.includes(k));
   if (!hasSensorKeyword) return null;
   
   // Don't match if asking for all sensors
-  if (lower.includes('ทั้งหมด') || lower.includes('all')) return null;
+  if (lower.includes('ทั้งหมด') || lower.includes('all') || lower.includes('ทุกตัว')) return null;
   
   // Find matching sensor by location or name
   for (const sensor of sensors) {
@@ -346,17 +393,17 @@ const checkSpecificSensor = (input: string, sensors: SensorData[]): SensorData |
     const id = sensor.id.toLowerCase();
     
     // Check common location keywords
-    const locationKeywords = ['โรงรถ', 'ห้องนั่งเล่น', 'ห้องครัว', 'ห้องนอนใหญ่', 'ห้องนอนเล็ก', 'ชั้น 1', 'ชั้น 2'];
+    const locationKeywords = ['โรงรถ', 'ห้องนั่งเล่น', 'ห้องครัว', 'ห้องนอนใหญ่', 'ห้องนอนเล็ก', 'ชั้น 1', 'ชั้น 2', 'ห้องนอน'];
     for (const keyword of locationKeywords) {
       if (lower.includes(keyword.toLowerCase()) && (location.includes(keyword.toLowerCase()) || name.includes(keyword.toLowerCase()))) {
         return sensor;
       }
     }
     
-    // Direct match
-    if (lower.includes(location) || lower.includes(name) || lower.includes(id)) {
-      return sensor;
-    }
+    // Direct match with location/name/id
+    if (location && lower.includes(location)) return sensor;
+    if (name && lower.includes(name)) return sensor;
+    if (id && lower.includes(id)) return sensor;
   }
   return null;
 };

@@ -49,22 +49,62 @@ const checkNavigation = (input: string): { path: string; name: string } | null =
 };
 
 // Check if user wants features that require full page (map, chart, download)
-const checkNeedsFullPage = (input: string): { type: 'map' | 'chart' | 'download' | null; query: string } => {
-  const lower = input.toLowerCase();
+const checkNeedsFullPage = (input: string): { type: 'map' | 'chart' | 'download' | 'sensor' | null; query: string } => {
+  const lower = input.toLowerCase().trim();
   
-  // Map keywords
-  const mapKeywords = ['แผนที่', 'map', 'ตำแหน่ง', 'location', 'พิกัด', 'gps', 'ที่ตั้ง', 'อยู่ไหน'];
-  if (mapKeywords.some(k => lower.includes(k))) {
+  // Exclude keywords (คำถาม ไม่ใช่คำสั่ง)
+  const excludeKeywords = ['วิธี', 'ยังไง', 'อย่างไร', 'ตั้งค่า', 'เพิ่ม', 'ลบ', 'แก้ไข', 'ล้าง', 'reset', 'clear'];
+  const hasExclude = excludeKeywords.some(e => lower.includes(e));
+  
+  if (hasExclude) {
+    return { type: null, query: '' };
+  }
+  
+  // คำกริยาที่บ่งบอกว่าต้องการดู
+  const actionVerbs = ['แสดง', 'ดู', 'โชว์', 'show', 'display', 'ทำการแสดง', 'ขอดู', 'เปิด', 'ขอ'];
+  const hasAction = actionVerbs.some(v => lower.includes(v));
+  
+  // Sensor keywords (รวมคำที่พิมพ์ไม่ครบ/พิมพ์ผิด)
+  const sensorWords = [
+    'sensor', 'sensors', 
+    'เซ็นเซอร์', 'เซนเซอร์', 'เซ็นเซอ', 'เซนเซอ', 'เซ็นเซ', 'เซนเซ',
+    'เซอเซอร์', 'เซอเซอ', 'เซอร์เซอร์', 'เซ็น', 'เซน'
+  ];
+  const hasSensor = sensorWords.some(s => lower.includes(s));
+  
+  // คำที่บ่งบอกว่าต้องการดูเฉพาะที่ (ถ้ามีคำเหล่านี้ ไม่ใช่การขอดูทั้งหมด แต่ยังต้องไป /chat)
+  const locationKeywords = ['โรงรถ', 'ห้องนั่งเล่น', 'ห้องครัว', 'ห้องนอนใหญ่', 'ห้องนอนเล็ก', 'ห้องนอน', 'ชั้น 1', 'ชั้น 2'];
+  const hasLocation = locationKeywords.some(l => lower.includes(l.toLowerCase()));
+  
+  // ถ้าพิมพ์แค่คำ sensor เฉยๆ หรือ action + sensor (ไม่ว่าจะมี location หรือไม่) ก็ไป /chat
+  const isSensorOnly = sensorWords.some(s => lower === s || lower === s + 's');
+  if (isSensorOnly || (hasAction && hasSensor) || (hasSensor && hasLocation)) {
+    return { type: 'sensor', query: input };
+  }
+  
+  // Map keywords (รวมคำที่พิมพ์ไม่ครบ)
+  const mapWords = ['แผนที่', 'แมพ', 'แม็พ', 'map', 'ตำแหน่ง', 'location', 'พิกัด', 'gps', 'ที่ตั้ง'];
+  const locationQuestions = ['อยู่ไหน', 'อยู่ที่ไหน', 'อยู่ตรงไหน', 'ตั้งอยู่'];
+  const hasMapWord = mapWords.some(m => lower.includes(m));
+  const hasLocationQuestion = locationQuestions.some(q => lower.includes(q));
+  
+  // ถ้าพิมพ์แค่คำ map เฉยๆ ก็แสดง map เลย
+  const isMapOnly = mapWords.some(m => lower === m);
+  if (isMapOnly || hasMapWord || hasLocationQuestion) {
     return { type: 'map', query: input };
   }
   
-  // Chart keywords
-  const chartKeywords = ['กราฟ', 'graph', 'chart', 'แสดงกราฟ', 'ดูกราฟ', 'ประวัติค่า', 'ประวัติควัน', 'แนวโน้ม', 'trend'];
-  if (chartKeywords.some(k => lower.includes(k))) {
+  // Chart keywords (รวมคำที่พิมพ์ไม่ครบ)
+  const chartWords = ['กราฟ', 'กร๊าฟ', 'graph', 'chart', 'แนวโน้ม', 'trend', 'ประวัติค่า', 'ประวัติควัน'];
+  const hasChartWord = chartWords.some(c => lower.includes(c));
+  
+  // ถ้าพิมพ์แค่คำ chart เฉยๆ ก็แสดง chart เลย
+  const isChartOnly = chartWords.some(c => lower === c);
+  if (isChartOnly || hasChartWord) {
     return { type: 'chart', query: input };
   }
   
-  // Download keywords (direct download request)
+  // Download keywords
   const downloadKeywords = ['ดาวน์โหลด', 'download', 'โหลด'];
   const platformKeywords = ['android', 'apk', 'windows', 'exe', 'มือถือ', 'คอม'];
   if (downloadKeywords.some(k => lower.includes(k)) && platformKeywords.some(k => lower.includes(k))) {
@@ -381,13 +421,13 @@ export const ChatBot = () => {
     const settingsCommand = checkSettingsCommand(msg);
     const fullPageFeature = checkNeedsFullPage(msg);
 
-    // Handle features that need full page (map, chart, download)
+    // Handle features that need full page (map, chart, download, sensor)
     if (fullPageFeature.type) {
       if (!isRegen) setMessages(prev => [...prev, userMessage]);
       setInput('');
       setIsLoading(true);
       
-      const featureNames: Record<string, string> = { map: 'แผนที่', chart: 'กราฟ', download: 'ดาวน์โหลด' };
+      const featureNames: Record<string, string> = { map: 'แผนที่', chart: 'กราฟ', download: 'ดาวน์โหลด', sensor: 'เซ็นเซอร์' };
       const featureName = featureNames[fullPageFeature.type] || '';
       setThinkingSteps([`เตรียม${featureName}`, 'นำทางไปหน้า Chat']);
       setCurrentStep(0);

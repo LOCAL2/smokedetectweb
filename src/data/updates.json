@@ -1,6 +1,28 @@
 {
   "updates": [
     {
+      "version": "1.5.2",
+      "date": "2025-12-31",
+      "title": "ปรับปรุง AI Chat ให้เข้าใจบริบทมากขึ้น",
+      "type": "improvement",
+      "changes": [
+        "รองรับคำสั่งภาษาไทยที่พิมพ์ไม่ครบ เช่น แสดงเซ็น, เซนเซอ",
+        "พิมพ์แค่ sensor หรือ กราฟ หรือ แมพ ก็แสดงผลได้เลย",
+        "แยกแยะการขอดู sensor เฉพาะที่ เช่น แสดงเซ็น ห้องครัว",
+        "เพิ่มคำกริยาที่รองรับ เช่น ทำการแสดง, ขอดู, โชว์"
+      ]
+    },
+    {
+      "version": "1.5.1",
+      "date": "2025-12-31",
+      "title": "แก้ไข Font ภาษาไทย",
+      "type": "fix",
+      "changes": [
+        "เพิ่ม Font Noto Sans Thai รองรับภาษาไทยทั้งระบบ",
+        "แก้ไขปัญหาตัวอักษรภาษาไทยแสดงผิดในหน้า AI Chat"
+      ]
+    },
+    {
       "version": "1.5.0",
       "date": "2025-12-31",
       "title": "หน้า Maintenance Mode",
@@ -8,9 +30,7 @@
       "changes": [
         "เพิ่มหน้า Maintenance สำหรับแจ้งผู้ใช้เมื่อระบบกำลังพัฒนา",
         "ออกแบบ UI ระดับ Production พร้อม animated gradient background",
-        "แสดง Logo พร้อม spinning rings effect",
-        "แสดงเวลา Server แบบ Real-time",
-        "เปิด/ปิดได้ผ่าน Environment Variable VITE_MAINTENANCE_MODE"
+        "แสดง Logo พร้อม spinning rings effect"
       ]
     },
     {
