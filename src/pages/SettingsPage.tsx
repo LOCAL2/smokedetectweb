@@ -4,12 +4,159 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, RotateCcw, AlertTriangle, Clock, Bell, Volume2,
   Plus, Trash2, Server, MapPin, Gamepad2, Trash, Navigation, Activity,
-  Layout, GripVertical, BarChart3, Pin, TrendingUp, MousePointer2,
+  Layout, GripVertical, BarChart3, Pin, TrendingUp, MousePointer2, ChevronDown, Check,
 } from 'lucide-react';
-import type { ApiEndpoint, SensorCoordinates, DashboardComponent, LayoutPosition, SettingsConfig } from '../hooks/useSettings';
+import type { ApiEndpoint, SensorCoordinates, DashboardComponent, LayoutPosition, SettingsConfig, SensorGroup } from '../hooks/useSettings';
 import { useSettingsContext } from '../context/SettingsContext';
 import { useSensorDataContext } from '../context/SensorDataContext';
 import { useTheme } from '../context/ThemeContext';
+
+// Custom Zone Dropdown Component
+const ZoneDropdown = ({ 
+  value, 
+  groups, 
+  onChange 
+}: { 
+  value: string; 
+  groups: SensorGroup[]; 
+  onChange: (val: string) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { isDark } = useTheme();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  const selectedGroup = groups.find(g => g.id === value);
+  
+  // Close on click outside
+  const handleClickOutside = (e: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      setIsOpen(false);
+    }
+  };
+  
+  useState(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  });
+
+  const bgColor = isDark ? '#1E293B' : '#FFFFFF';
+  const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+  const textColor = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const hoverBg = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
+
+  return (
+    <div ref={dropdownRef} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 8px',
+          background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          border: `1px solid ${borderColor}`,
+          borderRadius: '6px',
+          cursor: 'pointer',
+          fontSize: '11px',
+          color: selectedGroup ? textColor : textSecondary,
+          minWidth: '80px',
+        }}
+      >
+        {selectedGroup && (
+          <span style={{ 
+            width: '8px', 
+            height: '8px', 
+            borderRadius: '50%', 
+            background: selectedGroup.color,
+            flexShrink: 0,
+          }} />
+        )}
+        <span style={{ flex: 1, textAlign: 'left' }}>
+          {selectedGroup?.name || 'ไม่มีโซน'}
+        </span>
+        <ChevronDown size={12} style={{ 
+          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.2s',
+        }} />
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              marginTop: '4px',
+              background: bgColor,
+              border: `1px solid ${borderColor}`,
+              borderRadius: '8px',
+              boxShadow: isDark 
+                ? '0 10px 40px rgba(0,0,0,0.5)' 
+                : '0 10px 40px rgba(0,0,0,0.15)',
+              zIndex: 100,
+              minWidth: '120px',
+              overflow: 'hidden',
+            }}
+          >
+            {/* No zone option */}
+            <div
+              onClick={() => { onChange(''); setIsOpen(false); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                cursor: 'pointer',
+                background: !value ? hoverBg : 'transparent',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = hoverBg}
+              onMouseLeave={(e) => e.currentTarget.style.background = !value ? hoverBg : 'transparent'}
+            >
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: textSecondary, opacity: 0.3 }} />
+              <span style={{ flex: 1, fontSize: '12px', color: textSecondary }}>ไม่มีโซน</span>
+              {!value && <Check size={12} color="#10B981" />}
+            </div>
+            
+            {/* Zone options */}
+            {groups.map(group => (
+              <div
+                key={group.id}
+                onClick={() => { onChange(group.id); setIsOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  background: value === group.id ? hoverBg : 'transparent',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = hoverBg}
+                onMouseLeave={(e) => e.currentTarget.style.background = value === group.id ? hoverBg : 'transparent'}
+              >
+                <span style={{ 
+                  width: '8px', 
+                  height: '8px', 
+                  borderRadius: '50%', 
+                  background: group.color,
+                }} />
+                <span style={{ flex: 1, fontSize: '12px', color: textColor }}>{group.name}</span>
+                {value === group.id && <Check size={12} color="#10B981" />}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // Dashboard component info
 const dashboardComponents: Record<DashboardComponent, { name: string; icon: React.ElementType; color: string }> = {
@@ -358,6 +505,30 @@ export const SettingsPage = () => {
   const [editingSensorId, setEditingSensorId] = useState<string | null>(null);
   const [newSensorId, setNewSensorId] = useState('');
 
+  // Handle notification toggle with permission request
+  const handleNotificationToggle = async () => {
+    if (!settings.enableNotification) {
+      // Turning ON - request permission first
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          updateSettings({ enableNotification: true });
+        } else if (Notification.permission !== 'denied') {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            updateSettings({ enableNotification: true });
+          }
+        } else {
+          alert('การแจ้งเตือนถูกบล็อก กรุณาเปิดใช้งานในการตั้งค่าเบราว์เซอร์');
+        }
+      } else {
+        alert('เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน');
+      }
+    } else {
+      // Turning OFF
+      updateSettings({ enableNotification: false });
+    }
+  };
+
   const handleClearHistory = () => {
     localStorage.removeItem('smoke-sensor-history');
     localStorage.removeItem('smoke-sensor-max-values');
@@ -375,13 +546,25 @@ export const SettingsPage = () => {
 
   // Combine online sensors with saved coordinates
   // Use location as primary key for better persistence across endpoint changes
-  // Memoize to prevent flickering when sensor data updates frequently (Demo Mode)
+  
+  // Create stable sensor key from locations only (not the whole sensors array)
+  const sensorLocationsKey = useMemo(() => {
+    return sensors.map(s => s.location || s.id).sort().join(',');
+  }, [sensors]);
 
-  // Track previous sensor keys to prevent unnecessary re-renders
-  const prevSensorKeysRef = useRef<string>('');
+  // Track previous sensor data to prevent unnecessary re-renders
   const prevSensorListRef = useRef<{ id: string; location: string; coordKey: string; isOnline: boolean }[]>([]);
+  const prevKeyRef = useRef<string>('');
 
   const allSensorIds = useMemo(() => {
+    const coordsKey = (settings.sensorCoordinates || []).map(c => c.sensorId).sort().join(',');
+    const combinedKey = `${sensorLocationsKey}|${coordsKey}`;
+    
+    // Return cached list if key hasn't changed
+    if (combinedKey === prevKeyRef.current) {
+      return prevSensorListRef.current;
+    }
+    
     const sensorMap = new Map<string, { id: string; location: string; coordKey: string; isOnline: boolean }>();
 
     // Add online sensors - use location as coordKey for persistence
@@ -407,17 +590,11 @@ export const SettingsPage = () => {
       }
     });
 
-    // Create a stable key from sensor IDs only (not values)
-    const currentKeys = Array.from(sensorMap.keys()).sort().join(',');
-
-    // Only update if the keys actually changed
-    if (currentKeys !== prevSensorKeysRef.current) {
-      prevSensorKeysRef.current = currentKeys;
-      prevSensorListRef.current = Array.from(sensorMap.values());
-    }
+    prevKeyRef.current = combinedKey;
+    prevSensorListRef.current = Array.from(sensorMap.values());
 
     return prevSensorListRef.current;
-  }, [sensors, settings.sensorCoordinates]);
+  }, [sensors, sensorLocationsKey, settings.sensorCoordinates]);
 
   // Add new sensor manually
   const addNewSensor = () => {
@@ -638,7 +815,7 @@ export const SettingsPage = () => {
               <Toggle enabled={settings.enableSoundAlert} onChange={() => updateSettings({ enableSoundAlert: !settings.enableSoundAlert })} color="#10B981" />
             </SettingRow>
             <SettingRow icon={Bell} title="Notification" color="#10B981">
-              <Toggle enabled={settings.enableNotification} onChange={() => updateSettings({ enableNotification: !settings.enableNotification })} color="#10B981" />
+              <Toggle enabled={settings.enableNotification} onChange={handleNotificationToggle} color="#10B981" />
             </SettingRow>
           </div>
         </Card>
@@ -747,11 +924,6 @@ export const SettingsPage = () => {
           <SettingRow icon={Gamepad2} title="Demo Mode" subtitle="ใช้ข้อมูลจำลองสำหรับทดสอบ" color="#F59E0B">
             <Toggle enabled={settings.demoMode} onChange={() => updateSettings({ demoMode: !settings.demoMode })} color="#F59E0B" />
           </SettingRow>
-          {settings.demoMode && (
-            <p style={{ color: '#F59E0B', fontSize: '12px', margin: '12px 0 0 54px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ⚠️ กำลังใช้ข้อมูลจำลอง
-            </p>
-          )}
         </Card>
 
         {/* Sensor Groups Management */}
@@ -815,6 +987,7 @@ export const SettingsPage = () => {
                   return (
                     <motion.div
                       key={group.id}
+                      data-zone-id={group.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -845,27 +1018,57 @@ export const SettingsPage = () => {
                       </div>
 
                       {/* Color Badge with Icon */}
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '10px',
-                        background: `${group.color}20`,
-                        border: `1px solid ${group.color}40`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        position: 'relative',
-                      }}>
+                      <div 
+                        data-color-badge
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '10px',
+                          background: `${group.color}20`,
+                          border: `1px solid ${group.color}40`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          position: 'relative',
+                        }}>
                         <Activity size={18} color={group.color} />
                         {/* Color picker overlay */}
                         <input
                           type="color"
-                          value={group.color}
-                          onChange={(e) => {
-                            const updated = [...settings.sensorGroups];
-                            updated[index] = { ...group, color: e.target.value };
-                            updateSettings({ sensorGroups: updated });
+                          defaultValue={group.color}
+                          onBlur={(e) => {
+                            if (e.target.value !== group.color) {
+                              const updated = [...settings.sensorGroups];
+                              updated[index] = { ...group, color: e.target.value };
+                              updateSettings({ sensorGroups: updated });
+                            }
+                          }}
+                          onInput={(e) => {
+                            const target = e.target as HTMLInputElement;
+                            const color = target.value;
+                            const zoneCard = target.closest('[data-zone-id]');
+                            if (zoneCard) {
+                              // Update card border
+                              (zoneCard as HTMLElement).style.borderColor = `${color}30`;
+                              // Update color badge
+                              const badge = zoneCard.querySelector('[data-color-badge]') as HTMLElement;
+                              if (badge) {
+                                badge.style.background = `${color}20`;
+                                badge.style.borderColor = `${color}40`;
+                                // Lucide icons use stroke, not fill
+                                const icon = badge.querySelector('svg');
+                                if (icon) {
+                                  icon.style.stroke = color;
+                                  icon.style.color = color;
+                                }
+                              }
+                              // Update preview bars
+                              const bars = zoneCard.querySelectorAll('[data-preview-bar]');
+                              bars.forEach((bar, i) => {
+                                (bar as HTMLElement).style.background = i === 3 ? color : `${color}80`;
+                              });
+                            }
                           }}
                           style={{
                             position: 'absolute',
@@ -881,27 +1084,30 @@ export const SettingsPage = () => {
 
                       {/* Zone Name & Info */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <input
-                          type="text"
-                          value={group.name}
-                          onChange={(e) => {
-                            const updated = [...settings.sensorGroups];
-                            updated[index] = { ...group, name: e.target.value };
-                            updateSettings({ sensorGroups: updated });
-                          }}
-                          style={{
-                            width: '100%',
-                            background: 'transparent',
-                            border: 'none',
-                            color: textColor,
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            outline: 'none',
-                            padding: 0,
-                          }}
-                          placeholder="ชื่อโซน"
-                        />
-                        <p style={{ color: textSecondary, fontSize: '11px', margin: '2px 0 0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <input
+                            type="text"
+                            value={group.name}
+                            onChange={(e) => {
+                              const updated = [...settings.sensorGroups];
+                              updated[index] = { ...group, name: e.target.value };
+                              updateSettings({ sensorGroups: updated });
+                            }}
+                            style={{
+                              flex: 1,
+                              background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                              border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                              borderRadius: '6px',
+                              color: textColor,
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              outline: 'none',
+                              padding: '6px 10px',
+                            }}
+                            placeholder="ชื่อโซน"
+                          />
+                        </div>
+                        <p style={{ color: textSecondary, fontSize: '11px', margin: '4px 0 0' }}>
                           {sensorCount > 0 ? `${sensorCount} เซ็นเซอร์` : 'ยังไม่มีเซ็นเซอร์'}
                         </p>
                       </div>
@@ -915,12 +1121,16 @@ export const SettingsPage = () => {
                         padding: '0 8px',
                       }}>
                         {[40, 70, 55, 85].map((h, i) => (
-                          <div key={i} style={{
-                            width: '6px',
-                            height: `${h}%`,
-                            background: `${group.color}${i === 3 ? '' : '80'}`,
-                            borderRadius: '2px',
-                          }} />
+                          <div 
+                            key={i} 
+                            data-preview-bar
+                            style={{
+                              width: '6px',
+                              height: `${h}%`,
+                              background: i === 3 ? group.color : `${group.color}80`,
+                              borderRadius: '2px',
+                            }} 
+                          />
                         ))}
                       </div>
 
@@ -1052,10 +1262,10 @@ export const SettingsPage = () => {
                           <p style={{ color: '#64748B', fontSize: '11px', margin: 0 }}>Key: {sensor.coordKey}</p>
 
                           {/* Group Selector */}
-                          <select
+                          <ZoneDropdown
                             value={settings.sensorAssignments[sensor.id] || ''}
-                            onChange={(e) => {
-                              const val = e.target.value;
+                            groups={settings.sensorGroups}
+                            onChange={(val) => {
                               const newAssignments = { ...settings.sensorAssignments };
                               if (val) {
                                 newAssignments[sensor.id] = val;
@@ -1064,22 +1274,7 @@ export const SettingsPage = () => {
                               }
                               updateSettings({ sensorAssignments: newAssignments });
                             }}
-                            style={{
-                              background: 'transparent',
-                              border: `1px solid ${borderColor}`,
-                              borderRadius: '4px',
-                              color: textSecondary,
-                              fontSize: '11px',
-                              padding: '2px 4px',
-                              outline: 'none',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <option value="">ไม่มีโซน</option>
-                            {settings.sensorGroups.map(g => (
-                              <option key={g.id} value={g.id}>{g.name}</option>
-                            ))}
-                          </select>
+                          />
                         </div>
                       </div>
                       <motion.button
@@ -1088,10 +1283,10 @@ export const SettingsPage = () => {
                         onClick={() => setEditingSensorId(isEditing ? null : sensor.coordKey)}
                         style={{
                           padding: '6px 12px',
-                          background: isEditing ? 'rgba(59, 130, 246, 0.2)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
-                          border: `1px solid ${isEditing ? 'rgba(59, 130, 246, 0.4)' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)')}`,
+                          background: isEditing ? 'rgba(59, 130, 246, 0.2)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'),
+                          border: `1px solid ${isEditing ? 'rgba(59, 130, 246, 0.4)' : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)')}`,
                           borderRadius: '8px',
-                          color: isEditing ? '#60A5FA' : textSecondary,
+                          color: isEditing ? '#60A5FA' : (isDark ? '#E2E8F0' : '#475569'),
                           fontSize: '12px',
                           cursor: 'pointer',
                         }}

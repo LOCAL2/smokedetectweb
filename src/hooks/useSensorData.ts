@@ -160,50 +160,6 @@ try {
   console.log('BroadcastChannel not supported, using localStorage fallback');
 }
 
-// Primary tab management - only one tab should fetch/generate data
-const PRIMARY_TAB_KEY = 'smoke-sensor-primary-tab';
-const TAB_ID = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-const claimPrimaryTab = (): boolean => {
-  const existing = localStorage.getItem(PRIMARY_TAB_KEY);
-  if (existing) {
-    try {
-      const data = JSON.parse(existing);
-      // If existing primary tab is still alive (heartbeat within 3 seconds), don't claim
-      if (Date.now() - data.heartbeat < 3000) {
-        return false;
-      }
-    } catch (e) { }
-  }
-  // Claim as primary
-  localStorage.setItem(PRIMARY_TAB_KEY, JSON.stringify({ tabId: TAB_ID, heartbeat: Date.now() }));
-  return true;
-};
-
-const updateHeartbeat = () => {
-  const existing = localStorage.getItem(PRIMARY_TAB_KEY);
-  if (existing) {
-    try {
-      const data = JSON.parse(existing);
-      if (data.tabId === TAB_ID) {
-        localStorage.setItem(PRIMARY_TAB_KEY, JSON.stringify({ tabId: TAB_ID, heartbeat: Date.now() }));
-      }
-    } catch (e) { }
-  }
-};
-
-const releasePrimaryTab = () => {
-  const existing = localStorage.getItem(PRIMARY_TAB_KEY);
-  if (existing) {
-    try {
-      const data = JSON.parse(existing);
-      if (data.tabId === TAB_ID) {
-        localStorage.removeItem(PRIMARY_TAB_KEY);
-      }
-    } catch (e) { }
-  }
-};
-
 // โหลด sensor stats (max, min, sum, count สำหรับ 24 ชั่วโมง)
 interface StoredSensorMax {
   id: string;
@@ -261,14 +217,12 @@ export const useSensorData = (settings: SettingsConfig) => {
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   const intervalRef = useRef<number | null>(null);
-  const heartbeatRef = useRef<number | null>(null);
   const historyRef = useRef<SensorHistory[]>(loadHistoryFromStorage());
   const sensorHistoryRef = useRef<SensorHistoryMap>(loadSensorHistoryFromStorage());
   const sensorMaxRef = useRef<Map<string, StoredSensorMax>>(loadSensorMaxFromStorage());
   const sensorsRef = useRef<Map<string, SensorData>>(new Map());
   const lastAlertTimeRef = useRef<number>(0);
   const wasInDangerRef = useRef<boolean>(false);
-  const isPrimaryTabRef = useRef<boolean>(false);
 
   // Process incoming sensor data
   const processSensorData = useCallback((rawData: SensorData[], fromBroadcast = false) => {
@@ -566,19 +520,12 @@ export const useSensorData = (settings: SettingsConfig) => {
 
   // Setup connections based on settings
   useEffect(() => {
-    // Listen for cross-tab updates via BroadcastChannel (debounced)
-    let broadcastTimeout: number | null = null;
+    // Listen for cross-tab updates via BroadcastChannel
     const handleBroadcastMessage = (event: MessageEvent) => {
       if (event.data?.type === 'sensor-update' && event.data?.sensors) {
-        // Debounce broadcast messages to avoid performance issues
-        if (broadcastTimeout) {
-          clearTimeout(broadcastTimeout);
-        }
-        broadcastTimeout = window.setTimeout(() => {
-          processSensorData(event.data.sensors, true);
-          setConnectionStatus('connected');
-          setIsLoading(false);
-        }, 100);
+        processSensorData(event.data.sensors, true);
+        setConnectionStatus('connected');
+        setIsLoading(false);
       }
     };
 
@@ -586,29 +533,15 @@ export const useSensorData = (settings: SettingsConfig) => {
       broadcastChannel.addEventListener('message', handleBroadcastMessage);
     }
 
-    // Check if another tab already has data (load from localStorage on mount)
+    // Load existing data from localStorage immediately
     const existingData = loadSensorDataFromStorage();
-    const hasValidExistingData = existingData && 
-      existingData.sensors.length > 0 && 
-      (Date.now() - existingData.timestamp) < settings.pollingInterval * 2;
-
-    if (hasValidExistingData) {
+    if (existingData && existingData.sensors.length > 0) {
       processSensorData(existingData.sensors, true);
       setConnectionStatus('connected');
       setIsLoading(false);
     }
 
-    // Try to become primary tab
-    isPrimaryTabRef.current = claimPrimaryTab();
-
-    // Start heartbeat if primary
-    if (isPrimaryTabRef.current) {
-      heartbeatRef.current = window.setInterval(() => {
-        updateHeartbeat();
-      }, 1000);
-    }
-
-    // Function to start fetching data
+    // Always start fetching immediately - don't wait for primary tab logic
     const startFetching = () => {
       if (settings.demoMode) {
         sensorsRef.current.clear();
@@ -624,69 +557,8 @@ export const useSensorData = (settings: SettingsConfig) => {
       }
     };
 
-    // Function to try claiming primary and start fetching
-    const tryClaimAndFetch = () => {
-      if (!isPrimaryTabRef.current && claimPrimaryTab()) {
-        isPrimaryTabRef.current = true;
-        // Start heartbeat
-        if (!heartbeatRef.current) {
-          heartbeatRef.current = window.setInterval(() => {
-            updateHeartbeat();
-          }, 1000);
-        }
-        startFetching();
-        return true;
-      }
-      return false;
-    };
-
-    // If not primary, try to claim periodically (in case primary tab closes)
-    const tryClaimInterval = !isPrimaryTabRef.current ? window.setInterval(() => {
-      tryClaimAndFetch();
-    }, 2000) : null;
-
-    // Only primary tab fetches/generates data
-    if (isPrimaryTabRef.current) {
-      startFetching();
-    } else {
-      // Non-primary tab: check for data availability
-      // If we have valid existing data, we're good - just wait for broadcasts
-      // If not, we need to become primary quickly
-      
-      if (!hasValidExistingData) {
-        // No valid data - try to become primary immediately
-        const claimed = tryClaimAndFetch();
-        
-        if (!claimed) {
-          // Still not primary, wait a bit then try again
-          setTimeout(() => {
-            const currentData = loadSensorDataFromStorage();
-            const hasData = currentData && currentData.sensors.length > 0 && 
-              (Date.now() - currentData.timestamp) < settings.pollingInterval * 3;
-            
-            if (!hasData) {
-              // Still no data, force claim primary
-              // Clear any stale primary tab claim
-              localStorage.removeItem(PRIMARY_TAB_KEY);
-              if (claimPrimaryTab()) {
-                isPrimaryTabRef.current = true;
-                if (!heartbeatRef.current) {
-                  heartbeatRef.current = window.setInterval(() => {
-                    updateHeartbeat();
-                  }, 1000);
-                }
-                startFetching();
-              }
-            } else {
-              // Got data from another tab
-              processSensorData(currentData.sensors, true);
-              setConnectionStatus('connected');
-              setIsLoading(false);
-            }
-          }, 1000);
-        }
-      }
-    }
+    // Start immediately
+    startFetching();
 
     return () => {
       sensorsRef.current.clear();
@@ -694,21 +566,9 @@ export const useSensorData = (settings: SettingsConfig) => {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      if (heartbeatRef.current) {
-        clearInterval(heartbeatRef.current);
-        heartbeatRef.current = null;
-      }
-      if (tryClaimInterval) {
-        clearInterval(tryClaimInterval);
-      }
-      if (broadcastTimeout) {
-        clearTimeout(broadcastTimeout);
-      }
       if (broadcastChannel) {
         broadcastChannel.removeEventListener('message', handleBroadcastMessage);
       }
-      // Release primary tab on unmount
-      releasePrimaryTab();
     };
   }, [settings.apiEndpoints, settings.pollingInterval, settings.demoMode, startHttpPolling, startDemoMode, processSensorData]);
 

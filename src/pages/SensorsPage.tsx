@@ -17,6 +17,7 @@ export const SensorsPage = () => {
   const { isDark } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'online' | 'warning' | 'danger' | 'pinned'>('all');
+  const [zoneFilter, setZoneFilter] = useState<string>('all');
   const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
 
   // Auto-open sensor from URL query parameter
@@ -59,6 +60,12 @@ export const SensorsPage = () => {
       (sensor.location || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
+
+    // Zone filter
+    if (zoneFilter !== 'all') {
+      const sensorZone = settings.sensorAssignments?.[sensor.id];
+      if (sensorZone !== zoneFilter) return false;
+    }
 
     if (filter === 'online') return sensor.isOnline;
     if (filter === 'warning') return sensor.value >= settings.warningThreshold && sensor.value < settings.dangerThreshold;
@@ -157,12 +164,12 @@ export const SensorsPage = () => {
           </div>
         </motion.div>
 
-        {/* Filters */}
+        {/* Status Filters */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}
+          style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}
         >
           {[
             { key: 'all', label: 'ทั้งหมด', color: '#3B82F6' },
@@ -190,6 +197,70 @@ export const SensorsPage = () => {
             </button>
           ))}
         </motion.div>
+
+        {/* Zone Filters */}
+        {settings.sensorGroups && settings.sensorGroups.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}
+          >
+            <span style={{ color: textSecondary, fontSize: '14px', marginRight: '4px' }}>โซน:</span>
+            {settings.sensorGroups.map((group) => {
+              const onlineCount = sensors.filter(s => 
+                s.isOnline && settings.sensorAssignments?.[s.id] === group.id
+              ).length;
+              const totalCount = sensors.filter(s => 
+                settings.sensorAssignments?.[s.id] === group.id
+              ).length;
+              
+              if (totalCount === 0) return null;
+              
+              const isSelected = zoneFilter === group.id;
+              
+              return (
+                <button
+                  key={group.id}
+                  onClick={() => setZoneFilter(isSelected ? 'all' : group.id)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: isSelected ? `2px solid ${group.color}` : `1px solid ${inputBorder}`,
+                    background: isSelected ? `${group.color}20` : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.6)'),
+                    color: isSelected ? group.color : textSecondary,
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: group.color,
+                    }}
+                  />
+                  {group.name}
+                  <span style={{ 
+                    opacity: 0.8,
+                    fontSize: '12px',
+                    background: isSelected ? `${group.color}30` : (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'),
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                  }}>
+                    {onlineCount}/{totalCount}
+                  </span>
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
 
         {/* Sensors Grid */}
         {isLoading ? (

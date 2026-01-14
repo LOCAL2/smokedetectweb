@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import Lenis from 'lenis';
 
 /**
@@ -7,27 +8,51 @@ import Lenis from 'lenis';
  * @param enabled - เปิด/ปิด smooth scroll (ค่าเริ่มต้น true)
  */
 export const useSmoothScroll = (enabled: boolean = true) => {
+  const location = useLocation();
+  const lenisRef = useRef<Lenis | null>(null);
+
   useEffect(() => {
     if (!enabled) return;
 
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential easing
+    // Create Lenis instance
+    lenisRef.current = new Lenis({
+      duration: 1.0,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
       wheelMultiplier: 1,
       touchMultiplier: 2,
+      infinite: false,
     });
 
+    let rafId: number;
+
     function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
+      lenisRef.current?.raf(time);
+      rafId = requestAnimationFrame(raf);
     }
 
-    requestAnimationFrame(raf);
+    rafId = requestAnimationFrame(raf);
 
     return () => {
-      lenis.destroy();
+      cancelAnimationFrame(rafId);
+      lenisRef.current?.destroy();
+      lenisRef.current = null;
     };
   }, [enabled]);
+
+  // Re-initialize scroll position and resize on route change
+  useEffect(() => {
+    if (lenisRef.current) {
+      // Scroll to top on route change
+      lenisRef.current.scrollTo(0, { immediate: true });
+      // Recalculate dimensions
+      setTimeout(() => {
+        lenisRef.current?.resize();
+      }, 100);
+    }
+  }, [location.pathname]);
 };
 
 export default useSmoothScroll;

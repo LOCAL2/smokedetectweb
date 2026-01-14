@@ -102,11 +102,7 @@ const getDefaultSettings = (): SettingsConfig => ({
       trendPanel: 'trendAnalysis',
     },
   },
-  sensorGroups: [
-    { id: 'zone-1', name: 'ชั้น 1', color: '#3B82F6' },
-    { id: 'zone-2', name: 'ชั้น 2', color: '#10B981' },
-    { id: 'canteen', name: 'โรงอาหาร', color: '#F59E0B' },
-  ],
+  sensorGroups: [],
   sensorAssignments: {},
 });
 

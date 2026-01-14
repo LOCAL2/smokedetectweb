@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Settings, Info, Users, BookOpen, Download, Bot, Menu, X, History, BarChart3, ChevronRight } from 'lucide-react';
@@ -16,14 +16,7 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
   const { settings } = useSettingsContext();
   const { isDark } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const menuItems = [
     { icon: Bot, label: 'AI Chat', path: '/chat', gradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)' },
@@ -37,22 +30,13 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Theme-aware colors - Glass design for both modes
-  const headerBg = scrolled 
-    ? (isDark 
-        ? 'rgba(15, 23, 42, 0.75)' 
-        : 'rgba(255, 255, 255, 0.65)')
-    : (isDark 
-        ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, transparent 100%)'
-        : 'linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, transparent 100%)');
-
+  // Theme-aware colors - Transparent design
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
   const textSecondary = isDark ? '#94A3B8' : '#475569';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-  const hoverBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)';
-  const activeBg = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.06)';
-  const shadowColor = isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.08)';
-  const navBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)';
+  const hoverBg = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+  const activeBg = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
+  const navBg = isDark ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.6)';
 
   return (
     <>
@@ -63,15 +47,9 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
           left: 0,
           right: 0,
           zIndex: 100,
-          padding: scrolled ? '12px 24px' : '20px 24px',
-          background: headerBg,
-          backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(10px)',
-          WebkitBackdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'blur(10px)',
-          boxShadow: scrolled 
-            ? `0 4px 30px ${shadowColor}, inset 0 1px 0 ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.5)'}` 
-            : 'none',
-          borderBottom: scrolled ? `1px solid ${borderColor}` : 'none',
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          padding: '16px 24px',
+          background: 'transparent',
+          transition: 'all 0.3s ease',
         }}
       >
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -257,7 +235,7 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
       </motion.header>
 
       {/* Spacer */}
-      <div style={{ height: scrolled ? '72px' : '88px', transition: 'height 0.4s ease' }} />
+      <div style={{ height: '80px' }} />
 
       {/* Mobile Menu */}
       <AnimatePresence>

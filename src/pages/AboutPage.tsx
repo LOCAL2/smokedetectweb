@@ -73,56 +73,43 @@ export const AboutPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: isDark ? '#0B0F1A' : '#F1F5F9' }}>
-      {/* Header with Back Button */}
-      <motion.header
+      {/* Back Button - Absolute positioned */}
+      <motion.button
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
+        onClick={() => navigate('/')}
         style={{
+          position: 'absolute',
+          top: 'clamp(16px, 4vw, 24px)',
+          left: 'clamp(16px, 4vw, 24px)',
           display: 'flex',
           alignItems: 'center',
-          gap: '16px',
-          padding: 'clamp(16px, 4vw, 24px)',
-          paddingBottom: '0',
+          gap: '12px',
+          background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+          border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
+          borderRadius: '14px',
+          padding: '14px 24px',
+          color: isDark ? '#94A3B8' : '#64748B',
+          fontSize: '15px',
+          fontWeight: 500,
+          cursor: 'pointer',
+          zIndex: 100,
         }}
       >
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
-            borderRadius: '14px',
-            padding: '14px 24px',
-            color: isDark ? '#94A3B8' : '#64748B',
-            fontSize: '15px',
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
-        >
-          <ArrowLeft size={20} />
-          กลับหน้าหลัก
-        </button>
-      </motion.header>
+        <ArrowLeft size={20} />
+        กลับหน้าหลัก
+      </motion.button>
 
       {/* Hero Section with Lamp Effect */}
       <LampContainer>
-        <motion.h1
-          initial={{ opacity: 0.5, y: 100 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: 0.3,
-            duration: 0.8,
-            ease: "easeInOut",
-          }}
+        <motion.h1 initial={{ opacity: 0.5, y: 100 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
           className={`mt-8 py-4 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl ${
             isDark 
               ? 'bg-gradient-to-br from-slate-300 to-slate-500' 
               : 'bg-gradient-to-br from-slate-600 to-slate-800'
-          }`}
-        >
-    Detection <br /> System
+          }`}>
+          About
         </motion.h1>
       </LampContainer>
 
