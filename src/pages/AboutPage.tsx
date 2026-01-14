@@ -19,7 +19,6 @@ export const AboutPage = () => {
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
   const textSecondary = isDark ? '#94A3B8' : '#64748B';
   const textMuted = isDark ? '#64748B' : '#94A3B8';
-  const dividerColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0, 0, 0, 0.08)';
 
   const features = [
     { icon: Wifi, title: 'Real-time Monitoring', desc: 'ตรวจจับค่าควันแบบเรียลไทม์ อัพเดททุกวินาที', color: '#3B82F6' },

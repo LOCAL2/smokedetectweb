@@ -160,9 +160,6 @@ export const RankingSkeleton = () => {
 
 // Full Dashboard Skeleton
 export const DashboardSkeleton = () => {
-  const { isDark } = useTheme();
-  const skeletonStyle = getSkeletonStyle(isDark);
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Status Cards */}

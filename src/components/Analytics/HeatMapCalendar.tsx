@@ -45,7 +45,6 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
     
     // Add days of month
     for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(year, month, d);
       // Use local date format to avoid timezone issues
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayData = data.find(item => item.date === dateStr);
@@ -97,11 +96,6 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
     emptyDayBorder: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
     noDataText: isDark ? '#475569' : '#94A3B8',
   };
-
-  const maxValue = useMemo(() => 
-    Math.max(...data.map(d => d.maxValue), 1),
-    [data]
-  );
 
   // Stats for current month
   const monthStats = useMemo(() => {

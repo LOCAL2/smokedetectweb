@@ -31,6 +31,7 @@ const defaultPositions: Record<LayoutPosition, DashboardComponent | null> = {
   bottomLeft: 'miniMap',
   bottomMiddle: 'comparisonChart',
   bottomRight: 'statusHistory',
+  trendPanel: 'trendAnalysis',
 };
 
 // Draggable Layout Slot Component

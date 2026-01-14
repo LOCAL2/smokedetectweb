@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Sparkles, Wrench, Rocket, Check, Calendar, Tag, 
+  ArrowLeft, Sparkles, Rocket, Check, Calendar, 
   Search, Filter, TrendingUp, Clock, Zap, ChevronDown, X,
   GitBranch, Package, Bug, Star
 } from 'lucide-react';

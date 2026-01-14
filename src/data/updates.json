@@ -1,6 +1,17 @@
 {
   "updates": [
     {
+      "version": "2.8.1",
+      "date": "2026-01-14",
+      "title": "แก้ไข Skeleton Loading ค้าง",
+      "type": "fix",
+      "changes": [
+        "แก้ไขปัญหา Skeleton Loading ค้างเมื่อเปิดหน้าเว็บใหม่",
+        "ปรับปรุง logic การ sync ข้อมูลระหว่าง tab ให้เสถียรขึ้น",
+        "Tab ใหม่จะ claim primary และเริ่มโหลดข้อมูลทันทีถ้าไม่มีข้อมูลเดิม"
+      ]
+    },
+    {
       "version": "2.8.0",
       "date": "2026-01-14",
       "title": "เพิ่มตั้งค่าเปิด/ปิด Smooth Scroll",

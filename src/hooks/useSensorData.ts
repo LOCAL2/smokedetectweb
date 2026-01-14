@@ -588,14 +588,14 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     // Check if another tab already has data (load from localStorage on mount)
     const existingData = loadSensorDataFromStorage();
-    if (existingData && existingData.sensors.length > 0) {
-      const dataAge = Date.now() - existingData.timestamp;
-      // Use existing data if it's less than 2x polling interval old
-      if (dataAge < settings.pollingInterval * 2) {
-        processSensorData(existingData.sensors, true);
-        setConnectionStatus('connected');
-        setIsLoading(false);
-      }
+    const hasValidExistingData = existingData && 
+      existingData.sensors.length > 0 && 
+      (Date.now() - existingData.timestamp) < settings.pollingInterval * 2;
+
+    if (hasValidExistingData) {
+      processSensorData(existingData.sensors, true);
+      setConnectionStatus('connected');
+      setIsLoading(false);
     }
 
     // Try to become primary tab
@@ -608,27 +608,8 @@ export const useSensorData = (settings: SettingsConfig) => {
       }, 1000);
     }
 
-    // If not primary, try to claim periodically (in case primary tab closes)
-    const tryClaimInterval = !isPrimaryTabRef.current ? window.setInterval(() => {
-      if (!isPrimaryTabRef.current && claimPrimaryTab()) {
-        isPrimaryTabRef.current = true;
-        // Start heartbeat
-        if (!heartbeatRef.current) {
-          heartbeatRef.current = window.setInterval(() => {
-            updateHeartbeat();
-          }, 1000);
-        }
-        // Start data fetching
-        if (settings.demoMode) {
-          startDemoMode();
-        } else {
-          startHttpPolling();
-        }
-      }
-    }, 2000) : null;
-
-    // Only primary tab fetches/generates data
-    if (isPrimaryTabRef.current) {
+    // Function to start fetching data
+    const startFetching = () => {
       if (settings.demoMode) {
         sensorsRef.current.clear();
         startDemoMode();
@@ -641,33 +622,69 @@ export const useSensorData = (settings: SettingsConfig) => {
           startHttpPolling();
         }
       }
-    } else {
-      // Non-primary tab: set loading false immediately, wait for broadcasts
-      setIsLoading(false);
+    };
 
-      // If no existing data after a short delay, try to become primary
-      setTimeout(() => {
-        const currentData = loadSensorDataFromStorage();
-        if (!currentData || currentData.sensors.length === 0 || Date.now() - currentData.timestamp > settings.pollingInterval * 3) {
-          // No fresh data available, try to claim primary
-          if (claimPrimaryTab()) {
-            isPrimaryTabRef.current = true;
-            if (!heartbeatRef.current) {
-              heartbeatRef.current = window.setInterval(() => {
-                updateHeartbeat();
-              }, 1000);
-            }
-            if (settings.demoMode) {
-              startDemoMode();
-            } else {
-              startHttpPolling();
-            }
-          }
+    // Function to try claiming primary and start fetching
+    const tryClaimAndFetch = () => {
+      if (!isPrimaryTabRef.current && claimPrimaryTab()) {
+        isPrimaryTabRef.current = true;
+        // Start heartbeat
+        if (!heartbeatRef.current) {
+          heartbeatRef.current = window.setInterval(() => {
+            updateHeartbeat();
+          }, 1000);
         }
-      }, 500);
+        startFetching();
+        return true;
+      }
+      return false;
+    };
 
-      if (existingData && existingData.sensors.length > 0) {
-        setConnectionStatus('connected');
+    // If not primary, try to claim periodically (in case primary tab closes)
+    const tryClaimInterval = !isPrimaryTabRef.current ? window.setInterval(() => {
+      tryClaimAndFetch();
+    }, 2000) : null;
+
+    // Only primary tab fetches/generates data
+    if (isPrimaryTabRef.current) {
+      startFetching();
+    } else {
+      // Non-primary tab: check for data availability
+      // If we have valid existing data, we're good - just wait for broadcasts
+      // If not, we need to become primary quickly
+      
+      if (!hasValidExistingData) {
+        // No valid data - try to become primary immediately
+        const claimed = tryClaimAndFetch();
+        
+        if (!claimed) {
+          // Still not primary, wait a bit then try again
+          setTimeout(() => {
+            const currentData = loadSensorDataFromStorage();
+            const hasData = currentData && currentData.sensors.length > 0 && 
+              (Date.now() - currentData.timestamp) < settings.pollingInterval * 3;
+            
+            if (!hasData) {
+              // Still no data, force claim primary
+              // Clear any stale primary tab claim
+              localStorage.removeItem(PRIMARY_TAB_KEY);
+              if (claimPrimaryTab()) {
+                isPrimaryTabRef.current = true;
+                if (!heartbeatRef.current) {
+                  heartbeatRef.current = window.setInterval(() => {
+                    updateHeartbeat();
+                  }, 1000);
+                }
+                startFetching();
+              }
+            } else {
+              // Got data from another tab
+              processSensorData(currentData.sensors, true);
+              setConnectionStatus('connected');
+              setIsLoading(false);
+            }
+          }, 1000);
+        }
       }
     }
 
