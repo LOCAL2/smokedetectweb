@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Crown, Users } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface Member {
   name: string;
@@ -11,6 +12,7 @@ interface Member {
 
 export const MembersPage = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   // แก้ไขข้อมูลสมาชิกตรงนี้
   const leader: Member = {
@@ -38,13 +40,18 @@ export const MembersPage = () => {
       transition={{ duration: 0.5, delay }}
       style={{
         background: isLeader
-          ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)'
-          : 'rgba(30, 41, 59, 0.6)',
+          ? (isDark 
+              ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)'
+              : 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)')
+          : (isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.9)'),
         borderRadius: 'clamp(16px, 3vw, 24px)',
         padding: isLeader ? 'clamp(28px, 5vw, 40px) clamp(20px, 4vw, 32px)' : 'clamp(24px, 4vw, 32px) clamp(16px, 3vw, 24px)',
-        border: isLeader ? '2px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+        border: isLeader 
+          ? '2px solid rgba(59, 130, 246, 0.3)' 
+          : (isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)'),
         textAlign: 'center',
         position: 'relative',
+        boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
       }}
     >
       {isLeader && (
@@ -69,7 +76,7 @@ export const MembersPage = () => {
         borderRadius: '50%',
         background: isLeader
           ? 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)'
-          : 'linear-gradient(135deg, #475569 0%, #334155 100%)',
+          : (isDark ? 'linear-gradient(135deg, #475569 0%, #334155 100%)' : 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)'),
         margin: '0 auto 20px',
         display: 'flex',
         alignItems: 'center',
@@ -95,7 +102,7 @@ export const MembersPage = () => {
 
       {/* Info */}
       <h3 style={{
-        color: '#F8FAFC',
+        color: isDark ? '#F8FAFC' : '#0F172A',
         fontSize: isLeader ? 'clamp(18px, 4vw, 22px)' : 'clamp(16px, 3.5vw, 18px)',
         fontWeight: 700,
         margin: '0 0 8px',
@@ -104,7 +111,7 @@ export const MembersPage = () => {
       </h3>
       
       <p style={{
-        color: isLeader ? '#60A5FA' : '#94A3B8',
+        color: isLeader ? '#60A5FA' : (isDark ? '#94A3B8' : '#64748B'),
         fontSize: '14px',
         fontWeight: 600,
         margin: '0 0 8px',
@@ -114,7 +121,7 @@ export const MembersPage = () => {
 
       {member.studentId && (
         <p style={{
-          color: '#64748B',
+          color: isDark ? '#64748B' : '#94A3B8',
           fontSize: '13px',
           margin: 0,
         }}>
@@ -127,9 +134,37 @@ export const MembersPage = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
+      background: isDark ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)' : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%)',
       padding: 'clamp(16px, 4vw, 32px)',
     }}>
+      {/* Back Button - Outside container */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ marginBottom: '24px' }}
+      >
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
+            borderRadius: '14px',
+            padding: '14px 24px',
+            color: isDark ? '#94A3B8' : '#64748B',
+            fontSize: '15px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
+          <ArrowLeft size={20} />
+          กลับหน้าหลัก
+        </button>
+      </motion.div>
+
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         {/* Header */}
         <motion.div
@@ -137,29 +172,6 @@ export const MembersPage = () => {
           animate={{ opacity: 1, y: 0 }}
           style={{ marginBottom: 'clamp(32px, 6vw, 48px)' }}
         >
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              color: '#94A3B8',
-              fontSize: '14px',
-              cursor: 'pointer',
-              marginBottom: 'clamp(20px, 4vw, 32px)',
-              transition: 'all 0.2s',
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-          >
-            <ArrowLeft size={18} />
-            กลับหน้าหลัก
-          </button>
-
           <div style={{ textAlign: 'center' }}>
             <div style={{
               display: 'inline-flex',
@@ -173,7 +185,7 @@ export const MembersPage = () => {
               <Users size={24} color="#3B82F6" />
               <span style={{ color: '#60A5FA', fontSize: '14px', fontWeight: 600 }}>ทีมพัฒนา</span>
             </div>
-            <h1 style={{ color: '#F8FAFC', fontSize: 'clamp(24px, 6vw, 36px)', fontWeight: 700, margin: '0 0 8px' }}>
+            <h1 style={{ color: isDark ? '#F8FAFC' : '#0F172A', fontSize: 'clamp(24px, 6vw, 36px)', fontWeight: 700, margin: '0 0 8px' }}>
               ผู้จัดทำโปรเจค
             </h1>
             <p style={{ color: '#64748B', fontSize: 'clamp(14px, 3vw, 16px)', margin: 0 }}>
@@ -232,12 +244,13 @@ export const MembersPage = () => {
             marginTop: 'clamp(32px, 6vw, 48px)',
             textAlign: 'center',
             padding: 'clamp(20px, 4vw, 32px)',
-            background: 'rgba(30, 41, 59, 0.4)',
+            background: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.9)',
             borderRadius: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.08)',
+            boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
           }}
         >
-          <h3 style={{ color: '#F8FAFC', fontSize: '18px', fontWeight: 600, margin: '0 0 12px' }}>
+          <h3 style={{ color: isDark ? '#F8FAFC' : '#0F172A', fontSize: '18px', fontWeight: 600, margin: '0 0 12px' }}>
             โปรเจคจบการศึกษา
           </h3>
           <p style={{ color: '#64748B', fontSize: '14px', margin: 0, lineHeight: 1.8 }}>

@@ -9,6 +9,8 @@ export interface SensorData {
   // GPS coordinates (optional)
   lat?: number;
   lng?: number;
+  latitude?: number;
+  longitude?: number;
   address?: string;
 }
 

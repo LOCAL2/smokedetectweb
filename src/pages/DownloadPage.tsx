@@ -12,12 +12,23 @@ import {
   Bell
 } from 'lucide-react';
 import { LampContainer } from '../components/ui/Lamp';
+import { useTheme } from '../context/ThemeContext';
 
 type Platform = 'android' | 'windows';
 
 export const DownloadPage = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
   const [activePlatform, setActivePlatform] = useState<Platform>('android');
+
+  // Theme colors
+  const cardBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)';
+  const cardBorder = isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0, 0, 0, 0.08)';
+  const textColor = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const textMuted = isDark ? '#64748B' : '#94A3B8';
+  const itemBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
+  const itemBorder = isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.05)';
 
   const handleDownload = () => {
     const link = document.createElement('a');
@@ -62,32 +73,39 @@ export const DownloadPage = () => {
   const PlatformIcon = current.icon;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A' }}>
-      {/* Back Button */}
-      <motion.button
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={() => navigate('/')}
+    <div style={{ minHeight: '100vh', background: isDark ? '#0B0F1A' : '#F1F5F9' }}>
+      {/* Header with Back Button */}
+      <motion.header
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
         style={{
-          position: 'fixed',
-          top: 'clamp(16px, 4vw, 32px)',
-          left: 'clamp(16px, 4vw, 32px)',
-          zIndex: 100,
-          display: 'inline-flex', 
-          alignItems: 'center', 
-          gap: '8px',
-          background: 'rgba(255, 255, 255, 0.05)', 
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '10px', 
-          padding: '10px 16px', 
-          color: '#94A3B8', 
-          fontSize: '14px',
-          cursor: 'pointer',
-          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          padding: 'clamp(16px, 4vw, 24px)',
+          paddingBottom: '0',
         }}
       >
-        <ArrowLeft size={18} /> กลับหน้าหลัก
-      </motion.button>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
+            borderRadius: '14px',
+            padding: '14px 24px',
+            color: textSecondary,
+            fontSize: '15px',
+            fontWeight: 500,
+            cursor: 'pointer',
+          }}
+        >
+          <ArrowLeft size={20} />
+          กลับหน้าหลัก
+        </button>
+      </motion.header>
 
       {/* Hero Section with Lamp */}
       <LampContainer>
@@ -100,7 +118,9 @@ export const DownloadPage = () => {
           <h1 style={{ 
             fontSize: 'clamp(36px, 8vw, 64px)', 
             fontWeight: 700, 
-            background: 'linear-gradient(to bottom right, #CBD5E1, #64748B)',
+            background: isDark 
+              ? 'linear-gradient(to bottom right, #CBD5E1, #64748B)'
+              : 'linear-gradient(to bottom right, #475569, #1E293B)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             margin: 0,
@@ -147,17 +167,17 @@ export const DownloadPage = () => {
                   padding: '20px 24px',
                   background: isActive 
                     ? data.gradient 
-                    : 'rgba(30, 41, 59, 0.5)',
+                    : cardBg,
                   border: isActive 
                     ? 'none' 
-                    : '1px solid rgba(255, 255, 255, 0.1)',
+                    : cardBorder,
                   borderRadius: '16px',
-                  color: isActive ? '#FFF' : '#94A3B8',
+                  color: isActive ? '#FFF' : textSecondary,
                   fontSize: '16px',
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  boxShadow: isActive ? `0 8px 32px ${data.color}40` : 'none',
+                  boxShadow: isActive ? `0 8px 32px ${data.color}40` : (isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)'),
                 }}
               >
                 <Icon size={24} />
@@ -176,12 +196,15 @@ export const DownloadPage = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
             style={{
-              background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+              background: isDark 
+                ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                : 'rgba(255, 255, 255, 0.95)',
               borderRadius: '24px',
               padding: 'clamp(24px, 5vw, 40px)',
               border: `1px solid ${current.color}30`,
               position: 'relative',
               overflow: 'hidden',
+              boxShadow: isDark ? 'none' : '0 8px 32px rgba(0, 0, 0, 0.08)',
             }}
           >
             {/* Glow Effect */}
@@ -220,7 +243,7 @@ export const DownloadPage = () => {
 
               {/* Title */}
               <h2 style={{ 
-                color: '#F8FAFC', 
+                color: textColor, 
                 fontSize: 'clamp(20px, 5vw, 28px)', 
                 fontWeight: 700, 
                 margin: '0 0 12px' 
@@ -254,22 +277,22 @@ export const DownloadPage = () => {
                 margin: '0 auto 28px',
               }}>
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: itemBg,
                   borderRadius: '12px',
                   padding: '14px',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  border: itemBorder,
                 }}>
-                  <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>ขนาดไฟล์</p>
-                  <p style={{ color: '#F8FAFC', fontSize: '15px', fontWeight: 600, margin: 0 }}>{current.size}</p>
+                  <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>ขนาดไฟล์</p>
+                  <p style={{ color: textColor, fontSize: '15px', fontWeight: 600, margin: 0 }}>{current.size}</p>
                 </div>
                 <div style={{
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: itemBg,
                   borderRadius: '12px',
                   padding: '14px',
-                  border: '1px solid rgba(255, 255, 255, 0.06)',
+                  border: itemBorder,
                 }}>
-                  <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>ความต้องการ</p>
-                  <p style={{ color: '#F8FAFC', fontSize: '15px', fontWeight: 600, margin: 0 }}>{current.requirements}</p>
+                  <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>ความต้องการ</p>
+                  <p style={{ color: textColor, fontSize: '15px', fontWeight: 600, margin: 0 }}>{current.requirements}</p>
                 </div>
               </div>
 
@@ -323,10 +346,11 @@ export const DownloadPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                background: 'rgba(30, 41, 59, 0.4)',
+                background: cardBg,
                 borderRadius: '12px',
                 padding: '16px',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                border: cardBorder,
+                boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
               }}
             >
               <div style={{
@@ -340,7 +364,7 @@ export const DownloadPage = () => {
               }}>
                 <feature.icon size={20} color="#6366F1" />
               </div>
-              <span style={{ color: '#E2E8F0', fontSize: '14px', fontWeight: 500 }}>
+              <span style={{ color: isDark ? '#E2E8F0' : '#334155', fontSize: '14px', fontWeight: 500 }}>
                 {feature.text}
               </span>
             </div>
@@ -358,7 +382,7 @@ export const DownloadPage = () => {
             fontSize: '13px', 
             marginTop: '48px',
             paddingTop: '24px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+            borderTop: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)'}`,
           }}
         >
           © 2024 Smoke Detection System

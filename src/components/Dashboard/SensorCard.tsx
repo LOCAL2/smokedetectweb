@@ -4,6 +4,7 @@ import type { SettingsConfig } from '../../hooks/useSettings';
 import { getSensorStatusWithSettings } from '../../hooks/useSettings';
 import { STATUS_COLORS, STATUS_LABELS } from '../../config/thresholds';
 import { formatNumber } from '../../utils/format';
+import { useTheme } from '../../context/ThemeContext';
 
 interface SensorCardProps {
   sensor: SensorData;
@@ -16,26 +17,51 @@ interface SensorCardProps {
 export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, onClick }: SensorCardProps) => {
   const status = getSensorStatusWithSettings(sensor.value, settings.warningThreshold, settings.dangerThreshold);
   const colors = STATUS_COLORS[status];
+  const { isDark } = useTheme();
+
+  // Theme-aware colors
+  const cardBg = isDark
+    ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)'
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)';
+
+  const borderColor = isDark
+    ? `${colors.primary}30`
+    : `${colors.primary}20`;
+
+  const textPrimary = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#64748B' : '#64748B';
+  const pinBg = isPinned
+    ? (isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)')
+    : (isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)');
+
+  const pinBorder = isPinned
+    ? (isDark ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(59, 130, 246, 0.3)')
+    : (isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)');
+
+  const progressBarBg = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
   return (
     <div
       onClick={onClick}
       style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        background: cardBg,
         backdropFilter: 'blur(20px)',
         borderRadius: '24px',
         padding: '24px',
-        border: `1px solid ${colors.primary}30`,
+        border: `1px solid ${borderColor}`,
         position: 'relative',
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'transform 0.2s, box-shadow 0.2s',
+        boxShadow: isDark ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.05)',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'scale(1.02) translateY(-4px)';
+        if (!isDark) e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)';
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'scale(1) translateY(0)';
+        if (!isDark) e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.05)';
       }}
     >
       {status === 'danger' && (
@@ -52,12 +78,12 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, on
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <h4 style={{ color: '#F8FAFC', fontSize: '18px', fontWeight: 600, margin: 0 }}>
+          <h4 style={{ color: textPrimary, fontSize: '18px', fontWeight: 600, margin: 0 }}>
             {sensor.name}
           </h4>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
-            <MapPin size={14} color="#64748B" />
-            <span style={{ color: '#64748B', fontSize: '13px' }}>{sensor.location}</span>
+            <MapPin size={14} color={textSecondary} />
+            <span style={{ color: textSecondary, fontSize: '13px' }}>{sensor.location}</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -68,8 +94,8 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, on
                 onTogglePin(sensor.id);
               }}
               style={{
-                background: isPinned ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                border: isPinned ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                background: pinBg,
+                border: pinBorder,
                 borderRadius: '8px',
                 padding: '6px',
                 cursor: 'pointer',
@@ -78,7 +104,7 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, on
               }}
               title={isPinned ? 'เลิกปักหมุด' : 'ปักหมุดไว้หน้าหลัก'}
             >
-              <Pin size={14} color={isPinned ? '#3B82F6' : '#64748B'} fill={isPinned ? '#3B82F6' : 'none'} />
+              <Pin size={14} color={isPinned ? '#3B82F6' : textSecondary} fill={isPinned ? '#3B82F6' : 'none'} />
             </button>
           )}
           {sensor.isOnline ? (
@@ -95,14 +121,15 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, on
             fontSize: '56px',
             fontWeight: 800,
             color: colors.primary,
-            textShadow: colors.glow,
+            textShadow: isDark ? colors.glow : 'none',
             letterSpacing: '-0.03em',
             lineHeight: 1,
+            filter: !isDark ? 'brightness(0.9) saturate(1.2)' : 'none',
           }}
         >
           {formatNumber(sensor.value)}
         </div>
-        <span style={{ color: '#94A3B8', fontSize: '16px', fontWeight: 500 }}>
+        <span style={{ color: textSecondary, fontSize: '16px', fontWeight: 500 }}>
           {sensor.unit}
         </span>
       </div>
@@ -123,7 +150,7 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, on
       <div style={{ marginTop: '16px' }}>
         <div style={{
           height: '6px',
-          background: 'rgba(255, 255, 255, 0.1)',
+          background: progressBarBg,
           borderRadius: '3px',
           overflow: 'hidden',
         }}>

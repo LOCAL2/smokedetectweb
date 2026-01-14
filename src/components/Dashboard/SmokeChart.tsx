@@ -15,6 +15,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import type { SensorHistory } from '../../types/sensor';
 import type { SettingsConfig } from '../../hooks/useSettings';
+import { useTheme } from '../../context/ThemeContext';
 
 ChartJS.register(
   CategoryScale,
@@ -37,6 +38,7 @@ interface SmokeChartProps {
   settings: SettingsConfig;
   initialViewMode?: 'average' | 'individual' | 'pinned';
   initialFullscreen?: boolean;
+  filteredSensorIds?: string[];
 }
 
 const COLORS = [
@@ -44,23 +46,42 @@ const COLORS = [
   '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1',
 ];
 
-export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'individual', initialFullscreen = false }: SmokeChartProps) => {
+export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'individual', initialFullscreen = false, filteredSensorIds }: SmokeChartProps) => {
   const chartRef = useRef<ChartJS<'line'>>(null);
   const [viewMode, setViewMode] = useState<'average' | 'individual' | 'pinned'>(initialViewMode);
   const [isFullscreen, setIsFullscreen] = useState(initialFullscreen);
+  const { isDark } = useTheme();
 
-  // Get unique sensors from history
-  const sensorIds = Object.keys(sensorHistory);
+  // Get unique sensors from history, filtered if needed
+  const allSensorIds = Object.keys(sensorHistory);
+  const sensorIds = filteredSensorIds
+    ? allSensorIds.filter(id => filteredSensorIds.includes(id))
+    : allSensorIds;
+
   const pinnedSensors = settings.pinnedSensors || [];
-  
+
+  // Theme colors
+  const cardBg = isDark
+    ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)';
+
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const textColor = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)';
+  const tooltipBg = isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+  const tooltipText = isDark ? '#F8FAFC' : '#0F172A';
+  const tooltipBody = isDark ? '#94A3B8' : '#64748B';
+  const fullscreenBg = isDark ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)' : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)';
+
   // Prepare data based on view mode
   const prepareChartData = () => {
     if (viewMode === 'average') {
-      const labels = data.map(item => 
-        new Date(item.timestamp).toLocaleTimeString('th-TH', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          second: '2-digit' 
+      const labels = data.map(item =>
+        new Date(item.timestamp).toLocaleTimeString('th-TH', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
         })
       );
       const values = data.map(item => item.value);
@@ -76,11 +97,11 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
           tension: 0.4,
           pointRadius: 4,
           pointBackgroundColor: '#3B82F6',
-          pointBorderColor: '#1E293B',
+          pointBorderColor: isDark ? '#1E293B' : '#FFF',
           pointBorderWidth: 2,
           pointHoverRadius: 7,
           pointHoverBackgroundColor: '#3B82F6',
-          pointHoverBorderColor: '#FFF',
+          pointHoverBorderColor: isDark ? '#FFF' : '#1E293B',
           pointHoverBorderWidth: 2,
           borderWidth: 2.5,
         }],
@@ -88,7 +109,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
     }
 
     // Individual or Pinned sensor view
-    const displaySensorIds = viewMode === 'pinned' 
+    const displaySensorIds = viewMode === 'pinned'
       ? sensorIds.filter(id => pinnedSensors.includes(id))
       : sensorIds;
 
@@ -97,12 +118,12 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
     displaySensorIds.forEach(id => {
       sensorHistory[id]?.forEach(h => allTimestamps.add(h.timestamp));
     });
-    
+
     const sortedTimestamps = Array.from(allTimestamps).sort();
-    
-    const labels = sortedTimestamps.map(ts => 
-      new Date(ts).toLocaleTimeString('th-TH', { 
-        hour: '2-digit', 
+
+    const labels = sortedTimestamps.map(ts =>
+      new Date(ts).toLocaleTimeString('th-TH', {
+        hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
       })
@@ -111,14 +132,14 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
     const datasets = displaySensorIds.slice(0, 10).map((sensorId, index) => {
       const sensorData = sensorHistory[sensorId] || [];
       const displayName = sensorData[0]?.location || sensorData[0]?.sensorName || sensorId;
-      
+
       // Map values to timestamps
       const valueMap = new Map<string, number>();
       sensorData.forEach(h => valueMap.set(h.timestamp, h.value));
-      
+
       const values = sortedTimestamps.map(ts => valueMap.get(ts) ?? null);
       const color = COLORS[index % COLORS.length];
-      
+
       return {
         label: displayName,
         data: values,
@@ -128,11 +149,11 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
         tension: 0.4,
         pointRadius: 4,
         pointBackgroundColor: color,
-        pointBorderColor: '#1E293B',
+        pointBorderColor: isDark ? '#1E293B' : '#FFF',
         pointBorderWidth: 2,
         pointHoverRadius: 7,
         pointHoverBackgroundColor: color,
-        pointHoverBorderColor: '#FFF',
+        pointHoverBorderColor: isDark ? '#FFF' : '#1E293B',
         pointHoverBorderWidth: 2,
         borderWidth: 2.5,
         spanGaps: true,
@@ -160,7 +181,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
         display: viewMode !== 'average',
         position: 'bottom' as const,
         labels: {
-          color: '#94A3B8',
+          color: textSecondary,
           usePointStyle: true,
           pointStyle: 'circle',
           padding: 20,
@@ -169,14 +190,14 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
       },
       tooltip: {
         enabled: true,
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-        titleColor: '#F8FAFC',
+        backgroundColor: tooltipBg,
+        titleColor: tooltipText,
         titleFont: { size: 13, weight: 600 as const },
-        bodyColor: '#94A3B8',
+        bodyColor: tooltipBody,
         bodyFont: { size: 12 },
         padding: 14,
         cornerRadius: 12,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: borderColor,
         borderWidth: 1,
         displayColors: true,
         boxWidth: 8,
@@ -197,13 +218,13 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
     },
     scales: {
       x: {
-        grid: { 
+        grid: {
           display: true,
-          color: 'rgba(255, 255, 255, 0.03)',
+          color: gridColor,
           drawTicks: false,
         },
         ticks: {
-          color: '#64748B',
+          color: textSecondary,
           font: { size: 11 },
           maxTicksLimit: 6,
           padding: 8,
@@ -212,12 +233,12 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
       },
       y: {
         min: 0,
-        grid: { 
-          color: 'rgba(255, 255, 255, 0.05)',
+        grid: {
+          color: gridColor,
           drawTicks: false,
         },
         ticks: {
-          color: '#64748B',
+          color: textSecondary,
           font: { size: 11 },
           padding: 12,
           callback: (value: any) => `${value}`,
@@ -272,27 +293,28 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.3 }}
       style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        background: cardBg,
         backdropFilter: 'blur(20px)',
         borderRadius: '24px',
         padding: 'clamp(16px, 4vw, 28px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${borderColor}`,
+        boxShadow: isDark ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.05)',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h3 style={{ color: '#F8FAFC', fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: 600, margin: 0 }}>
+          <h3 style={{ color: textColor, fontSize: 'clamp(16px, 4vw, 18px)', fontWeight: 600, margin: 0 }}>
             กราฟค่าควัน (30 นาทีล่าสุด)
           </h3>
-          <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>
-            {viewMode === 'average' 
-              ? 'แสดงค่าเฉลี่ยจากเซ็นเซอร์ทั้งหมด' 
+          <p style={{ color: textSecondary, fontSize: '13px', marginTop: '4px' }}>
+            {viewMode === 'average'
+              ? 'แสดงค่าเฉลี่ยจากเซ็นเซอร์ทั้งหมด'
               : viewMode === 'pinned'
                 ? `แสดงเฉพาะเซ็นเซอร์ที่ปักหมุด (${pinnedSensors.length})`
                 : 'แสดงแยกตามแต่ละเซ็นเซอร์'}
           </p>
         </div>
-        
+
         {/* View Mode Toggle & Fullscreen */}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
@@ -300,9 +322,9 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             style={{
               padding: '8px 16px',
               borderRadius: '10px',
-              border: viewMode === 'individual' ? 'none' : '1px solid rgba(255,255,255,0.1)',
-              background: viewMode === 'individual' ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' : 'rgba(255,255,255,0.05)',
-              color: viewMode === 'individual' ? '#FFF' : '#94A3B8',
+              border: viewMode === 'individual' ? 'none' : `1px solid ${borderColor}`,
+              background: viewMode === 'individual' ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+              color: viewMode === 'individual' ? '#FFF' : textSecondary,
               fontSize: '13px',
               fontWeight: 500,
               cursor: 'pointer',
@@ -316,9 +338,9 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             style={{
               padding: '8px 16px',
               borderRadius: '10px',
-              border: viewMode === 'pinned' ? 'none' : '1px solid rgba(255,255,255,0.1)',
-              background: viewMode === 'pinned' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'rgba(255,255,255,0.05)',
-              color: viewMode === 'pinned' ? '#FFF' : '#94A3B8',
+              border: viewMode === 'pinned' ? 'none' : `1px solid ${borderColor}`,
+              background: viewMode === 'pinned' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+              color: viewMode === 'pinned' ? '#FFF' : textSecondary,
               fontSize: '13px',
               fontWeight: 500,
               cursor: 'pointer',
@@ -332,9 +354,9 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             style={{
               padding: '8px 16px',
               borderRadius: '10px',
-              border: viewMode === 'average' ? 'none' : '1px solid rgba(255,255,255,0.1)',
-              background: viewMode === 'average' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'rgba(255,255,255,0.05)',
-              color: viewMode === 'average' ? '#FFF' : '#94A3B8',
+              border: viewMode === 'average' ? 'none' : `1px solid ${borderColor}`,
+              background: viewMode === 'average' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'),
+              color: viewMode === 'average' ? '#FFF' : textSecondary,
               fontSize: '13px',
               fontWeight: 500,
               cursor: 'pointer',
@@ -343,16 +365,16 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
           >
             ค่าเฉลี่ย
           </button>
-          
+
           {/* Fullscreen Button */}
           <button
             onClick={() => setIsFullscreen(true)}
             style={{
               padding: '8px 12px',
               borderRadius: '10px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#94A3B8',
+              border: `1px solid ${borderColor}`,
+              background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+              color: textSecondary,
               fontSize: '13px',
               fontWeight: 500,
               cursor: 'pointer',
@@ -374,28 +396,28 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
       `}</style>
 
       <div style={{ height: viewMode === 'average' ? '320px' : '380px', position: 'relative' }}>
-        <Line 
-          ref={chartRef} 
-          data={chartData} 
-          options={options} 
+        <Line
+          ref={chartRef}
+          data={chartData}
+          options={options}
           plugins={[thresholdPlugin]}
         />
       </div>
 
       {/* Legend for threshold lines */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '24px', 
+      <div style={{
+        display: 'flex',
+        gap: '24px',
         marginTop: '16px',
         paddingTop: '16px',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+        borderTop: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
         flexWrap: 'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ 
-            width: '24px', 
-            height: '2px', 
-            background: '#F59E0B', 
+          <div style={{
+            width: '24px',
+            height: '2px',
+            background: '#F59E0B',
             borderRadius: '2px',
             boxShadow: '0 0 8px rgba(245, 158, 11, 0.5)',
           }} />
@@ -404,10 +426,10 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ 
-            width: '24px', 
-            height: '2px', 
-            background: '#EF4444', 
+          <div style={{
+            width: '24px',
+            height: '2px',
+            background: '#EF4444',
             borderRadius: '2px',
             boxShadow: '0 0 8px rgba(239, 68, 68, 0.5)',
           }} />
@@ -427,7 +449,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+              background: fullscreenBg,
               zIndex: 1000,
               display: 'flex',
               flexDirection: 'column',
@@ -435,19 +457,19 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             }}
           >
             {/* Header */}
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               marginBottom: '24px',
               paddingBottom: '16px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+              borderBottom: `1px solid ${borderColor}`,
             }}>
               <div>
-                <h3 style={{ color: '#F8FAFC', fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 600, margin: 0 }}>
+                <h3 style={{ color: textColor, fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 600, margin: 0 }}>
                   กราฟค่าควัน
                 </h3>
-                <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0' }}>
+                <p style={{ color: textSecondary, fontSize: '14px', margin: '4px 0 0' }}>
                   ข้อมูลย้อนหลัง 30 นาที • {viewMode === 'average' ? 'ค่าเฉลี่ย' : viewMode === 'pinned' ? `ปักหมุด ${pinnedSensors.length} ตัว` : `${sensorIds.length} เซ็นเซอร์`}
                 </p>
               </div>
@@ -470,53 +492,53 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             </div>
 
             {/* View Mode Toggle */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '10px', 
-              marginBottom: '24px', 
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              marginBottom: '24px',
               flexWrap: 'wrap',
-              background: 'rgba(30, 41, 59, 0.5)',
+              background: isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.5)',
               padding: '8px',
               borderRadius: '14px',
               width: 'fit-content',
             }}>
               <button onClick={() => setViewMode('individual')}
-                style={{ 
-                  padding: '12px 24px', 
-                  borderRadius: '10px', 
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '10px',
                   border: 'none',
-                  background: viewMode === 'individual' ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' : 'transparent', 
-                  color: viewMode === 'individual' ? '#FFF' : '#94A3B8', 
-                  fontSize: '14px', 
-                  fontWeight: 600, 
+                  background: viewMode === 'individual' ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' : 'transparent',
+                  color: viewMode === 'individual' ? '#FFF' : textSecondary,
+                  fontSize: '14px',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}>
                 แยกเซ็นเซอร์
               </button>
               <button onClick={() => setViewMode('pinned')}
-                style={{ 
-                  padding: '12px 24px', 
-                  borderRadius: '10px', 
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '10px',
                   border: 'none',
-                  background: viewMode === 'pinned' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'transparent', 
-                  color: viewMode === 'pinned' ? '#FFF' : '#94A3B8', 
-                  fontSize: '14px', 
-                  fontWeight: 600, 
+                  background: viewMode === 'pinned' ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' : 'transparent',
+                  color: viewMode === 'pinned' ? '#FFF' : textSecondary,
+                  fontSize: '14px',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}>
                 ปักหมุด ({pinnedSensors.length})
               </button>
               <button onClick={() => setViewMode('average')}
-                style={{ 
-                  padding: '12px 24px', 
-                  borderRadius: '10px', 
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '10px',
                   border: 'none',
-                  background: viewMode === 'average' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'transparent', 
-                  color: viewMode === 'average' ? '#FFF' : '#94A3B8', 
-                  fontSize: '14px', 
-                  fontWeight: 600, 
+                  background: viewMode === 'average' ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' : 'transparent',
+                  color: viewMode === 'average' ? '#FFF' : textSecondary,
+                  fontSize: '14px',
+                  fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}>
@@ -525,18 +547,19 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             </div>
 
             {/* Chart Container */}
-            <div style={{ 
-              flex: 1, 
+            <div style={{
+              flex: 1,
               minHeight: 0,
-              background: 'rgba(30, 41, 59, 0.4)',
+              background: isDark ? 'rgba(30, 41, 59, 0.4)' : 'rgba(255, 255, 255, 0.4)',
               borderRadius: '20px',
               padding: 'clamp(16px, 3vw, 24px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: `1px solid ${borderColor}`,
               overflow: 'hidden',
+              boxShadow: isDark ? 'none' : 'inset 0 2px 10px rgba(0,0,0,0.05)',
             }}>
               <div style={{ height: '100%', borderRadius: '12px', overflow: 'hidden' }}>
-                <Line 
-                  data={chartData} 
+                <Line
+                  data={chartData}
                   options={{
                     ...options,
                     animation: { duration: 500 },
@@ -562,32 +585,32 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
                         },
                       },
                       y: {
-                      ...options.scales.y,
-                      ticks: {
-                        ...options.scales.y.ticks,
-                        font: { size: 12 },
+                        ...options.scales.y,
+                        ticks: {
+                          ...options.scales.y.ticks,
+                          font: { size: 12 },
+                        },
                       },
                     },
-                  },
-                }} 
-                plugins={[thresholdPlugin]} 
-              />
+                  }}
+                  plugins={[thresholdPlugin]}
+                />
               </div>
             </div>
 
             {/* Legend */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '32px', 
-              marginTop: '20px', 
+            <div style={{
+              display: 'flex',
+              gap: '32px',
+              marginTop: '20px',
               flexWrap: 'wrap',
               justifyContent: 'center',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ 
-                  width: '32px', 
-                  height: '3px', 
-                  background: '#F59E0B', 
+                <div style={{
+                  width: '32px',
+                  height: '3px',
+                  background: '#F59E0B',
                   borderRadius: '2px',
                   boxShadow: '0 0 10px rgba(245, 158, 11, 0.5)',
                 }} />
@@ -596,10 +619,10 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ 
-                  width: '32px', 
-                  height: '3px', 
-                  background: '#EF4444', 
+                <div style={{
+                  width: '32px',
+                  height: '3px',
+                  background: '#EF4444',
                   borderRadius: '2px',
                   boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)',
                 }} />

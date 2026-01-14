@@ -7,9 +7,19 @@ import {
 } from 'lucide-react';
 import { LampContainer } from '../components/ui/Lamp';
 import { LinkPreview } from '../components/ui/LinkPreview';
+import { useTheme } from '../context/ThemeContext';
 
 export const AboutPage = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
+
+  // Theme colors
+  const cardBg = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255, 255, 255, 0.9)';
+  const cardBorder = isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0, 0, 0, 0.08)';
+  const textColor = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const textMuted = isDark ? '#64748B' : '#94A3B8';
+  const dividerColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0, 0, 0, 0.08)';
 
   const features = [
     { icon: Wifi, title: 'Real-time Monitoring', desc: 'ตรวจจับค่าควันแบบเรียลไทม์ อัพเดททุกวินาที', color: '#3B82F6' },
@@ -63,52 +73,69 @@ export const AboutPage = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0B0F1A' }}>
-      {/* Hero Section with Lamp Effect */}
-      <div style={{ position: 'relative' }}>
-        <motion.button
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+    <div style={{ minHeight: '100vh', background: isDark ? '#0B0F1A' : '#F1F5F9' }}>
+      {/* Header with Back Button */}
+      <motion.header
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          padding: 'clamp(16px, 4vw, 24px)',
+          paddingBottom: '0',
+        }}
+      >
+        <button
           onClick={() => navigate('/')}
           style={{
-            position: 'absolute',
-            top: 'clamp(16px, 4vw, 32px)',
-            left: 'clamp(16px, 4vw, 32px)',
-            zIndex: 100,
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '10px', padding: '10px 16px', color: '#94A3B8', fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
+            borderRadius: '14px',
+            padding: '14px 24px',
+            color: isDark ? '#94A3B8' : '#64748B',
+            fontSize: '15px',
+            fontWeight: 500,
             cursor: 'pointer',
           }}
         >
-          <ArrowLeft size={18} /> กลับหน้าหลัก
-        </motion.button>
+          <ArrowLeft size={20} />
+          กลับหน้าหลัก
+        </button>
+      </motion.header>
 
-        <LampContainer>
-          <motion.h1
-            initial={{ opacity: 0.5, y: 100 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{
-              delay: 0.3,
-              duration: 0.8,
-              ease: "easeInOut",
-            }}
-            className="mt-8 bg-gradient-to-br from-slate-300 to-slate-500 py-4 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl"
-          >
-            Smoke Detection <br /> System
-          </motion.h1>
-        </LampContainer>
-      </div>
+      {/* Hero Section with Lamp Effect */}
+      <LampContainer>
+        <motion.h1
+          initial={{ opacity: 0.5, y: 100 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{
+            delay: 0.3,
+            duration: 0.8,
+            ease: "easeInOut",
+          }}
+          className={`mt-8 py-4 bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl ${
+            isDark 
+              ? 'bg-gradient-to-br from-slate-300 to-slate-500' 
+              : 'bg-gradient-to-br from-slate-600 to-slate-800'
+          }`}
+        >
+    Detection <br /> System
+        </motion.h1>
+      </LampContainer>
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px)' }}>
         {/* Project Description */}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
-          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '20px', padding: 'clamp(24px, 4vw, 32px)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <h2 style={{ color: '#F8FAFC', fontSize: '20px', fontWeight: 600, margin: '0 0 16px' }}>เกี่ยวกับโปรเจค</h2>
-            <p style={{ color: '#94A3B8', fontSize: '15px', lineHeight: 1.8, margin: '0 0 16px' }}>
+          <div style={{ background: cardBg, borderRadius: '20px', padding: 'clamp(24px, 4vw, 32px)', border: cardBorder, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
+            <h2 style={{ color: textColor, fontSize: '20px', fontWeight: 600, margin: '0 0 16px' }}>เกี่ยวกับโปรเจค</h2>
+            <p style={{ color: textSecondary, fontSize: '15px', lineHeight: 1.8, margin: '0 0 16px' }}>
               ระบบตรวจจับควันอัจฉริยะ เป็นโปรเจคสำหรับการศึกษาระดับ ปวช.3 พัฒนาขึ้นเพื่อช่วยตรวจจับและแจ้งเตือนเมื่อมีควันในปริมาณที่เป็นอันตราย โดยใช้เซ็นเซอร์ MQ-2 ร่วมกับ ESP32 ในการวัดค่าและส่งข้อมูลมายัง Dashboard แบบ Real-time ผ่าน REST API
             </p>
-            <p style={{ color: '#94A3B8', fontSize: '15px', lineHeight: 1.8, margin: 0 }}>
+            <p style={{ color: textSecondary, fontSize: '15px', lineHeight: 1.8, margin: 0 }}>
               ระบบสามารถตั้งค่าระดับการแจ้งเตือนได้ แบ่งเป็นระดับเฝ้าระวังและระดับอันตราย พร้อมแสดงกราฟประวัติค่าควันย้อนหลัง 24 ชั่วโมง รองรับการเชื่อมต่อหลายเซ็นเซอร์พร้อมกัน และสามารถแจ้งเตือนผ่าน LINE Messaging API ได้ทันที
             </p>
           </div>
@@ -116,18 +143,18 @@ export const AboutPage = () => {
 
         {/* Features Grid */}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
-          <h2 style={{ color: '#F8FAFC', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Target size={18} color="#3B82F6" /> คุณสมบัติหลัก
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {features.map((feature, index) => (
               <motion.div key={index} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + index * 0.1 }}
-                style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ background: cardBg, borderRadius: '16px', padding: '24px', border: cardBorder, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `${feature.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
                   <feature.icon size={24} color={feature.color} />
                 </div>
-                <h3 style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: '0 0 8px' }}>{feature.title}</h3>
-                <p style={{ color: '#64748B', fontSize: '14px', margin: 0, lineHeight: 1.6 }}>{feature.desc}</p>
+                <h3 style={{ color: textColor, fontSize: '16px', fontWeight: 600, margin: '0 0 8px' }}>{feature.title}</h3>
+                <p style={{ color: textMuted, fontSize: '14px', margin: 0, lineHeight: 1.6 }}>{feature.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -135,16 +162,16 @@ export const AboutPage = () => {
 
         {/* How It Works */}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
-          <h2 style={{ color: '#F8FAFC', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Clock size={18} color="#10B981" /> หลักการทำงาน
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
             {howItWorks.map((item, index) => (
-              <div key={index} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
+              <div key={index} style={{ background: cardBg, borderRadius: '16px', padding: '20px', border: cardBorder, position: 'relative', boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
                 <div style={{ position: 'absolute', top: '16px', right: '16px', width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, color: '#FFF' }}>{item.step}</div>
-                <item.icon size={24} color="#64748B" style={{ marginBottom: '12px' }} />
-                <h3 style={{ color: '#F8FAFC', fontSize: '15px', fontWeight: 600, margin: '0 0 6px' }}>{item.title}</h3>
-                <p style={{ color: '#64748B', fontSize: '13px', margin: 0, lineHeight: 1.5 }}>{item.desc}</p>
+                <item.icon size={24} color={textMuted} style={{ marginBottom: '12px' }} />
+                <h3 style={{ color: textColor, fontSize: '15px', fontWeight: 600, margin: '0 0 6px' }}>{item.title}</h3>
+                <p style={{ color: textMuted, fontSize: '13px', margin: 0, lineHeight: 1.5 }}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -152,14 +179,14 @@ export const AboutPage = () => {
 
         {/* Specifications */}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
-          <h2 style={{ color: '#F8FAFC', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Smartphone size={18} color="#F59E0B" /> ข้อมูลจำเพาะ
           </h2>
-          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+          <div style={{ background: cardBg, borderRadius: '16px', border: cardBorder, overflow: 'hidden', boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
             {specifications.map((spec, index) => (
-              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: index < specifications.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                <span style={{ color: '#94A3B8', fontSize: '14px' }}>{spec.label}</span>
-                <span style={{ color: '#F8FAFC', fontSize: '14px', fontWeight: 500 }}>{spec.value}</span>
+              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: index < specifications.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none' }}>
+                <span style={{ color: textSecondary, fontSize: '14px' }}>{spec.label}</span>
+                <span style={{ color: textColor, fontSize: '14px', fontWeight: 500 }}>{spec.value}</span>
               </div>
             ))}
           </div>
@@ -167,15 +194,15 @@ export const AboutPage = () => {
 
         {/* Project Goals */}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
-          <h2 style={{ color: '#F8FAFC', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <CheckCircle size={18} color="#10B981" /> วัตถุประสงค์ของโปรเจค
           </h2>
-          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ background: cardBg, borderRadius: '16px', padding: '24px', border: cardBorder, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
             <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
               {projectGoals.map((goal, index) => (
-                <li key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: index < projectGoals.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                <li key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '12px 0', borderBottom: index < projectGoals.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none' }}>
                   <CheckCircle size={18} color="#10B981" style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <span style={{ color: '#E2E8F0', fontSize: '14px', lineHeight: 1.6 }}>{goal}</span>
+                  <span style={{ color: isDark ? '#E2E8F0' : '#334155', fontSize: '14px', lineHeight: 1.6 }}>{goal}</span>
                 </li>
               ))}
             </ul>
@@ -184,19 +211,18 @@ export const AboutPage = () => {
 
         {/* Tech Stack */}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
-          <h2 style={{ color: '#F8FAFC', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Cpu size={18} color="#8B5CF6" /> เทคโนโลยีที่ใช้
           </h2>
           
-          {/* Frontend */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '16px' }}>
+          <div style={{ background: cardBg, borderRadius: '16px', padding: '24px', border: cardBorder, marginBottom: '16px', boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Palette size={20} color="#FFF" />
               </div>
               <div>
-                <h3 style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: 0 }}>Frontend</h3>
-                <p style={{ color: '#64748B', fontSize: '12px', margin: 0 }}>User Interface & Experience</p>
+                <h3 style={{ color: textColor, fontSize: '16px', fontWeight: 600, margin: 0 }}>Frontend</h3>
+                <p style={{ color: textMuted, fontSize: '12px', margin: 0 }}>User Interface & Experience</p>
               </div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -207,7 +233,7 @@ export const AboutPage = () => {
                     border: '1px solid rgba(59, 130, 246, 0.2)',
                     borderRadius: '10px', 
                     padding: '10px 16px', 
-                    color: '#E2E8F0', 
+                    color: isDark ? '#E2E8F0' : '#334155', 
                     fontSize: '14px', 
                     fontWeight: 500, 
                     display: 'inline-block', 
@@ -219,17 +245,15 @@ export const AboutPage = () => {
             </div>
           </div>
 
-          {/* Backend & Hardware Row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-            {/* Backend */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ background: cardBg, borderRadius: '16px', padding: '24px', border: cardBorder, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Server size={20} color="#FFF" />
                 </div>
                 <div>
-                  <h3 style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: 0 }}>Backend</h3>
-                  <p style={{ color: '#64748B', fontSize: '12px', margin: 0 }}>Server & API</p>
+                  <h3 style={{ color: textColor, fontSize: '16px', fontWeight: 600, margin: 0 }}>Backend</h3>
+                  <p style={{ color: textMuted, fontSize: '12px', margin: 0 }}>Server & API</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -240,7 +264,7 @@ export const AboutPage = () => {
                       border: '1px solid rgba(16, 185, 129, 0.2)',
                       borderRadius: '10px', 
                       padding: '10px 16px', 
-                      color: '#E2E8F0', 
+                      color: isDark ? '#E2E8F0' : '#334155', 
                       fontSize: '14px', 
                       fontWeight: 500, 
                       display: 'inline-block', 
@@ -252,15 +276,14 @@ export const AboutPage = () => {
               </div>
             </div>
 
-            {/* Hardware */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ background: cardBg, borderRadius: '16px', padding: '24px', border: cardBorder, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <CircuitBoard size={20} color="#FFF" />
                 </div>
                 <div>
-                  <h3 style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: 0 }}>Hardware</h3>
-                  <p style={{ color: '#64748B', fontSize: '12px', margin: 0 }}>IoT & Sensors</p>
+                  <h3 style={{ color: textColor, fontSize: '16px', fontWeight: 600, margin: 0 }}>Hardware</h3>
+                  <p style={{ color: textMuted, fontSize: '12px', margin: 0 }}>IoT & Sensors</p>
                 </div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -271,7 +294,7 @@ export const AboutPage = () => {
                       border: '1px solid rgba(245, 158, 11, 0.2)',
                       borderRadius: '10px', 
                       padding: '10px 16px', 
-                      color: '#E2E8F0', 
+                      color: isDark ? '#E2E8F0' : '#334155', 
                       fontSize: '14px', 
                       fontWeight: 500, 
                       display: 'inline-block', 
@@ -285,9 +308,8 @@ export const AboutPage = () => {
           </div>
         </motion.section>
 
-        {/* Footer */}
         <motion.p initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0, duration: 0.8, ease: "easeInOut" }}
-          style={{ textAlign: 'center', color: '#475569', fontSize: '13px', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          style={{ textAlign: 'center', color: '#475569', fontSize: '13px', marginTop: '48px', paddingTop: '24px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)'}` }}>
           © 2024 Smoke Detection System
         </motion.p>
       </div>

@@ -20,6 +20,8 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useAnalyticsData } from '../hooks/useAnalyticsData';
 import { useSettingsContext } from '../context/SettingsContext';
+import { HeatMapCalendar } from '../components/Analytics/HeatMapCalendar';
+import { useTheme } from '../context/ThemeContext';
 
 type DateRange = 7 | 14 | 30 | 45;
 
@@ -86,14 +88,39 @@ const generateMockData = () => {
 export const AnalyticsPage = () => {
   const navigate = useNavigate();
   const { settings } = useSettingsContext();
+  const { isDark } = useTheme();
   const { getSummary, exportAsText, exportAsJSON, resetData, analytics } = useAnalyticsData(
     settings.warningThreshold,
     settings.dangerThreshold
   );
   
   const [dateRange, setDateRange] = useState<DateRange>(7);
-  const [expandedLocation, setExpandedLocation] = useState<string | null>(null);
+  const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Theme colors
+  const cardBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)';
+  const cardBorder = isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.08)';
+  const textColor = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const textMuted = isDark ? '#64748B' : '#94A3B8';
+  const itemBg = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
+  const buttonBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+  const buttonBorder = isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)';
+  const headerBorder = isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.08)';
+  
+  // Toggle expanded location
+  const toggleLocation = (locationId: string) => {
+    setExpandedLocations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(locationId)) {
+        newSet.delete(locationId);
+      } else {
+        newSet.add(locationId);
+      }
+      return newSet;
+    });
+  };
   
   // Check if mock data exists
   const hasMockData = Object.keys(analytics.locations).length > 0;
@@ -104,6 +131,32 @@ export const AnalyticsPage = () => {
   const totalDanger = summary.reduce((sum, s) => sum + (s?.dangerCount || 0), 0);
   const totalWarning = summary.reduce((sum, s) => sum + (s?.warningCount || 0), 0);
   const overallMax = summary.length > 0 ? Math.max(...summary.map(s => s?.max || 0)) : 0;
+
+  // Prepare heat map data
+  const heatMapData = useMemo(() => {
+    const dayMap = new Map<string, { maxValue: number; avgValue: number; readings: number }>();
+    
+    Object.values(analytics.locations).forEach((loc: any) => {
+      if (loc.hourlyData) {
+        loc.hourlyData.forEach((h: any) => {
+          const date = h.hour.split('T')[0];
+          const existing = dayMap.get(date);
+          if (existing) {
+            existing.maxValue = Math.max(existing.maxValue, h.max);
+            existing.avgValue = (existing.avgValue * existing.readings + h.avg * h.count) / (existing.readings + h.count);
+            existing.readings += h.count;
+          } else {
+            dayMap.set(date, { maxValue: h.max, avgValue: h.avg, readings: h.count });
+          }
+        });
+      }
+    });
+    
+    return Array.from(dayMap.entries()).map(([date, data]) => ({
+      date,
+      ...data,
+    }));
+  }, [analytics.locations]);
 
   const handleExportText = () => {
     const text = exportAsText(dateRange);
@@ -233,7 +286,7 @@ export const AnalyticsPage = () => {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0B0F1A',
+      background: isDark ? '#0B0F1A' : '#F1F5F9',
       padding: 'clamp(16px, 4vw, 24px)',
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -249,7 +302,7 @@ export const AnalyticsPage = () => {
             gap: '16px',
             marginBottom: '32px',
             paddingBottom: '20px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+            borderBottom: headerBorder,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -259,11 +312,11 @@ export const AnalyticsPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: buttonBg,
+                border: buttonBorder,
                 borderRadius: '10px',
                 padding: '10px 16px',
-                color: '#94A3B8',
+                color: textSecondary,
                 fontSize: '14px',
                 cursor: 'pointer',
               }}
@@ -271,10 +324,10 @@ export const AnalyticsPage = () => {
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h1 style={{ color: '#F8FAFC', fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 600, margin: 0 }}>
+              <h1 style={{ color: textColor, fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 600, margin: 0 }}>
                 Analytics
               </h1>
-              <p style={{ color: '#64748B', fontSize: '13px', margin: '4px 0 0' }}>
+              <p style={{ color: textMuted, fontSize: '13px', margin: '4px 0 0' }}>
                 สรุปข้อมูล Sensor ย้อนหลัง
               </p>
             </div>
@@ -289,11 +342,11 @@ export const AnalyticsPage = () => {
                 style={{
                   padding: '8px 16px',
                   borderRadius: '8px',
-                  border: dateRange === days ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                  border: dateRange === days ? 'none' : buttonBorder,
                   background: dateRange === days 
                     ? 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' 
-                    : 'rgba(255, 255, 255, 0.05)',
-                  color: dateRange === days ? '#FFF' : '#94A3B8',
+                    : buttonBg,
+                  color: dateRange === days ? '#FFF' : textSecondary,
                   fontSize: '13px',
                   fontWeight: 500,
                   cursor: 'pointer',
@@ -318,10 +371,11 @@ export const AnalyticsPage = () => {
           }}
         >
           <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
+            background: cardBg,
             borderRadius: '16px',
             padding: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: cardBorder,
+            boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
               <div style={{ 
@@ -331,18 +385,19 @@ export const AnalyticsPage = () => {
               }}>
                 <MapPin size={20} color="#3B82F6" />
               </div>
-              <span style={{ color: '#94A3B8', fontSize: '14px' }}>สถานที่ทั้งหมด</span>
+              <span style={{ color: textSecondary, fontSize: '14px' }}>สถานที่ทั้งหมด</span>
             </div>
-            <p style={{ color: '#F8FAFC', fontSize: '28px', fontWeight: 700, margin: 0 }}>
+            <p style={{ color: textColor, fontSize: '28px', fontWeight: 700, margin: 0 }}>
               {summary.length}
             </p>
           </div>
 
           <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
+            background: cardBg,
             borderRadius: '16px',
             padding: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: cardBorder,
+            boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
               <div style={{ 
@@ -352,18 +407,19 @@ export const AnalyticsPage = () => {
               }}>
                 <BarChart3 size={20} color="#10B981" />
               </div>
-              <span style={{ color: '#94A3B8', fontSize: '14px' }}>การอ่านค่าทั้งหมด</span>
+              <span style={{ color: textSecondary, fontSize: '14px' }}>การอ่านค่าทั้งหมด</span>
             </div>
-            <p style={{ color: '#F8FAFC', fontSize: '28px', fontWeight: 700, margin: 0 }}>
+            <p style={{ color: textColor, fontSize: '28px', fontWeight: 700, margin: 0 }}>
               {totalReadings.toLocaleString()}
             </p>
           </div>
 
           <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
+            background: cardBg,
             borderRadius: '16px',
             padding: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: cardBorder,
+            boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
               <div style={{ 
@@ -373,7 +429,7 @@ export const AnalyticsPage = () => {
               }}>
                 <TrendingUp size={20} color="#8B5CF6" />
               </div>
-              <span style={{ color: '#94A3B8', fontSize: '14px' }}>ค่าสูงสุด</span>
+              <span style={{ color: textSecondary, fontSize: '14px' }}>ค่าสูงสุด</span>
             </div>
             <p style={{ color: getStatusColor(overallMax), fontSize: '28px', fontWeight: 700, margin: 0 }}>
               {overallMax} PPM
@@ -381,10 +437,11 @@ export const AnalyticsPage = () => {
           </div>
 
           <div style={{
-            background: 'rgba(30, 41, 59, 0.5)',
+            background: cardBg,
             borderRadius: '16px',
             padding: '20px',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
+            border: cardBorder,
+            boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
               <div style={{ 
@@ -394,17 +451,17 @@ export const AnalyticsPage = () => {
               }}>
                 <AlertTriangle size={20} color="#EF4444" />
               </div>
-              <span style={{ color: '#94A3B8', fontSize: '14px' }}>แจ้งเตือน</span>
+              <span style={{ color: textSecondary, fontSize: '14px' }}>แจ้งเตือน</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ textAlign: 'center' }}>
                 <p style={{ color: '#EF4444', fontSize: '24px', fontWeight: 700, margin: 0 }}>{totalDanger}</p>
-                <p style={{ color: '#64748B', fontSize: '11px', margin: 0 }}>อันตราย</p>
+                <p style={{ color: textMuted, fontSize: '11px', margin: 0 }}>อันตราย</p>
               </div>
               <span style={{ color: '#475569', fontSize: '20px' }}>/</span>
               <div style={{ textAlign: 'center' }}>
                 <p style={{ color: '#F59E0B', fontSize: '24px', fontWeight: 700, margin: 0 }}>{totalWarning}</p>
-                <p style={{ color: '#64748B', fontSize: '11px', margin: 0 }}>เฝ้าระวัง</p>
+                <p style={{ color: textMuted, fontSize: '11px', margin: 0 }}>เฝ้าระวัง</p>
               </div>
             </div>
           </div>
@@ -538,7 +595,7 @@ export const AnalyticsPage = () => {
           transition={{ delay: 0.3 }}
         >
           <h2 style={{ 
-            color: '#F8FAFC', 
+            color: textColor, 
             fontSize: '18px', 
             fontWeight: 600, 
             margin: '0 0 16px',
@@ -552,21 +609,21 @@ export const AnalyticsPage = () => {
 
           {summary.length === 0 ? (
             <div style={{
-              background: 'rgba(30, 41, 59, 0.5)',
+              background: cardBg,
               borderRadius: '16px',
               padding: '60px 40px',
               textAlign: 'center',
-              border: '1px dashed rgba(255, 255, 255, 0.1)',
+              border: `1px dashed ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Calendar size={48} color="#475569" style={{ marginBottom: '16px' }} />
-              <h3 style={{ color: '#94A3B8', fontSize: '16px', margin: '0 0 8px' }}>
+              <Calendar size={48} color={textMuted} style={{ marginBottom: '16px' }} />
+              <h3 style={{ color: textSecondary, fontSize: '16px', margin: '0 0 8px' }}>
                 ยังไม่มีข้อมูลในช่วงเวลานี้
               </h3>
-              <p style={{ color: '#64748B', fontSize: '14px', margin: 0 }}>
+              <p style={{ color: textMuted, fontSize: '14px', margin: 0 }}>
                 ข้อมูลจะถูกบันทึกอัตโนมัติเมื่อมีการอ่านค่า Sensor
               </p>
             </div>
@@ -579,17 +636,16 @@ export const AnalyticsPage = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.05 }}
                   style={{
-                    background: 'rgba(30, 41, 59, 0.5)',
+                    background: cardBg,
                     borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    border: cardBorder,
                     overflow: 'hidden',
+                    boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
                   }}
                 >
                   {/* Location Header */}
                   <button
-                    onClick={() => setExpandedLocation(
-                      expandedLocation === loc.locationId ? null : loc.locationId
-                    )}
+                    onClick={() => toggleLocation(loc.locationId)}
                     style={{
                       width: '100%',
                       display: 'flex',
@@ -611,17 +667,17 @@ export const AnalyticsPage = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#F8FAFC',
+                        color: textColor,
                         fontSize: '14px',
                         fontWeight: 600,
                       }}>
                         {index + 1}
                       </div>
                       <div>
-                        <h3 style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: 0 }}>
+                        <h3 style={{ color: textColor, fontSize: '16px', fontWeight: 600, margin: 0 }}>
                           {loc.locationName}
                         </h3>
-                        <p style={{ color: '#64748B', fontSize: '12px', margin: '4px 0 0' }}>
+                        <p style={{ color: textMuted, fontSize: '12px', margin: '4px 0 0' }}>
                           {loc.totalReadings.toLocaleString()} การอ่านค่า
                         </p>
                       </div>
@@ -629,7 +685,7 @@ export const AnalyticsPage = () => {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                       <div style={{ textAlign: 'right' }}>
-                        <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>ค่าสูงสุด</p>
+                        <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>ค่าสูงสุด</p>
                         <p style={{ 
                           color: getStatusColor(loc.max), 
                           fontSize: '18px', 
@@ -640,28 +696,28 @@ export const AnalyticsPage = () => {
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>ค่าเฉลี่ย</p>
-                        <p style={{ color: '#F8FAFC', fontSize: '18px', fontWeight: 700, margin: 0 }}>
+                        <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>ค่าเฉลี่ย</p>
+                        <p style={{ color: textColor, fontSize: '18px', fontWeight: 700, margin: 0 }}>
                           {loc.avg} PPM
                         </p>
                       </div>
-                      {expandedLocation === loc.locationId ? (
-                        <ChevronUp size={20} color="#64748B" />
+                      {expandedLocations.has(loc.locationId) ? (
+                        <ChevronUp size={20} color={textMuted} />
                       ) : (
-                        <ChevronDown size={20} color="#64748B" />
+                        <ChevronDown size={20} color={textMuted} />
                       )}
                     </div>
                   </button>
 
                   {/* Expanded Details */}
-                  {expandedLocation === loc.locationId && (
+                  {expandedLocations.has(loc.locationId) && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       style={{
                         padding: '0 20px 20px',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                        borderTop: headerBorder,
                       }}
                     >
                       <div style={{
@@ -671,42 +727,42 @@ export const AnalyticsPage = () => {
                         marginTop: '16px',
                       }}>
                         <div style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          background: itemBg,
                           borderRadius: '10px',
                           padding: '14px',
                         }}>
-                          <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>ค่าต่ำสุด</p>
+                          <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>ค่าต่ำสุด</p>
                           <p style={{ color: '#10B981', fontSize: '20px', fontWeight: 600, margin: 0 }}>
                             {loc.min} PPM
                           </p>
                         </div>
                         <div style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          background: itemBg,
                           borderRadius: '10px',
                           padding: '14px',
                         }}>
-                          <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>แจ้งเตือนอันตราย</p>
+                          <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>แจ้งเตือนอันตราย</p>
                           <p style={{ color: '#EF4444', fontSize: '20px', fontWeight: 600, margin: 0 }}>
                             {loc.dangerCount} ครั้ง
                           </p>
                         </div>
                         <div style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          background: itemBg,
                           borderRadius: '10px',
                           padding: '14px',
                         }}>
-                          <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>แจ้งเตือนเฝ้าระวัง</p>
+                          <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>แจ้งเตือนเฝ้าระวัง</p>
                           <p style={{ color: '#F59E0B', fontSize: '20px', fontWeight: 600, margin: 0 }}>
                             {loc.warningCount} ครั้ง
                           </p>
                         </div>
                         <div style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
+                          background: itemBg,
                           borderRadius: '10px',
                           padding: '14px',
                         }}>
-                          <p style={{ color: '#64748B', fontSize: '12px', margin: '0 0 4px' }}>จำนวนชั่วโมง</p>
-                          <p style={{ color: '#F8FAFC', fontSize: '20px', fontWeight: 600, margin: 0 }}>
+                          <p style={{ color: textMuted, fontSize: '12px', margin: '0 0 4px' }}>จำนวนชั่วโมง</p>
+                          <p style={{ color: textColor, fontSize: '20px', fontWeight: 600, margin: 0 }}>
                             {loc.hourlyData.length} ชม.
                           </p>
                         </div>
@@ -717,6 +773,20 @@ export const AnalyticsPage = () => {
               ))}
             </div>
           )}
+        </motion.div>
+
+        {/* Heat Map Calendar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          style={{ marginTop: '32px' }}
+        >
+          <HeatMapCalendar 
+            data={heatMapData}
+            warningThreshold={settings.warningThreshold}
+            dangerThreshold={settings.dangerThreshold}
+          />
         </motion.div>
 
         {/* Data Info */}
@@ -737,7 +807,7 @@ export const AnalyticsPage = () => {
           }}
         >
           <Calendar size={16} color="#60A5FA" />
-          <p style={{ color: '#94A3B8', fontSize: '13px', margin: 0 }}>
+          <p style={{ color: textSecondary, fontSize: '13px', margin: 0 }}>
             ข้อมูลเริ่มเก็บตั้งแต่: {formatDate(analytics.createdAt)} | 
             ข้อมูลจะถูกลบอัตโนมัติหลังจาก 45 วัน
           </p>
@@ -763,12 +833,13 @@ export const AnalyticsPage = () => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             style={{
-              background: '#1E293B',
+              background: isDark ? '#1E293B' : '#FFFFFF',
               borderRadius: '20px',
               padding: '32px',
               maxWidth: '400px',
               width: '100%',
               textAlign: 'center',
+              boxShadow: isDark ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.15)',
             }}
           >
             <div style={{
@@ -783,10 +854,10 @@ export const AnalyticsPage = () => {
             }}>
               <Trash2 size={32} color="#EF4444" />
             </div>
-            <h3 style={{ color: '#F8FAFC', fontSize: '20px', margin: '0 0 12px' }}>
+            <h3 style={{ color: textColor, fontSize: '20px', margin: '0 0 12px' }}>
               ยืนยันการลบข้อมูล?
             </h3>
-            <p style={{ color: '#94A3B8', fontSize: '14px', margin: '0 0 24px' }}>
+            <p style={{ color: textSecondary, fontSize: '14px', margin: '0 0 24px' }}>
               ข้อมูล Analytics ทั้งหมดจะถูกลบและไม่สามารถกู้คืนได้
             </p>
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -796,9 +867,9 @@ export const AnalyticsPage = () => {
                   flex: 1,
                   padding: '14px',
                   borderRadius: '10px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  border: buttonBorder,
                   background: 'transparent',
-                  color: '#94A3B8',
+                  color: textSecondary,
                   fontSize: '14px',
                   fontWeight: 500,
                   cursor: 'pointer',

@@ -1,6 +1,297 @@
 {
   "updates": [
     {
+      "version": "2.8.0",
+      "date": "2026-01-14",
+      "title": "เพิ่มตั้งค่าเปิด/ปิด Smooth Scroll",
+      "type": "feature",
+      "changes": [
+        "เพิ่มตัวเลือกเปิด/ปิด Smooth Scroll ในหน้าตั้งค่า",
+        "ค่าเริ่มต้นเป็นเปิด (scroll hijacking)",
+        "ปิดได้หากต้องการใช้ scroll แบบปกติของ browser"
+      ]
+    },
+    {
+      "version": "2.7.5",
+      "date": "2026-01-12",
+      "title": "แก้ไข ChatBot Popup รองรับ Light Mode",
+      "type": "fix",
+      "changes": [
+        "แก้ไข ChatBot Popup ให้แสดงสีถูกต้องใน Light Mode",
+        "ปรับสีพื้นหลัง ข้อความ และปุ่มให้เหมาะกับทั้ง Dark และ Light Theme",
+        "ปรับสี Avatar และ Message Bubble ให้อ่านง่ายขึ้น"
+      ]
+    },
+    {
+      "version": "2.7.4",
+      "date": "2026-01-12",
+      "title": "แก้ไข Dashboard รองรับ Light Mode",
+      "type": "fix",
+      "changes": [
+        "แก้ไข Skeleton Loading ให้แสดงสีถูกต้องใน Light Mode",
+        "ปรับสีพื้นหลังและ shimmer effect ให้เหมาะกับทั้ง Dark และ Light Theme",
+        "แก้ไข TypeScript error ใน Dashboard Layout"
+      ]
+    },
+    {
+      "version": "2.7.3",
+      "date": "2026-01-12",
+      "title": "ปรับปรุงปุ่มกลับหน้าหลักทุกหน้า",
+      "type": "improvement",
+      "changes": [
+        "ปรับปุ่มกลับหน้าหลักให้มีข้อความ 'กลับหน้าหลัก' ทุกหน้า",
+        "เพิ่มขนาดปุ่มและ padding ให้กดง่ายขึ้น",
+        "ปรับ border-radius เป็น 14px ให้ดูนุ่มนวลขึ้น"
+      ]
+    },
+    {
+      "version": "2.7.2",
+      "date": "2026-01-12",
+      "title": "ปรับปรุงหน้า Changelog",
+      "type": "fix",
+      "changes": [
+        "เปลี่ยน URL จาก /updates เป็น /changelog",
+        "ย้าย badge 'ล่าสุด' ไปอยู่ inline ไม่ทับปุ่มแสดง-ซ่อน",
+        "เพิ่มระยะห่างระหว่าง icon กับหัวข้อ"
+      ]
+    },
+    {
+      "version": "2.7.1",
+      "date": "2026-01-12",
+      "title": "ปรับปรุง UI ปุ่มกลับหน้าหลักและ Lamp Effect",
+      "type": "fix",
+      "changes": [
+        "แก้ไขตัวอักษร y ที่โดนทับใน Lamp Effect",
+        "ปรับปุ่มกลับหน้าหลักให้เหมือนกันทุกหน้า",
+        "เปลี่ยนจาก fixed position เป็น inline header"
+      ]
+    },
+    {
+      "version": "2.7.0",
+      "date": "2026-01-11",
+      "title": "ออกแบบหน้า Changelog ใหม่ระดับ Production",
+      "type": "improvement",
+      "changes": [
+        "เพิ่ม Hero Section พร้อม Lamp Effect สวยงาม",
+        "เพิ่ม Statistics Cards แสดงสถิติอัพเดท",
+        "เพิ่มระบบค้นหาและกรองตามประเภท",
+        "ออกแบบ Timeline Cards ใหม่แบบ Expandable",
+        "เพิ่ม Badge 'ล่าสุด' สำหรับอัพเดทใหม่สุด",
+        "รองรับ Light/Dark Mode อย่างสมบูรณ์",
+        "เพิ่ม Animation ที่ลื่นไหลทั่วทั้งหน้า"
+      ]
+    },
+    {
+      "version": "2.6.5",
+      "date": "2026-01-11",
+      "title": "ปรับปรุงสีหัวข้อหน้าต่างๆ ใน Light Mode",
+      "type": "fix",
+      "changes": [
+        "ปรับสีหัวข้อ User Guide, Download, About ให้เข้มขึ้นใน Light Mode",
+        "แก้ไขข้อความที่จางเกินไปให้อ่านง่ายขึ้น"
+      ]
+    },
+    {
+      "version": "2.6.4",
+      "date": "2026-01-11",
+      "title": "ปรับปรุง Heat Map ไม่แสดงข้อมูลวันที่ยังไม่ถึง",
+      "type": "fix",
+      "changes": [
+        "ไม่แสดงข้อมูลและสีสถานะสำหรับวันที่ยังไม่ถึง",
+        "วันที่ในอนาคตจะแสดงจางลงและไม่สามารถคลิกได้"
+      ]
+    },
+    {
+      "version": "2.6.3",
+      "date": "2026-01-11",
+      "title": "แก้ไขบัก Heat Map แสดงวันที่ผิด",
+      "type": "fix",
+      "changes": [
+        "แก้ไขปัญหาคลิกวันที่ 12 แต่แสดงวันที่ 11 ในรายละเอียด",
+        "แก้ไข timezone issue ที่ทำให้วันที่เลื่อนไป 1 วัน"
+      ]
+    },
+    {
+      "version": "2.6.2",
+      "date": "2026-01-11",
+      "title": "แก้ไข Lamp Header รองรับ Light Mode",
+      "type": "fix",
+      "changes": [
+        "แก้ไข Lamp Effect ในหน้า User Guide, Download และหน้าอื่นๆ ให้รองรับ Light Mode",
+        "เปลี่ยนพื้นหลังจากสีเข้มเป็นสีอ่อนเมื่อใช้ Light Theme",
+        "ปรับสี glow effect ให้เหมาะกับทั้งสอง Theme"
+      ]
+    },
+    {
+      "version": "2.6.1",
+      "date": "2026-01-11",
+      "title": "แก้ไข Heat Map Calendar รองรับ Light Mode",
+      "type": "fix",
+      "changes": [
+        "แก้ไข Heat Map ปฏิทินให้แสดงสีถูกต้องใน Light Mode",
+        "ปรับสีพื้นหลัง ขอบ และข้อความให้เหมาะกับทั้ง Dark และ Light Theme",
+        "ปรับปรุง Stats Panel ให้อ่านง่ายขึ้นใน Light Mode"
+      ]
+    },
+    {
+      "version": "2.6.0",
+      "date": "2026-01-11",
+      "title": "ปรับปรุง Light Mode ทุกหน้า",
+      "type": "improvement",
+      "changes": [
+        "แก้ไขหน้า User Guide ให้รองรับ Light Mode",
+        "แก้ไขหน้า Download ให้รองรับ Light Mode",
+        "แก้ไขหน้า Analytics ให้รองรับ Light Mode",
+        "แก้ไขหน้า Changelog ให้รองรับ Light Mode",
+        "ปรับปรุงสีการ์ด ปุ่ม และข้อความให้แสดงถูกต้องทุก Theme"
+      ]
+    },
+    {
+      "version": "2.5.0",
+      "date": "2026-01-11",
+      "title": "เพิ่มการจัดเรียง Layout แถวล่าง",
+      "type": "feature",
+      "changes": [
+        "เพิ่มแถวล่างสุดในการจัดเรียง Layout (แผนที่, กราฟเปรียบเทียบ, ประวัติสถานะ)",
+        "เพิ่ม Component วิเคราะห์แนวโน้มให้เลือกใช้งาน",
+        "สามารถสลับตำแหน่ง Component ได้ทั้ง 7 ตำแหน่ง",
+        "ปรับปรุง Preview ให้แสดงผลสวยงามขึ้น"
+      ]
+    },
+    {
+      "version": "2.4.0",
+      "date": "2026-01-11",
+      "title": "ปรับปรุง UI จัดการโซน Sensor",
+      "type": "improvement",
+      "changes": [
+        "ออกแบบส่วนจัดการโซนใหม่ให้สวยงามเหมือนส่วน Layout",
+        "เพิ่ม Preview แท่งกราฟสีตามโซน",
+        "แสดงจำนวน Sensor ในแต่ละโซน",
+        "เพิ่มคำอธิบายการใช้งานโซน"
+      ]
+    },
+    {
+      "version": "2.3.0",
+      "date": "2026-01-11",
+      "title": "ปรับปรุง Light Mode ทั้งระบบ",
+      "type": "improvement",
+      "changes": [
+        "แก้ไขสีข้อความและปุ่มในหน้า Chat ให้รองรับ Light Mode",
+        "ปรับปรุงสีพื้นหลังหน้าดาวน์โหลด, คู่มือ, เกี่ยวกับ, Analytics, Updates, ผู้จัดทำ",
+        "แก้ไขปุ่ม 'ไปที่หน้าตั้งค่า' ให้แสดงสีถูกต้องใน Light Mode"
+      ]
+    },
+    {
+      "version": "2.2.2",
+      "date": "2026-01-11",
+      "title": "ปรับปรุง MiniMap และ Layout หน้าหลัก",
+      "type": "fix",
+      "changes": [
+        "แก้ไข MiniMap ให้แสดงแผนที่เต็มช่อง",
+        "ปรับ Zoom Level ให้เห็นภาพรวมมากขึ้น",
+        "แก้ไขปัญหา Modal พริบและ Zoom ไม่ได้",
+        "ปรับปรุง Layout Dashboard ให้แสดงผลสวยงาม"
+      ]
+    },
+    {
+      "version": "2.2.1",
+      "date": "2026-01-11",
+      "title": "แก้ไข MiniMap และปุ่มขยาย",
+      "type": "fix",
+      "changes": [
+        "แก้ไขปุ่มขยายแผนที่ให้เปิด Modal แทนการไปหน้า Sensors",
+        "เพิ่ม Modal แสดงแผนที่ขนาดใหญ่พร้อม Zoom Control",
+        "เพิ่ม Attribution สำหรับ Map Tiles"
+      ]
+    },
+    {
+      "version": "2.2.0",
+      "date": "2026-01-11",
+      "title": "ปรับปรุง Heat Map Calendar",
+      "type": "improvement",
+      "changes": [
+        "ออกแบบ Heat Map Calendar ใหม่ให้ดูมืออาชีพขึ้น",
+        "เพิ่มการเลือกดูรายเดือนย้อนหลังได้",
+        "เพิ่ม Panel แสดงสถิติเมื่อคลิกวัน",
+        "ย้าย Heat Map ไปอยู่ล่างรายละเอียดสถานที่",
+        "ปรับปรุง Header เป็น Glass Design"
+      ]
+    },
+    {
+      "version": "2.1.2",
+      "date": "2026-01-11",
+      "title": "แก้ไข Panel Scroll",
+      "type": "fix",
+      "changes": [
+        "แก้ไข Panel เลื่อนได้แล้วหน้าหลังไม่เลื่อนตาม",
+        "ป้องกัน scroll event bubble ไปยังหน้าหลัก"
+      ]
+    },
+    {
+      "version": "2.1.1",
+      "date": "2026-01-11",
+      "title": "แก้ไขบัก QR Code และ Panel",
+      "type": "fix",
+      "changes": [
+        "แก้ไข QR Code สแกนแล้วเปิด Sensor Detail อัตโนมัติ",
+        "แก้ไข Panel เลื่อนไม่ได้ และหน้าหลังเลื่อนแทน",
+        "แก้ไข Skeleton Loading ค้างเมื่อเปิดหลาย Tab"
+      ]
+    },
+    {
+      "version": "2.1.0",
+      "date": "2026-01-11",
+      "title": "เพิ่มการแสดงผล Components ใหม่",
+      "type": "improvement",
+      "changes": [
+        "เพิ่ม Mini Map แสดงตำแหน่ง Sensor บน Dashboard",
+        "เพิ่มกราฟเปรียบเทียบค่า Sensor แบบ Bar Chart",
+        "เพิ่มประวัติสถานะ Online/Offline ของ Sensor",
+        "เพิ่ม Heat Map Calendar ในหน้า Analytics",
+        "เพิ่ม QR Code สำหรับแชร์ข้อมูล Sensor",
+        "เพิ่ม Offline Indicator แจ้งเตือนเมื่อไม่มีเน็ต",
+        "แก้ไข Build Error ของ Offline Support"
+      ]
+    },
+    {
+      "version": "2.0.0",
+      "date": "2025-01-11",
+      "title": "อัพเดทใหญ่ - เพิ่มฟีเจอร์ใหม่หลายรายการ",
+      "type": "release",
+      "changes": [
+        "เพิ่ม Dark/Light Mode Toggle สลับธีมสีได้",
+        "เพิ่ม Mini Map Preview แสดงแผนที่ขนาดเล็กบน Dashboard",
+        "เพิ่มกราฟเปรียบเทียบค่า Sensor",
+        "เพิ่ม Heat Map Calendar แสดงวันที่มีค่าสูงเป็นสีแดง",
+        "เพิ่มประวัติสถานะ Sensor Online/Offline",
+        "เพิ่ม QR Code สำหรับแต่ละ Sensor",
+        "ปรับปรุง Skeleton Loading ให้ดูเป็นธรรมชาติขึ้น",
+        "เพิ่ม Offline Support แสดงข้อมูลล่าสุดเมื่อไม่มีเน็ต"
+      ]
+    },
+    {
+      "version": "1.6.1",
+      "date": "2025-12-31",
+      "title": "ปรับปรุงหน้า Analytics",
+      "type": "improvement",
+      "changes": [
+        "สามารถเปิดดูรายละเอียดหลายสถานที่พร้อมกันได้",
+        "กดเปิด/ปิดแต่ละสถานที่แยกกันได้อิสระ"
+      ]
+    },
+    {
+      "version": "1.6.0",
+      "date": "2025-12-31",
+      "title": "Smooth Scroll แบบกำหนดเอง",
+      "type": "feature",
+      "changes": [
+        "เพิ่มระบบ Smooth Scroll แบบ custom ที่ควบคุมด้วย JavaScript",
+        "การเลื่อนหน้า smooth โดยไม่พึ่ง OS/Browser setting",
+        "รองรับ Mouse wheel, Keyboard และ Touch",
+        "ใช้ easing animation ให้การเลื่อนดูเป็นธรรมชาติ"
+      ]
+    },
+    {
       "version": "1.5.2",
       "date": "2025-12-31",
       "title": "ปรับปรุง AI Chat ให้เข้าใจบริบทมากขึ้น",

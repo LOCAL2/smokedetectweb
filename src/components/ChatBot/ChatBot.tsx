@@ -5,6 +5,7 @@ import { MessageCircle, X, Send, Bot, User, Loader, Copy, Check, RefreshCw, Thum
 import { streamMessageFromGroq, type ChatMessage } from '../../services/groqService';
 import { useSensorDataContext } from '../../context/SensorDataContext';
 import { useSettingsContext } from '../../context/SettingsContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
 
@@ -34,9 +35,9 @@ const NAVIGATION_MAP: Record<string, { path: string; name: string }> = {
   'เซ็นเซอร์': { path: '/sensors', name: 'หน้าเซ็นเซอร์' },
   'sensor': { path: '/sensors', name: 'หน้าเซ็นเซอร์' },
   'ปักหมุด': { path: '/sensors', name: 'หน้าเซ็นเซอร์' },
-  'อัพเดท': { path: '/updates', name: 'หน้าอัพเดท' },
-  'updates': { path: '/updates', name: 'หน้าอัพเดท' },
-  'changelog': { path: '/updates', name: 'หน้าอัพเดท' },
+  'อัพเดท': { path: '/changelog', name: 'หน้า Changelog' },
+  'updates': { path: '/changelog', name: 'หน้า Changelog' },
+  'changelog': { path: '/changelog', name: 'หน้า Changelog' },
 };
 
 const checkNavigation = (input: string): { path: string; name: string } | null => {
@@ -301,6 +302,7 @@ export const ChatBot = () => {
   const location = useLocation();
   const { sensors, stats } = useSensorDataContext();
   const { settings, updateSettings } = useSettingsContext();
+  const { isDark } = useTheme();
   
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ExtendedMessage[]>([]);
@@ -621,6 +623,20 @@ export const ChatBot = () => {
 
   if (!API_KEY || location.pathname === '/chat') return null;
 
+  // Theme colors
+  const popupBg = isDark ? '#0F172A' : '#FFFFFF';
+  const popupBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  const inputBg = isDark ? '#1E293B' : '#F1F5F9';
+  const messageBg = isDark ? '#1E293B' : '#F1F5F9';
+  const textColor = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const textMuted = isDark ? '#64748B' : '#94A3B8';
+  const avatarBg = isDark ? '#374151' : '#E2E8F0';
+  const buttonBg = isDark ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.08)';
+  const buttonBorder = isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.15)';
+  const buttonText = isDark ? '#A5B4FC' : '#6366F1';
+  const disabledBg = isDark ? '#374151' : '#CBD5E1';
+
   return (
     <>
       {/* Floating Chat Button */}
@@ -672,7 +688,7 @@ export const ChatBot = () => {
             animate={{ opacity: 1, scale: 1 }} 
             exit={{ opacity: 0, scale: 0.3 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            style={{ position: 'fixed', bottom: 'calc(clamp(20px,4vw,28px) + 70px)', right: 'clamp(16px,4vw,24px)', width: 'min(380px, calc(100vw - 32px))', height: 'min(520px, calc(100vh - 140px))', background: '#0F172A', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', zIndex: 1001, transformOrigin: 'bottom right' }}>
+            style={{ position: 'fixed', bottom: 'calc(clamp(20px,4vw,28px) + 70px)', right: 'clamp(16px,4vw,24px)', width: 'min(380px, calc(100vw - 32px))', height: 'min(520px, calc(100vh - 140px))', background: popupBg, borderRadius: 20, border: `1px solid ${popupBorder}`, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: isDark ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(0,0,0,0.15)', zIndex: 1001, transformOrigin: 'bottom right' }}>
             
             {/* Header */}
             <div style={{ padding: 'clamp(12px,3vw,16px)', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -701,11 +717,11 @@ export const ChatBot = () => {
             <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(12px,3vw,16px)', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {messages.length === 0 && !streamingText && !isThinking && (
                 <div style={{ textAlign: 'center', padding: '24px 12px' }}>
-                  <div style={{ width: 56, height: 56, borderRadius: 14, background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 14, background: buttonBg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                     <MessageCircle size={24} color="#6366F1" />
                   </div>
-                  <p style={{ color: '#F8FAFC', fontSize: 14, fontWeight: 500, margin: '0 0 4px' }}>สวัสดีครับ</p>
-                  <p style={{ color: '#64748B', fontSize: 12, margin: '0 0 16px' }}>ถามเกี่ยวกับระบบได้เลย</p>
+                  <p style={{ color: textColor, fontSize: 14, fontWeight: 500, margin: '0 0 4px' }}>สวัสดีครับ</p>
+                  <p style={{ color: textMuted, fontSize: 12, margin: '0 0 16px' }}>ถามเกี่ยวกับระบบได้เลย</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <AnimatePresence mode="wait">
                       {quickPrompts.map(q => (
@@ -715,7 +731,7 @@ export const ChatBot = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           onClick={() => { setInput(q); setTimeout(() => handleSend(q), 50); }}
-                          style={{ padding: '10px 14px', background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 10, color: '#A5B4FC', fontSize: 12, cursor: 'pointer', textAlign: 'center' }}
+                          style={{ padding: '10px 14px', background: buttonBg, border: `1px solid ${buttonBorder}`, borderRadius: 10, color: buttonText, fontSize: 12, cursor: 'pointer', textAlign: 'center' }}
                         >
                           {q}
                         </motion.button>
@@ -723,7 +739,7 @@ export const ChatBot = () => {
                     </AnimatePresence>
                     <button 
                       onClick={shufflePrompts}
-                      style={{ padding: '8px 14px', background: 'transparent', border: '1px dashed rgba(99,102,241,0.3)', borderRadius: 10, color: '#64748B', fontSize: 11, cursor: 'pointer', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                      style={{ padding: '8px 14px', background: 'transparent', border: `1px dashed ${buttonBorder}`, borderRadius: 10, color: textMuted, fontSize: 11, cursor: 'pointer', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                     >
                       <RefreshCw size={12} />
                       ดู Prompt อื่น
@@ -734,25 +750,25 @@ export const ChatBot = () => {
 
               {messages.map((msg, i) => (
                 <div key={msg.id} className="msg-box" style={{ display: 'flex', gap: 8, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: msg.role === 'user' ? '#3B82F6' : '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {msg.role === 'user' ? <User size={14} color="#FFF" /> : <Bot size={14} color="#FFF" />}
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: msg.role === 'user' ? '#3B82F6' : avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {msg.role === 'user' ? <User size={14} color="#FFF" /> : <Bot size={14} color={isDark ? '#FFF' : '#64748B'} />}
                   </div>
                   <div style={{ maxWidth: '80%' }}>
-                    <div style={{ padding: '10px 14px', borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: msg.role === 'user' ? '#3B82F6' : '#1E293B', color: '#F8FAFC', fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</div>
+                    <div style={{ padding: '10px 14px', borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: msg.role === 'user' ? '#3B82F6' : messageBg, color: msg.role === 'user' ? '#FFF' : textColor, fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.content}</div>
                     {msg.role === 'assistant' && (
                       <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                        <button onClick={() => copyText(msg.content, msg.id)} style={{ background: copiedId === msg.id ? 'rgba(16,185,129,0.15)' : 'rgba(99,102,241,0.1)', border: '1px solid ' + (copiedId === msg.id ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.2)'), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: copiedId === msg.id ? '#10B981' : '#A5B4FC', fontSize: 11, transition: 'all 0.2s' }}>
+                        <button onClick={() => copyText(msg.content, msg.id)} style={{ background: copiedId === msg.id ? 'rgba(16,185,129,0.15)' : buttonBg, border: '1px solid ' + (copiedId === msg.id ? 'rgba(16,185,129,0.3)' : buttonBorder), borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: copiedId === msg.id ? '#10B981' : buttonText, fontSize: 11, transition: 'all 0.2s' }}>
                           {copiedId === msg.id ? <Check size={12} /> : <Copy size={12} />}
                           <span>{copiedId === msg.id ? 'คัดลอกแล้ว' : 'คัดลอก'}</span>
                         </button>
-                        <button onClick={() => regenerate(i)} style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: '#A5B4FC', fontSize: 11, transition: 'all 0.2s' }}>
+                        <button onClick={() => regenerate(i)} style={{ background: buttonBg, border: `1px solid ${buttonBorder}`, borderRadius: 6, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, color: buttonText, fontSize: 11, transition: 'all 0.2s' }}>
                           <RefreshCw size={12} />
                           <span>ตอบใหม่</span>
                         </button>
-                        <button onClick={() => handleLike(msg.id, !msg.liked)} style={{ background: msg.liked ? 'rgba(16,185,129,0.2)' : 'rgba(99,102,241,0.1)', border: '1px solid ' + (msg.liked ? 'rgba(16,185,129,0.3)' : 'rgba(99,102,241,0.2)'), borderRadius: 6, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: msg.liked ? '#10B981' : '#A5B4FC', transition: 'all 0.2s' }}>
+                        <button onClick={() => handleLike(msg.id, !msg.liked)} style={{ background: msg.liked ? 'rgba(16,185,129,0.2)' : buttonBg, border: '1px solid ' + (msg.liked ? 'rgba(16,185,129,0.3)' : buttonBorder), borderRadius: 6, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: msg.liked ? '#10B981' : buttonText, transition: 'all 0.2s' }}>
                           <ThumbsUp size={12} />
                         </button>
-                        <button onClick={() => handleDislike(msg.id, !msg.disliked)} style={{ background: msg.disliked ? 'rgba(239,68,68,0.2)' : 'rgba(99,102,241,0.1)', border: '1px solid ' + (msg.disliked ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.2)'), borderRadius: 6, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: msg.disliked ? '#EF4444' : '#A5B4FC', transition: 'all 0.2s' }}>
+                        <button onClick={() => handleDislike(msg.id, !msg.disliked)} style={{ background: msg.disliked ? 'rgba(239,68,68,0.2)' : buttonBg, border: '1px solid ' + (msg.disliked ? 'rgba(239,68,68,0.3)' : buttonBorder), borderRadius: 6, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: msg.disliked ? '#EF4444' : buttonText, transition: 'all 0.2s' }}>
                           <ThumbsDown size={12} />
                         </button>
                       </div>
@@ -763,21 +779,21 @@ export const ChatBot = () => {
 
               {isThinking && (
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bot size={14} color="#FFF" /></div>
-                  <div style={{ background: '#1E293B', borderRadius: 14, padding: 12, flex: 1 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bot size={14} color={isDark ? '#FFF' : '#64748B'} /></div>
+                  <div style={{ background: messageBg, borderRadius: 14, padding: 12, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                       <Loader size={12} color="#3B82F6" className="spin" />
-                      <span style={{ color: '#94A3B8', fontSize: 12 }}>{thinkingSteps.length} ขั้นตอน</span>
+                      <span style={{ color: textSecondary, fontSize: 12 }}>{thinkingSteps.length} ขั้นตอน</span>
                       <span style={{ color: currentStep >= thinkingSteps.length - 1 ? '#10B981' : '#F59E0B', fontSize: 11, marginLeft: 'auto' }}>
                         {currentStep >= thinkingSteps.length - 1 ? '✓' : '...'}
                       </span>
                     </div>
                     {thinkingSteps.map((step, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
-                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: idx <= currentStep ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${idx <= currentStep ? '#10B981' : '#475569'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: idx <= currentStep ? 'rgba(16,185,129,0.15)' : (isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'), border: `1px solid ${idx <= currentStep ? '#10B981' : (isDark ? '#475569' : '#CBD5E1')}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           {idx <= currentStep && <span style={{ color: '#10B981', fontSize: 8 }}>✓</span>}
                         </div>
-                        <span style={{ color: idx <= currentStep ? '#F8FAFC' : '#64748B', fontSize: 11 }}>{step}</span>
+                        <span style={{ color: idx <= currentStep ? textColor : textMuted, fontSize: 11 }}>{step}</span>
                       </div>
                     ))}
                   </div>
@@ -786,31 +802,31 @@ export const ChatBot = () => {
 
               {streamingText && (
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bot size={14} color="#FFF" /></div>
-                  <div style={{ maxWidth: '80%', padding: '10px 14px', borderRadius: '14px 14px 14px 4px', background: '#1E293B', color: '#F8FAFC', fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{streamingText}<span className="cursor" /></div>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Bot size={14} color={isDark ? '#FFF' : '#64748B'} /></div>
+                  <div style={{ maxWidth: '80%', padding: '10px 14px', borderRadius: '14px 14px 14px 4px', background: messageBg, color: textColor, fontSize: 13, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{streamingText}<span className="cursor" /></div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
-            <div style={{ padding: 'clamp(10px,2.5vw,14px)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', gap: 8, background: '#1E293B', borderRadius: 12, padding: 4 }}>
+            <div style={{ padding: 'clamp(10px,2.5vw,14px)', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }}>
+              <div style={{ display: 'flex', gap: 8, background: inputBg, borderRadius: 12, padding: 4 }}>
                 {recognitionRef.current && (
                   <button onClick={toggleVoice} style={{ padding: '10px', background: isListening ? 'rgba(239,68,68,0.2)' : 'transparent', border: 'none', borderRadius: 8, cursor: 'pointer', display: 'flex' }}>
-                    {isListening ? <MicOff size={16} color="#EF4444" /> : <Mic size={16} color="#94A3B8" />}
+                    {isListening ? <MicOff size={16} color="#EF4444" /> : <Mic size={16} color={textSecondary} />}
                   </button>
                 )}
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
                   placeholder={isListening ? 'กำลังฟัง...' : 'ถามเกี่ยวกับระบบ...'}
                   disabled={isLoading && !abortController}
-                  style={{ flex: 1, padding: '10px 12px', background: 'transparent', border: 'none', color: '#F8FAFC', fontSize: 13, outline: 'none', minWidth: 0 }} />
+                  style={{ flex: 1, padding: '10px 12px', background: 'transparent', border: 'none', color: textColor, fontSize: 13, outline: 'none', minWidth: 0 }} />
                 {isLoading ? (
                   <button onClick={stopGeneration} style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.2)', border: 'none', borderRadius: 8, cursor: 'pointer', display: 'flex' }}>
                     <Square size={14} color="#EF4444" fill="#EF4444" />
                   </button>
                 ) : (
-                  <button onClick={() => handleSend()} disabled={!input.trim()} style={{ padding: '10px 12px', background: input.trim() ? '#6366F1' : '#374151', border: 'none', borderRadius: 8, cursor: input.trim() ? 'pointer' : 'not-allowed', display: 'flex' }}>
+                  <button onClick={() => handleSend()} disabled={!input.trim()} style={{ padding: '10px 12px', background: input.trim() ? '#6366F1' : disabledBg, border: 'none', borderRadius: 8, cursor: input.trim() ? 'pointer' : 'not-allowed', display: 'flex' }}>
                     <Send size={14} color="#FFF" />
                   </button>
                 )}

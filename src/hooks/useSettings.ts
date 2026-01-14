@@ -24,12 +24,18 @@ export interface LineNotifySettings {
   lastNotifyTime?: number;
 }
 
-export type DashboardComponent = 'statusCards' | 'chart' | 'ranking' | 'pinnedSensors';
+export type DashboardComponent = 'statusCards' | 'chart' | 'ranking' | 'pinnedSensors' | 'miniMap' | 'comparisonChart' | 'statusHistory' | 'trendAnalysis';
 
-export type LayoutPosition = 'top' | 'middleLeft' | 'middleRight' | 'bottom';
+export type LayoutPosition = 'top' | 'middleLeft' | 'middleRight' | 'bottom' | 'bottomLeft' | 'bottomMiddle' | 'bottomRight' | 'trendPanel';
 
 export interface LayoutSettings {
   positions: Record<LayoutPosition, DashboardComponent | null>;
+}
+
+export interface SensorGroup {
+  id: string;
+  name: string;
+  color: string;
 }
 
 export interface SettingsConfig {
@@ -38,12 +44,15 @@ export interface SettingsConfig {
   pollingInterval: number;
   enableSoundAlert: boolean;
   enableNotification: boolean;
+  enableSmoothScroll: boolean;
   apiEndpoints: ApiEndpoint[];
   pinnedSensors: string[];
   sensorCoordinates: SensorCoordinates[];
   lineNotify: LineNotifySettings;
   demoMode: boolean;
   dashboardLayout: LayoutSettings;
+  sensorGroups: SensorGroup[];
+  sensorAssignments: Record<string, string>; // sensorId -> groupId
 }
 
 const STORAGE_KEY = 'smoke-detection-settings';
@@ -63,6 +72,7 @@ const getDefaultSettings = (): SettingsConfig => ({
   pollingInterval: Number(import.meta.env.VITE_POLLING_INTERVAL) || 500,
   enableSoundAlert: false,
   enableNotification: import.meta.env.VITE_ENABLE_NOTIFICATION === 'true',
+  enableSmoothScroll: true,
   apiEndpoints: [{
     id: 'default',
     name: 'สถานที่หลัก',
@@ -86,8 +96,18 @@ const getDefaultSettings = (): SettingsConfig => ({
       middleLeft: 'chart',
       middleRight: 'ranking',
       bottom: 'pinnedSensors',
+      bottomLeft: 'miniMap',
+      bottomMiddle: 'comparisonChart',
+      bottomRight: 'statusHistory',
+      trendPanel: 'trendAnalysis',
     },
   },
+  sensorGroups: [
+    { id: 'zone-1', name: 'ชั้น 1', color: '#3B82F6' },
+    { id: 'zone-2', name: 'ชั้น 2', color: '#10B981' },
+    { id: 'canteen', name: 'โรงอาหาร', color: '#F59E0B' },
+  ],
+  sensorAssignments: {},
 });
 
 export const useSettings = () => {
@@ -110,11 +130,11 @@ export const useSettings = () => {
         setSettings(event.data.settings);
       }
     };
-    
+
     if (settingsBroadcastChannel) {
       settingsBroadcastChannel.addEventListener('message', handleBroadcastMessage);
     }
-    
+
     // Fallback: Listen for localStorage changes
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === STORAGE_KEY && event.newValue) {
@@ -126,9 +146,9 @@ export const useSettings = () => {
         }
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => {
       if (settingsBroadcastChannel) {
         settingsBroadcastChannel.removeEventListener('message', handleBroadcastMessage);

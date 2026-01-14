@@ -5,6 +5,7 @@ import type { SensorData } from '../../types/sensor';
 import type { SettingsConfig } from '../../hooks/useSettings';
 import { getSensorStatusWithSettings } from '../../hooks/useSettings';
 import { formatNumber } from '../../utils/format';
+import { useTheme } from '../../context/ThemeContext';
 
 interface AlertBannerProps {
   sensors: SensorData[];
@@ -14,6 +15,7 @@ interface AlertBannerProps {
 export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
   const [isVisible, setIsVisible] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { isDark } = useTheme();
 
   const dangerSensors = sensors.filter(
     (s) =>
@@ -50,7 +52,9 @@ export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
           borderRadius: '20px',
           marginBottom: '24px',
           overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
+          boxShadow: isDark
+            ? '0 8px 32px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
+            : '0 8px 25px rgba(220, 38, 38, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
           border: '1px solid rgba(239, 68, 68, 0.3)',
         }}
       >
@@ -64,7 +68,7 @@ export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <motion.div
-                animate={{ 
+                animate={{
                   scale: [1, 1.15, 1],
                   boxShadow: [
                     '0 0 0 0 rgba(239, 68, 68, 0.4)',
@@ -146,15 +150,15 @@ export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 style={{
-                  background: sensor.value === maxValue 
-                    ? 'rgba(255, 255, 255, 0.2)' 
+                  background: sensor.value === maxValue
+                    ? 'rgba(255, 255, 255, 0.2)'
                     : 'rgba(255, 255, 255, 0.1)',
                   borderRadius: '14px',
                   padding: '16px 20px',
                   minWidth: '180px',
                   flexShrink: 0,
-                  border: sensor.value === maxValue 
-                    ? '2px solid rgba(255, 255, 255, 0.4)' 
+                  border: sensor.value === maxValue
+                    ? '2px solid rgba(255, 255, 255, 0.4)'
                     : '1px solid rgba(255, 255, 255, 0.15)',
                 }}
               >

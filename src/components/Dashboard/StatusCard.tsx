@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 interface StatusCardProps {
   title: string;
@@ -11,6 +12,17 @@ interface StatusCardProps {
 }
 
 export const StatusCard = ({ title, value, subtitle, icon: Icon, color, delay = 0 }: StatusCardProps) => {
+  const { isDark } = useTheme();
+
+  const cardBg = isDark
+    ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)';
+
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+  const textPrimary = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const textMuted = isDark ? '#64748B' : '#94A3B8';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -18,13 +30,14 @@ export const StatusCard = ({ title, value, subtitle, icon: Icon, color, delay = 
       transition={{ duration: 0.5, delay }}
       className="status-card"
       style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        background: cardBg,
         backdropFilter: 'blur(20px)',
         borderRadius: '20px',
         padding: '24px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${borderColor}`,
         position: 'relative',
         overflow: 'hidden',
+        boxShadow: isDark ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.05)',
       }}
     >
       <div style={{
@@ -37,20 +50,20 @@ export const StatusCard = ({ title, value, subtitle, icon: Icon, color, delay = 
         borderRadius: '50%',
         transform: 'translate(30%, -30%)',
       }} />
-      
+
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ color: '#94A3B8', fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>
+          <p style={{ color: textSecondary, fontSize: '14px', marginBottom: '8px', fontWeight: 500 }}>
             {title}
           </p>
           <motion.h3
             initial={{ scale: 0.5 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3, delay: delay + 0.2 }}
-            style={{ 
-              color: '#F8FAFC', 
-              fontSize: '32px', 
-              fontWeight: 700, 
+            style={{
+              color: textPrimary,
+              fontSize: '32px',
+              fontWeight: 700,
               margin: 0,
               letterSpacing: '-0.02em'
             }}
@@ -58,7 +71,7 @@ export const StatusCard = ({ title, value, subtitle, icon: Icon, color, delay = 
             {value}
           </motion.h3>
           {subtitle && (
-            <p style={{ color: '#64748B', fontSize: '13px', marginTop: '4px' }}>
+            <p style={{ color: textMuted, fontSize: '13px', marginTop: '4px' }}>
               {subtitle}
             </p>
           )}

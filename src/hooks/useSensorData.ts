@@ -20,23 +20,23 @@ const playAlertSound = () => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     oscillator.frequency.value = 800;
     oscillator.type = 'sine';
     gainNode.gain.value = 0.3;
-    
+
     oscillator.start();
-    
+
     // Beep pattern: beep-beep-beep
     setTimeout(() => { gainNode.gain.value = 0; }, 150);
     setTimeout(() => { gainNode.gain.value = 0.3; }, 250);
     setTimeout(() => { gainNode.gain.value = 0; }, 400);
     setTimeout(() => { gainNode.gain.value = 0.3; }, 500);
     setTimeout(() => { gainNode.gain.value = 0; }, 650);
-    setTimeout(() => { 
+    setTimeout(() => {
       oscillator.stop();
       audioContext.close();
     }, 700);
@@ -48,7 +48,7 @@ const playAlertSound = () => {
 // Browser notification
 const showNotification = (title: string, body: string) => {
   if (!('Notification' in window)) return;
-  
+
   if (Notification.permission === 'granted') {
     new Notification(title, {
       body,
@@ -173,7 +173,7 @@ const claimPrimaryTab = (): boolean => {
       if (Date.now() - data.heartbeat < 3000) {
         return false;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
   // Claim as primary
   localStorage.setItem(PRIMARY_TAB_KEY, JSON.stringify({ tabId: TAB_ID, heartbeat: Date.now() }));
@@ -188,7 +188,7 @@ const updateHeartbeat = () => {
       if (data.tabId === TAB_ID) {
         localStorage.setItem(PRIMARY_TAB_KEY, JSON.stringify({ tabId: TAB_ID, heartbeat: Date.now() }));
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 };
 
@@ -200,7 +200,7 @@ const releasePrimaryTab = () => {
       if (data.tabId === TAB_ID) {
         localStorage.removeItem(PRIMARY_TAB_KEY);
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 };
 
@@ -259,7 +259,7 @@ export const useSensorData = (settings: SettingsConfig) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
-  
+
   const intervalRef = useRef<number | null>(null);
   const heartbeatRef = useRef<number | null>(null);
   const historyRef = useRef<SensorHistory[]>(loadHistoryFromStorage());
@@ -271,11 +271,26 @@ export const useSensorData = (settings: SettingsConfig) => {
   const isPrimaryTabRef = useRef<boolean>(false);
 
   // Process incoming sensor data
-  const processSensorData = useCallback((allData: SensorData[], fromBroadcast = false) => {
-    if (allData.length === 0) return;
+  const processSensorData = useCallback((rawData: SensorData[], fromBroadcast = false) => {
+    if (rawData.length === 0) return;
+
+    // Merge coordinates from settings
+    const allData = rawData.map(sensor => {
+      const coord = settings.sensorCoordinates?.find(
+        c => c.sensorId === sensor.id || c.sensorId === sensor.location
+      );
+      if (coord) {
+        return {
+          ...sensor,
+          latitude: coord.lat,
+          longitude: coord.lng,
+        };
+      }
+      return sensor;
+    });
 
     setSensors(allData);
-    
+
     // Save to localStorage and broadcast to other tabs (only if this is the source)
     if (!fromBroadcast) {
       saveSensorDataToStorage(allData);
@@ -286,10 +301,10 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     const now = Date.now();
     const oneDayAgo = now - 24 * 60 * 60 * 1000;
-    
+
     allData.forEach(sensor => {
       const locationKey = sensor.location || sensor.id;
-      
+
       // Update stats (max, min, avg)
       const existing = sensorMaxRef.current.get(locationKey);
       if (!existing || existing.timestamp < oneDayAgo) {
@@ -318,12 +333,12 @@ export const useSensorData = (settings: SettingsConfig) => {
       if (!sensorHistoryRef.current[locationKey]) {
         sensorHistoryRef.current[locationKey] = [];
       }
-      
+
       const sensorHist = sensorHistoryRef.current[locationKey];
       const lastEntry = sensorHist[sensorHist.length - 1];
       const shouldAdd = !lastEntry || (now - new Date(lastEntry.timestamp).getTime()) >= GRAPH_UPDATE_INTERVAL_MS;
       const cutoffTime = now - GRAPH_RETENTION_MS;
-      
+
       if (shouldAdd) {
         sensorHistoryRef.current[locationKey] = [
           ...sensorHist.filter(h => new Date(h.timestamp).getTime() > cutoffTime),
@@ -337,18 +352,18 @@ export const useSensorData = (settings: SettingsConfig) => {
         ].slice(-500);
       }
     });
-    
+
     // Clean old max values
     sensorMaxRef.current.forEach((value, key) => {
       if (value.timestamp < oneDayAgo) {
         sensorMaxRef.current.delete(key);
       }
     });
-    
+
     saveSensorMaxToStorage(sensorMaxRef.current);
     saveSensorHistoryToStorage(sensorHistoryRef.current);
     setSensorHistory({ ...sensorHistoryRef.current });
-    
+
     // Sort max values with min/avg
     const sortedMaxValues: SensorMaxValue[] = Array.from(sensorMaxRef.current.values())
       .map(item => ({
@@ -360,7 +375,7 @@ export const useSensorData = (settings: SettingsConfig) => {
         avgValue: item.count > 0 ? Math.round(item.sumValue / item.count) : 0,
       }))
       .sort((a, b) => b.maxValue - a.maxValue);
-    
+
     setSensorMaxValues(sortedMaxValues);
 
     // Calculate stats
@@ -368,7 +383,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     const values = onlineSensors.map(s => s.value);
     const avgValue = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
     const maxValue = values.length > 0 ? Math.max(...values) : 0;
-    const alertCount = allData.filter(s => 
+    const alertCount = allData.filter(s =>
       getSensorStatusWithSettings(s.value, settings.warningThreshold, settings.dangerThreshold) !== 'safe'
     ).length;
 
@@ -381,23 +396,23 @@ export const useSensorData = (settings: SettingsConfig) => {
     });
 
     // Check for danger alerts and trigger notifications
-    const dangerSensors = allData.filter(s => 
+    const dangerSensors = allData.filter(s =>
       getSensorStatusWithSettings(s.value, settings.warningThreshold, settings.dangerThreshold) === 'danger'
     );
-    
+
     const isInDanger = dangerSensors.length > 0;
     const timeSinceLastAlert = now - lastAlertTimeRef.current;
     const alertCooldown = 30000; // 30 seconds between alerts
-    
+
     // Only alert when entering danger state (not continuously)
     if (isInDanger && !wasInDangerRef.current && timeSinceLastAlert > alertCooldown) {
       lastAlertTimeRef.current = now;
-      
+
       // Play sound alert
       if (settings.enableSoundAlert) {
         playAlertSound();
       }
-      
+
       // Show browser notification
       if (settings.enableNotification) {
         const sensorNames = dangerSensors.map(s => s.location || s.name || s.id).join(', ');
@@ -408,26 +423,26 @@ export const useSensorData = (settings: SettingsConfig) => {
         );
       }
     }
-    
+
     wasInDangerRef.current = isInDanger;
 
     // Save average history
     const historyNow = new Date();
     const lastHistEntry = historyRef.current[historyRef.current.length - 1];
-    const shouldAddEntry = !lastHistEntry || 
+    const shouldAddEntry = !lastHistEntry ||
       (historyNow.getTime() - new Date(lastHistEntry.timestamp).getTime()) >= GRAPH_UPDATE_INTERVAL_MS;
-    
+
     if (shouldAddEntry && avgValue > 0) {
       const newHistoryPoint: SensorHistory = {
         timestamp: historyNow.toISOString(),
         value: Math.round(avgValue),
       };
-      
+
       const cutoffTime = historyNow.getTime() - GRAPH_RETENTION_MS;
       const filteredHistory = historyRef.current.filter(
         item => new Date(item.timestamp).getTime() > cutoffTime
       );
-      
+
       historyRef.current = [...filteredHistory, newHistoryPoint];
       setHistory(historyRef.current);
       saveHistoryToStorage(historyRef.current);
@@ -435,13 +450,13 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     setError(null);
     setIsLoading(false);
-  }, [settings.warningThreshold, settings.dangerThreshold]);
+  }, [settings.warningThreshold, settings.dangerThreshold, settings.sensorCoordinates]);
 
   // Fetch via HTTP
   const fetchSensorData = useCallback(async () => {
     try {
       const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
-      
+
       if (enabledEndpoints.length === 0) {
         setError('ไม่มี API endpoint ที่เปิดใช้งาน');
         setIsLoading(false);
@@ -456,9 +471,9 @@ export const useSensorData = (settings: SettingsConfig) => {
           const response = await axios.get(endpoint.url, {
             headers: endpoint.apiKey ? { 'Authorization': `Bearer ${endpoint.apiKey}` } : {},
           });
-          
+
           let rawData: SensorData[] = [];
-          
+
           // Handle different response formats
           if (Array.isArray(response.data)) {
             rawData = response.data;
@@ -471,7 +486,7 @@ export const useSensorData = (settings: SettingsConfig) => {
               );
             }
           }
-          
+
           // Add to new sensors map (only sensors that responded)
           rawData.forEach((sensor: SensorData, index: number) => {
             const sensorId = `${endpoint.id}-${sensor.id || index}`;
@@ -492,7 +507,7 @@ export const useSensorData = (settings: SettingsConfig) => {
       // Replace sensorsRef with only the sensors that responded
       sensorsRef.current = newSensorsMap;
       const allSensors = Array.from(newSensorsMap.values());
-      
+
       if (allSensors.length === 0) {
         // Clear sensors state when no data
         setSensors([]);
@@ -514,11 +529,11 @@ export const useSensorData = (settings: SettingsConfig) => {
   // Start HTTP polling
   const startHttpPolling = useCallback(() => {
     fetchSensorData();
-    
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-    
+
     intervalRef.current = window.setInterval(fetchSensorData, settings.pollingInterval);
   }, [fetchSensorData, settings.pollingInterval]);
 
@@ -528,7 +543,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     resetMockData();
     setConnectionStatus('connected');
     setError(null);
-    
+
     const updateMockData = () => {
       const mockSensors = generateMockSensorData();
       // Clear and rebuild sensorsRef for demo mode too
@@ -538,32 +553,39 @@ export const useSensorData = (settings: SettingsConfig) => {
       });
       processSensorData(mockSensors);
     };
-    
+
     updateMockData();
     setIsLoading(false);
-    
+
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-    
+
     intervalRef.current = window.setInterval(updateMockData, settings.pollingInterval);
   }, [processSensorData, settings.pollingInterval]);
 
   // Setup connections based on settings
   useEffect(() => {
-    // Listen for cross-tab updates via BroadcastChannel
+    // Listen for cross-tab updates via BroadcastChannel (debounced)
+    let broadcastTimeout: number | null = null;
     const handleBroadcastMessage = (event: MessageEvent) => {
       if (event.data?.type === 'sensor-update' && event.data?.sensors) {
-        processSensorData(event.data.sensors, true);
-        setConnectionStatus('connected');
-        setIsLoading(false);
+        // Debounce broadcast messages to avoid performance issues
+        if (broadcastTimeout) {
+          clearTimeout(broadcastTimeout);
+        }
+        broadcastTimeout = window.setTimeout(() => {
+          processSensorData(event.data.sensors, true);
+          setConnectionStatus('connected');
+          setIsLoading(false);
+        }, 100);
       }
     };
-    
+
     if (broadcastChannel) {
       broadcastChannel.addEventListener('message', handleBroadcastMessage);
     }
-    
+
     // Check if another tab already has data (load from localStorage on mount)
     const existingData = loadSensorDataFromStorage();
     if (existingData && existingData.sensors.length > 0) {
@@ -578,14 +600,14 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     // Try to become primary tab
     isPrimaryTabRef.current = claimPrimaryTab();
-    
+
     // Start heartbeat if primary
     if (isPrimaryTabRef.current) {
       heartbeatRef.current = window.setInterval(() => {
         updateHeartbeat();
       }, 1000);
     }
-    
+
     // If not primary, try to claim periodically (in case primary tab closes)
     const tryClaimInterval = !isPrimaryTabRef.current ? window.setInterval(() => {
       if (!isPrimaryTabRef.current && claimPrimaryTab()) {
@@ -620,8 +642,30 @@ export const useSensorData = (settings: SettingsConfig) => {
         }
       }
     } else {
-      // Non-primary tab just waits for broadcasts
+      // Non-primary tab: set loading false immediately, wait for broadcasts
       setIsLoading(false);
+
+      // If no existing data after a short delay, try to become primary
+      setTimeout(() => {
+        const currentData = loadSensorDataFromStorage();
+        if (!currentData || currentData.sensors.length === 0 || Date.now() - currentData.timestamp > settings.pollingInterval * 3) {
+          // No fresh data available, try to claim primary
+          if (claimPrimaryTab()) {
+            isPrimaryTabRef.current = true;
+            if (!heartbeatRef.current) {
+              heartbeatRef.current = window.setInterval(() => {
+                updateHeartbeat();
+              }, 1000);
+            }
+            if (settings.demoMode) {
+              startDemoMode();
+            } else {
+              startHttpPolling();
+            }
+          }
+        }
+      }, 500);
+
       if (existingData && existingData.sensors.length > 0) {
         setConnectionStatus('connected');
       }
@@ -639,6 +683,9 @@ export const useSensorData = (settings: SettingsConfig) => {
       }
       if (tryClaimInterval) {
         clearInterval(tryClaimInterval);
+      }
+      if (broadcastTimeout) {
+        clearTimeout(broadcastTimeout);
       }
       if (broadcastChannel) {
         broadcastChannel.removeEventListener('message', handleBroadcastMessage);

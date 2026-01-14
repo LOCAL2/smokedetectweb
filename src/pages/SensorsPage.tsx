@@ -1,20 +1,49 @@
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Activity, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSensorDataContext } from '../context/SensorDataContext';
 import { useSettingsContext } from '../context/SettingsContext';
+import { useTheme } from '../context/ThemeContext';
 import { SensorCard } from '../components/Dashboard/SensorCard';
 import { SensorDetailPanel } from '../components/Dashboard/SensorDetailPanel';
 import type { SensorData } from '../types/sensor';
 
 export const SensorsPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { settings, updateSettings } = useSettingsContext();
   const { sensors, sensorMaxValues, isLoading } = useSensorDataContext();
+  const { isDark } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'online' | 'warning' | 'danger' | 'pinned'>('all');
   const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
+
+  // Auto-open sensor from URL query parameter
+  useEffect(() => {
+    const sensorId = searchParams.get('id');
+    if (sensorId && sensors.length > 0 && !selectedSensor) {
+      const sensor = sensors.find(s => s.id === sensorId || s.location === sensorId);
+      if (sensor) {
+        setSelectedSensor(sensor);
+      }
+    }
+  }, [searchParams, sensors, selectedSensor]);
+
+  // Clear URL param when closing panel
+  const handleClosePanel = () => {
+    setSelectedSensor(null);
+    if (searchParams.has('id')) {
+      searchParams.delete('id');
+      setSearchParams(searchParams);
+    }
+  };
+
+  // Update URL when selecting sensor
+  const handleSelectSensor = (sensor: SensorData) => {
+    setSelectedSensor(sensor);
+    setSearchParams({ id: sensor.id });
+  };
 
   const handleTogglePin = (sensorId: string) => {
     const pinnedSensors = settings.pinnedSensors || [];
@@ -39,12 +68,25 @@ export const SensorsPage = () => {
     return true;
   });
 
+  // Theme colors
+  const bgGradient = isDark
+    ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)'
+    : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%)';
+
+  const textColor = isDark ? '#F8FAFC' : '#0F172A';
+  const textSecondary = isDark ? '#94A3B8' : '#64748B';
+  const inputBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.6)';
+  const inputBorder = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const emptyStateBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.6)';
+  const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)',
+        background: bgGradient,
         padding: '32px',
+        transition: 'background 0.3s ease',
       }}
     >
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
@@ -55,21 +97,20 @@ export const SensorsPage = () => {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              color: '#94A3B8',
-              fontSize: '14px',
+              gap: '12px',
+              background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+              border: isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
+              borderRadius: '14px',
+              padding: '14px 24px',
+              color: textSecondary,
+              fontSize: '15px',
+              fontWeight: 500,
               cursor: 'pointer',
               marginBottom: '24px',
               transition: 'all 0.2s',
             }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={20} />
             กลับหน้าหลัก
           </button>
 
@@ -77,8 +118,8 @@ export const SensorsPage = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <Activity size={28} color="#3B82F6" />
               <div>
-                <h1 style={{ color: '#F8FAFC', fontSize: '28px', fontWeight: 700, margin: 0 }}>สถานะเซ็นเซอร์</h1>
-                <p style={{ color: '#64748B', fontSize: '14px', margin: '4px 0 0' }}>
+                <h1 style={{ color: textColor, fontSize: '28px', fontWeight: 700, margin: 0 }}>สถานะเซ็นเซอร์</h1>
+                <p style={{ color: textSecondary, fontSize: '14px', margin: '4px 0 0' }}>
                   ทั้งหมด {sensors.length} เซ็นเซอร์
                 </p>
               </div>
@@ -90,14 +131,14 @@ export const SensorsPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
+                background: inputBg,
+                border: `1px solid ${inputBorder}`,
                 borderRadius: '12px',
                 padding: '10px 16px',
                 minWidth: '250px',
               }}
             >
-              <Search size={18} color="#64748B" />
+              <Search size={18} color={textSecondary} />
               <input
                 type="text"
                 placeholder="ค้นหาเซ็นเซอร์..."
@@ -107,7 +148,7 @@ export const SensorsPage = () => {
                   background: 'none',
                   border: 'none',
                   outline: 'none',
-                  color: '#F8FAFC',
+                  color: textColor,
                   fontSize: '14px',
                   width: '100%',
                 }}
@@ -136,9 +177,9 @@ export const SensorsPage = () => {
               style={{
                 padding: '10px 20px',
                 borderRadius: '10px',
-                border: filter === item.key ? `2px solid ${item.color}` : '1px solid rgba(255, 255, 255, 0.1)',
-                background: filter === item.key ? `${item.color}20` : 'rgba(255, 255, 255, 0.03)',
-                color: filter === item.key ? item.color : '#94A3B8',
+                border: filter === item.key ? `2px solid ${item.color}` : `1px solid ${inputBorder}`,
+                background: filter === item.key ? `${item.color}20` : (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.6)'),
+                color: filter === item.key ? item.color : textSecondary,
                 fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -152,7 +193,7 @@ export const SensorsPage = () => {
 
         {/* Sensors Grid */}
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#64748B' }}>กำลังโหลด...</div>
+          <div style={{ textAlign: 'center', padding: '60px', color: textSecondary }}>กำลังโหลด...</div>
         ) : filteredSensors.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -160,9 +201,9 @@ export const SensorsPage = () => {
             style={{
               textAlign: 'center',
               padding: '80px 40px',
-              background: 'rgba(30, 41, 59, 0.5)',
+              background: emptyStateBg,
               borderRadius: '24px',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              border: `1px solid ${borderColor}`,
               minHeight: '400px',
               display: 'flex',
               flexDirection: 'column',
@@ -185,21 +226,21 @@ export const SensorsPage = () => {
             >
               <Activity size={48} color="#6366F1" style={{ opacity: 0.7 }} />
             </div>
-            <h3 style={{ color: '#F8FAFC', fontSize: '22px', fontWeight: 600, margin: '0 0 12px' }}>
+            <h3 style={{ color: textColor, fontSize: '22px', fontWeight: 600, margin: '0 0 12px' }}>
               ไม่พบเซ็นเซอร์
             </h3>
-            <p style={{ color: '#64748B', fontSize: '16px', margin: '0 0 32px', maxWidth: '400px', lineHeight: 1.6 }}>
-              {filter === 'pinned' 
+            <p style={{ color: textSecondary, fontSize: '16px', margin: '0 0 32px', maxWidth: '400px', lineHeight: 1.6 }}>
+              {filter === 'pinned'
                 ? 'ยังไม่มีเซ็นเซอร์ที่ปักหมุด กดไอคอนหมุดบนการ์ดเซ็นเซอร์เพื่อปักหมุด'
                 : filter === 'warning'
-                ? 'ไม่มีเซ็นเซอร์ที่อยู่ในสถานะเฝ้าระวัง'
-                : filter === 'danger'
-                ? 'ไม่มีเซ็นเซอร์ที่อยู่ในสถานะอันตราย'
-                : filter === 'online'
-                ? 'ไม่มีเซ็นเซอร์ที่ออนไลน์อยู่ในขณะนี้'
-                : searchTerm
-                ? `ไม่พบเซ็นเซอร์ที่ตรงกับ "${searchTerm}"`
-                : 'ยังไม่มีเซ็นเซอร์ในระบบ กรุณาเชื่อมต่อเซ็นเซอร์หรือเปิด Demo Mode'}
+                  ? 'ไม่มีเซ็นเซอร์ที่อยู่ในสถานะเฝ้าระวัง'
+                  : filter === 'danger'
+                    ? 'ไม่มีเซ็นเซอร์ที่อยู่ในสถานะอันตราย'
+                    : filter === 'online'
+                      ? 'ไม่มีเซ็นเซอร์ที่ออนไลน์อยู่ในขณะนี้'
+                      : searchTerm
+                        ? `ไม่พบเซ็นเซอร์ที่ตรงกับ "${searchTerm}"`
+                        : 'ยังไม่มีเซ็นเซอร์ในระบบ กรุณาเชื่อมต่อเซ็นเซอร์หรือเปิด Demo Mode'}
             </p>
             {(filter !== 'all' || searchTerm) && (
               <button
@@ -229,13 +270,13 @@ export const SensorsPage = () => {
             }}
           >
             {filteredSensors.map((sensor) => (
-              <SensorCard 
-                key={sensor.id} 
-                sensor={sensor} 
+              <SensorCard
+                key={sensor.id}
+                sensor={sensor}
                 settings={settings}
                 isPinned={(settings.pinnedSensors || []).includes(sensor.id)}
                 onTogglePin={handleTogglePin}
-                onClick={() => setSelectedSensor(sensor)}
+                onClick={() => handleSelectSensor(sensor)}
               />
             ))}
           </div>
@@ -248,7 +289,7 @@ export const SensorsPage = () => {
           transition={{ delay: 0.5 }}
           style={{
             textAlign: 'center',
-            color: '#475569',
+            color: textSecondary,
             fontSize: '13px',
             marginTop: '48px',
           }}
@@ -262,7 +303,7 @@ export const SensorsPage = () => {
         <SensorDetailPanel
           sensor={selectedSensor}
           stats={(() => {
-            const sensorStats = sensorMaxValues.find(s => 
+            const sensorStats = sensorMaxValues.find(s =>
               s.id === selectedSensor.location || s.id === selectedSensor.id
             );
             if (sensorStats) {
@@ -275,7 +316,7 @@ export const SensorsPage = () => {
             return null;
           })()}
           settings={settings}
-          onClose={() => setSelectedSensor(null)}
+          onClose={handleClosePanel}
         />
       )}
     </div>
