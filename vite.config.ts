@@ -10,7 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.jpg', 'vite.svg'],
       manifest: {
-        name: 'Smoke Detection System',
+        name: 'Smoke Detect System',
         short_name: 'SmokeDetect',
         description: 'ระบบตรวจจับควันอัจฉริยะ Real-time',
         theme_color: '#1f2937',

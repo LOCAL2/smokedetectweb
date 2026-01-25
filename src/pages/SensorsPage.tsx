@@ -365,7 +365,7 @@ export const SensorsPage = () => {
             marginTop: '48px',
           }}
         >
-          © 2024 Smoke Detection System
+          © 2024 Smoke Detect System
         </motion.p>
       </div>
 

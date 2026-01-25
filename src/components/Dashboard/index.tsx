@@ -466,7 +466,7 @@ export const Dashboard = () => {
               }}
             >
               <p style={{ color: textSecondary, fontSize: '13px' }}>
-                © 2024 Smoke Detection System | โปรเจค ปวช.3
+                © 2024 Smoke Detect System | โปรเจค ปวช.3
               </p>
             </motion.footer>
           </>

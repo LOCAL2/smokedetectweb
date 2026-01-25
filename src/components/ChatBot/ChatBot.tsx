@@ -698,7 +698,7 @@ export const ChatBot = () => {
                 </div>
                 <div>
                   <h3 style={{ color: '#FFF', fontSize: 14, fontWeight: 600, margin: 0 }}>AI Assistant</h3>
-                  <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, margin: 0 }}>Smoke Detection</p>
+                  <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, margin: 0 }}>Smoke Detect</p>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>

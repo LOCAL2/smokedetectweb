@@ -97,7 +97,7 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
                 margin: 0,
                 letterSpacing: '-0.02em',
               }}>
-                Smoke Detection
+                Smoke Detect
               </h1>
               {settings.demoMode && (
                 <motion.span

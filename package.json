@@ -16,7 +16,7 @@
   },
   "build": {
     "appId": "com.smokedetect.app",
-    "productName": "Smoke Detection",
+    "productName": "Smoke Detect",
     "directories": {
       "output": "release"
     },
@@ -35,7 +35,7 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Smoke Detection",
+      "shortcutName": "Smoke Detect",
       "installerIcon": "public/icon.ico",
       "uninstallerIcon": "public/icon.ico"
     }

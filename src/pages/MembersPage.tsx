@@ -189,7 +189,7 @@ export const MembersPage = () => {
               ผู้จัดทำโปรเจค
             </h1>
             <p style={{ color: '#64748B', fontSize: 'clamp(14px, 3vw, 16px)', margin: 0 }}>
-              Smoke Detection System | ปวช.3
+              Smoke Detect System | ปวช.3
             </p>
           </div>
         </motion.div>
@@ -270,7 +270,7 @@ export const MembersPage = () => {
             marginTop: '40px',
           }}
         >
-          © 2024 Smoke Detection System
+          © 2024 Smoke Detect System
         </motion.p>
       </div>
     </div>

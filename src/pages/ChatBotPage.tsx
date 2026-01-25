@@ -1146,7 +1146,7 @@ export const ChatBotPage = () => {
                 <Bot size={32} color="#fff" />
               </motion.div>
               <h1 style={{ color: isDark ? '#F8FAFC' : '#1E293B', fontSize: 'clamp(20px,5vw,28px)', fontWeight: 700, margin: '0 0 8px', textAlign: 'center' }}>สวัสดีครับ ผม Barron AI</h1>
-              <p style={{ color: isDark ? '#64748B' : '#94A3B8', fontSize: 'clamp(13px,3vw,15px)', margin: '0 0 32px', textAlign: 'center' }}>ถามเกี่ยวกับระบบ Smoke Detection ได้เลยครับ</p>
+              <p style={{ color: isDark ? '#64748B' : '#94A3B8', fontSize: 'clamp(13px,3vw,15px)', margin: '0 0 32px', textAlign: 'center' }}>ถามเกี่ยวกับระบบ Smoke Detect ได้เลยครับ</p>
 
               {/* Quick Actions - Random with Animation */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, maxWidth: 500, width: '100%' }}>
@@ -1413,7 +1413,7 @@ export const ChatBotPage = () => {
               )}
 
               <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !isLoading && (e.preventDefault(), handleSend())}
-                placeholder={isListening ? 'กำลังฟัง...' : isLoading ? 'พิมพ์คำถามถัดไปรอไว้ได้...' : 'ถามเกี่ยวกับระบบ Smoke Detection...'}
+                placeholder={isListening ? 'กำลังฟัง...' : isLoading ? 'พิมพ์คำถามถัดไปรอไว้ได้...' : 'ถามเกี่ยวกับระบบ Smoke Detect...'}
                 style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 'clamp(14px,3vw,15px)', outline: 'none', minWidth: 0 }} />
 
               {/* Show queued indicator when typing while loading */}

@@ -379,7 +379,7 @@ export const DownloadPage = () => {
             borderTop: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)'}`,
           }}
         >
-          © 2024 Smoke Detection System
+          © 2024 Smoke Detect System
         </motion.p>
       </div>
     </div>

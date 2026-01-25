@@ -190,7 +190,7 @@ export const AnalyticsPage = () => {
     container.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 40px; font-family: sans-serif;';
     container.innerHTML = `
       <div style="color: #0f172a;">
-        <h1 style="font-size: 24px; margin-bottom: 8px;">Smoke Detection Analytics Report</h1>
+        <h1 style="font-size: 24px; margin-bottom: 8px;">Smoke Detect Analytics Report</h1>
         <p style="color: #64748b; font-size: 12px; margin-bottom: 24px;">
           ช่วงเวลา: ${startDate.toLocaleDateString('th-TH')} - ${now.toLocaleDateString('th-TH')} (${dateRange} วัน)<br>
           สร้างเมื่อ: ${now.toLocaleString('th-TH')}
@@ -236,7 +236,7 @@ export const AnalyticsPage = () => {
         </div>
         
         <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center;">
-          Smoke Detection System - Analytics Report
+          Smoke Detect System - Analytics Report
         </div>
       </div>
     `;

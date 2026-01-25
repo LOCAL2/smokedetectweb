@@ -76,7 +76,7 @@ const getDefaultSettings = (): SettingsConfig => ({
   apiEndpoints: [{
     id: 'default',
     name: 'สถานที่หลัก',
-    url: import.meta.env.VITE_API_BASE_URL || 'http://118.173.113.78:3000/api/sensor',
+    url: import.meta.env.VITE_API_BASE_URL || '',
     apiKey: import.meta.env.VITE_API_KEY || '',
     enabled: true,
   }],
@@ -119,6 +119,40 @@ export const useSettings = () => {
     return getDefaultSettings();
   });
 
+  const updateSettings = useCallback((newSettings: Partial<SettingsConfig>) => {
+    setSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      // Broadcast to other tabs
+      if (settingsBroadcastChannel) {
+        settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: updated });
+      }
+      return updated;
+    });
+  }, []);
+
+  const resetSettings = useCallback(() => {
+    const defaults = getDefaultSettings();
+    localStorage.removeItem(STORAGE_KEY);
+    setSettings(defaults);
+    // Broadcast reset to other tabs
+    if (settingsBroadcastChannel) {
+      settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: defaults });
+    }
+  }, []);
+
+  // Auto enable demo mode if no API endpoints configured
+  useEffect(() => {
+    const autoDemoMode = import.meta.env.VITE_AUTO_DEMO_MODE === 'true';
+    if (autoDemoMode) {
+      const hasEnabledEndpoints = settings.apiEndpoints.some(ep => ep.enabled && ep.url);
+      if (!hasEnabledEndpoints && !settings.demoMode) {
+        // Auto enable demo mode
+        updateSettings({ demoMode: true });
+      }
+    }
+  }, [settings.apiEndpoints, settings.demoMode, updateSettings]);
+
   // Listen for cross-tab settings changes
   useEffect(() => {
     const handleBroadcastMessage = (event: MessageEvent) => {
@@ -151,28 +185,6 @@ export const useSettings = () => {
       }
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
-
-  const updateSettings = useCallback((newSettings: Partial<SettingsConfig>) => {
-    setSettings(prev => {
-      const updated = { ...prev, ...newSettings };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      // Broadcast to other tabs
-      if (settingsBroadcastChannel) {
-        settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: updated });
-      }
-      return updated;
-    });
-  }, []);
-
-  const resetSettings = useCallback(() => {
-    const defaults = getDefaultSettings();
-    localStorage.removeItem(STORAGE_KEY);
-    setSettings(defaults);
-    // Broadcast reset to other tabs
-    if (settingsBroadcastChannel) {
-      settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: defaults });
-    }
   }, []);
 
   return { settings, updateSettings, resetSettings };

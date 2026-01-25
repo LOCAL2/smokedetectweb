@@ -628,7 +628,7 @@ export const UpdatesPage = () => {
           }}
         >
           <p style={{ color: colors.textMuted, fontSize: '13px', margin: '0 0 8px' }}>
-            Smoke Detection System
+            Smoke Detect System
           </p>
           <p style={{ color: colors.textMuted, fontSize: '12px', margin: 0, opacity: 0.7 }}>
             มีข้อเสนอแนะ? ติดต่อทีมพัฒนาได้เลย

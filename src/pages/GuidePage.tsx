@@ -239,7 +239,7 @@ export const GuidePage = () => {
         </motion.div>
         <motion.p initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.8, ease: "easeInOut" }}
           style={{ textAlign: 'center', color: '#475569', fontSize: '13px', marginTop: '48px', paddingTop: '24px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)'}` }}>
-          Smoke Detection System - User Guide v2.0
+          Smoke Detect System - User Guide v2.0
         </motion.p>
       </div>
     </div>

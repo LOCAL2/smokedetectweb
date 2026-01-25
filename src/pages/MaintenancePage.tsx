@@ -252,7 +252,7 @@ export const MaintenancePage = () => {
           style={{ marginTop: '64px' }}
         >
           <p style={{ color: '#334155', fontSize: '12px', margin: 0 }}>
-            Smoke Detection System © 2024
+            Smoke Detect System © 2024
           </p>
         </motion.div>
       </div>

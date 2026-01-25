@@ -240,7 +240,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    let text = `รายงานสรุปค่าควัน Smoke Detection System\n`;
+    let text = `รายงานสรุปค่าควัน Smoke Detect System\n`;
     text += `=====================================\n\n`;
     text += `ช่วงเวลา: ${startDate.toLocaleDateString('th-TH')} - ${now.toLocaleDateString('th-TH')} (${days} วัน)\n`;
     text += `สร้างเมื่อ: ${now.toLocaleString('th-TH')}\n\n`;

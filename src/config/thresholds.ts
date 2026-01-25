@@ -1,4 +1,4 @@
-// Smoke Detection Threshold Configuration
+// Smoke Detect Threshold Configuration
 export interface ThresholdConfig {
   warning: number;
   danger: number;

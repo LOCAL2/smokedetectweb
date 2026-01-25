@@ -296,7 +296,7 @@ export const AboutPage = () => {
 
         <motion.p initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.0, duration: 0.8, ease: "easeInOut" }}
           style={{ textAlign: 'center', color: '#475569', fontSize: '13px', marginTop: '48px', paddingTop: '24px', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)'}` }}>
-          © 2024 Smoke Detection System
+          © 2024 Smoke Detect System
         </motion.p>
       </div>
     </div>
