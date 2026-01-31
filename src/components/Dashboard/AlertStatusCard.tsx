@@ -106,7 +106,7 @@ export const AlertStatusCard = ({ sensors, settings, delay = 0 }: AlertStatusCar
 
       </motion.div>
 
-      {/* Expanded Alert List - Dropdown Overlay */}
+      {}
       <AnimatePresence>
         {isExpanded && hasAlerts && (
           <motion.div

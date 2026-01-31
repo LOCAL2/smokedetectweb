@@ -14,7 +14,8 @@ import {
   ChevronUp,
   BarChart3,
   FileDown,
-  Sparkles
+  Sparkles,
+  CalendarDays
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -22,10 +23,12 @@ import { useAnalyticsData } from '../hooks/useAnalyticsData';
 import { useSettingsContext } from '../context/SettingsContext';
 import { HeatMapCalendar } from '../components/Analytics/HeatMapCalendar';
 import { useTheme } from '../context/ThemeContext';
+import { generateWeeklyReport, formatWeeklyReportText } from '../utils/weeklyReport';
+import { useSensorDataContext } from '../context/SensorDataContext';
 
 type DateRange = 7 | 14 | 30 | 45;
 
-// Mock data generator
+
 const generateMockData = () => {
   const locations = [
     { id: 'loc-1', name: 'ห้องนอนใหญ่' },
@@ -89,6 +92,7 @@ export const AnalyticsPage = () => {
   const navigate = useNavigate();
   const { settings } = useSettingsContext();
   const { isDark } = useTheme();
+  const { sensors } = useSensorDataContext();
   const { getSummary, exportAsText, exportAsJSON, resetData, analytics } = useAnalyticsData(
     settings.warningThreshold,
     settings.dangerThreshold
@@ -97,8 +101,111 @@ export const AnalyticsPage = () => {
   const [dateRange, setDateRange] = useState<DateRange>(7);
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showWeeklyReportMenu, setShowWeeklyReportMenu] = useState(false);
 
-  // Theme colors
+  
+  const handleDownloadWeeklyReport = async (format: 'txt' | 'md' | 'pdf') => {
+    
+    const report = generateWeeklyReport(
+      new Map(), 
+      sensors,
+      settings.warningThreshold,
+      settings.dangerThreshold
+    );
+    
+    const reportText = formatWeeklyReportText(report);
+    
+    if (format === 'txt') {
+      const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `weekly-report-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'md') {
+      const blob = new Blob([reportText], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `weekly-report-${new Date().toISOString().split('T')[0]}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'pdf') {
+      
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.width = '800px';
+      tempDiv.style.padding = '40px';
+      tempDiv.style.background = '#FFFFFF';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '14px';
+      tempDiv.style.lineHeight = '1.6';
+      tempDiv.style.color = '#000000';
+      
+      
+      const lines = reportText.split('\n');
+      let html = '';
+      lines.forEach(line => {
+        if (line.startsWith('📊') || line.startsWith('===')) {
+          html += `<h1 style="font-size: 20px; font-weight: bold; margin: 20px 0 10px; color: #8B5CF6;">${line}</h1>`;
+        } else if (line.startsWith('📅') || line.startsWith('📈') || line.startsWith('💡') || line.startsWith('✅')) {
+          html += `<h2 style="font-size: 16px; font-weight: bold; margin: 15px 0 8px; color: #6366F1;">${line}</h2>`;
+        } else if (line.startsWith('•')) {
+          html += `<p style="margin: 5px 0 5px 20px;">${line}</p>`;
+        } else if (line.trim() === '') {
+          html += '<br/>';
+        } else {
+          html += `<p style="margin: 5px 0;">${line}</p>`;
+        }
+      });
+      
+      tempDiv.innerHTML = html;
+      document.body.appendChild(tempDiv);
+      
+      try {
+        const canvas = await html2canvas(tempDiv, {
+          scale: 2,
+          backgroundColor: '#FFFFFF',
+          logging: false,
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+        });
+        
+        const imgWidth = 210; 
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
+        
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= 297; 
+        
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= 297;
+        }
+        
+        pdf.save(`weekly-report-${new Date().toISOString().split('T')[0]}.pdf`);
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('ไม่สามารถสร้าง PDF ได้ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        document.body.removeChild(tempDiv);
+      }
+    }
+    
+    setShowWeeklyReportMenu(false);
+  };
+
+  
   const cardBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)';
   const cardBorder = isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.08)';
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
@@ -109,7 +216,7 @@ export const AnalyticsPage = () => {
   const buttonBorder = isDark ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)';
   const headerBorder = isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.08)';
   
-  // Toggle expanded location
+  
   const toggleLocation = (locationId: string) => {
     setExpandedLocations(prev => {
       const newSet = new Set(prev);
@@ -122,7 +229,7 @@ export const AnalyticsPage = () => {
     });
   };
   
-  // Check if mock data exists
+  
   const hasMockData = Object.keys(analytics.locations).length > 0;
 
   const summary = useMemo(() => getSummary(dateRange), [getSummary, dateRange]);
@@ -132,7 +239,7 @@ export const AnalyticsPage = () => {
   const totalWarning = summary.reduce((sum, s) => sum + (s?.warningCount || 0), 0);
   const overallMax = summary.length > 0 ? Math.max(...summary.map(s => s?.max || 0)) : 0;
 
-  // Prepare heat map data
+  
   const heatMapData = useMemo(() => {
     const dayMap = new Map<string, { maxValue: number; avgValue: number; readings: number }>();
     
@@ -185,7 +292,7 @@ export const AnalyticsPage = () => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - dateRange);
     
-    // สร้าง hidden div สำหรับ render PDF content
+    
     const container = document.createElement('div');
     container.style.cssText = 'position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 40px; font-family: sans-serif;';
     container.innerHTML = `
@@ -290,7 +397,7 @@ export const AnalyticsPage = () => {
       padding: 'clamp(16px, 4vw, 24px)',
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header */}
+        {}
         <motion.header
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -333,7 +440,7 @@ export const AnalyticsPage = () => {
             </div>
           </div>
 
-          {/* Date Range Selector */}
+          {}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {([7, 14, 30, 45] as DateRange[]).map(days => (
               <button
@@ -358,7 +465,7 @@ export const AnalyticsPage = () => {
           </div>
         </motion.header>
 
-        {/* Stats Overview */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -467,7 +574,7 @@ export const AnalyticsPage = () => {
           </div>
         </motion.div>
 
-        {/* Export & Reset Buttons */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -542,10 +649,160 @@ export const AnalyticsPage = () => {
             <Download size={18} />
             Export JSON
           </button>
+
+          {}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowWeeklyReportMenu(!showWeeklyReportMenu)}
+              disabled={sensors.length === 0}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 20px',
+                borderRadius: '10px',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                background: sensors.length === 0 ? 'rgba(100, 116, 139, 0.1)' : 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.15))',
+                color: sensors.length === 0 ? '#64748B' : '#A78BFA',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: sensors.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: sensors.length === 0 ? 0.5 : 1,
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                if (sensors.length > 0) {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(139, 92, 246, 0.3)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <CalendarDays size={18} />
+              📊 Weekly AI Report
+              <ChevronDown size={16} style={{ 
+                transform: showWeeklyReportMenu ? 'rotate(180deg)' : 'rotate(0)',
+                transition: 'transform 0.2s',
+              }} />
+            </button>
+
+            {}
+            {showWeeklyReportMenu && sensors.length > 0 && (
+              <>
+                <div 
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 10,
+                  }}
+                  onClick={() => setShowWeeklyReportMenu(false)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '8px',
+                    background: isDark ? '#1E293B' : '#FFFFFF',
+                    borderRadius: '12px',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+                    overflow: 'hidden',
+                    minWidth: '200px',
+                    zIndex: 20,
+                  }}
+                >
+                  <button
+                    onClick={() => handleDownloadWeeklyReport('txt')}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    <FileText size={16} />
+                    Text File (.txt)
+                  </button>
+                  <button
+                    onClick={() => handleDownloadWeeklyReport('md')}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    <FileText size={16} />
+                    Markdown (.md)
+                  </button>
+                  <button
+                    onClick={() => handleDownloadWeeklyReport('pdf')}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '12px 16px',
+                      border: 'none',
+                      background: 'transparent',
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'background 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isDark ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
+                  >
+                    <FileDown size={16} />
+                    PDF Document (.pdf)
+                  </button>
+                </motion.div>
+              </>
+            )}
+          </div>
           
           <div style={{ flex: 1 }} />
           
-          {/* Mock Data Buttons */}
+          {}
           <button
             onClick={handleGenerateMockData}
             disabled={hasMockData}
@@ -588,7 +845,7 @@ export const AnalyticsPage = () => {
           </button>
         </motion.div>
 
-        {/* Location List */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -643,7 +900,7 @@ export const AnalyticsPage = () => {
                     boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
                   }}
                 >
-                  {/* Location Header */}
+                  {}
                   <button
                     onClick={() => toggleLocation(loc.locationId)}
                     style={{
@@ -709,7 +966,7 @@ export const AnalyticsPage = () => {
                     </div>
                   </button>
 
-                  {/* Expanded Details */}
+                  {}
                   {expandedLocations.has(loc.locationId) && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
@@ -775,7 +1032,7 @@ export const AnalyticsPage = () => {
           )}
         </motion.div>
 
-        {/* Heat Map Calendar */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -789,7 +1046,7 @@ export const AnalyticsPage = () => {
           />
         </motion.div>
 
-        {/* Data Info */}
+        {}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -814,7 +1071,7 @@ export const AnalyticsPage = () => {
         </motion.div>
       </div>
 
-      {/* Reset Confirmation Modal */}
+      {}
       {showResetConfirm && (
         <div style={{
           position: 'fixed',

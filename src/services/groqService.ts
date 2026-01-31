@@ -111,7 +111,7 @@ export interface ChatMessage {
   content: string;
 }
 
-// Get all available API keys
+
 const getApiKeys = (): string[] => {
   const keys: string[] = [];
   const key1 = import.meta.env.VITE_GROQ_API_KEY;
@@ -125,10 +125,10 @@ const getApiKeys = (): string[] => {
   return keys;
 };
 
-// Track which API key to use (for fallback)
+
 let currentKeyIndex = 0;
 
-// Try to make request with a specific API key
+
 async function tryRequestWithKey(
   messages: ChatMessage[],
   apiKey: string
@@ -154,20 +154,20 @@ async function tryRequestWithKey(
   return response;
 }
 
-// Clean markdown from response
+
 const cleanMarkdown = (text: string): string => {
   return text
-    .replace(/\*\*([^*]+)\*\*/g, '"$1"')  // **text** -> "text"
-    .replace(/\*([^*]+)\*/g, '$1')         // *text* -> text
-    .replace(/^#{1,6}\s+/gm, '')           // Remove # headers
-    .replace(/^[-*]\s+/gm, '')             // Remove - or * list markers
-    .replace(/`([^`]+)`/g, '$1');          // `code` -> code
+    .replace(/\*\*([^*]+)\*\*/g, '"$1"')  
+    .replace(/\*([^*]+)\*/g, '$1')         
+    .replace(/^#{1,6}\s+/gm, '')           
+    .replace(/^[-*]\s+/gm, '')             
+    .replace(/`([^`]+)`/g, '$1');          
 };
 
-// Streaming response generator with API key fallback
+
 export async function* streamMessageFromGroq(
   messages: ChatMessage[],
-  _apiKey?: string // Keep for backward compatibility but use internal keys
+  _apiKey?: string 
 ): AsyncGenerator<string> {
   const apiKeys = getApiKeys();
   
@@ -178,7 +178,7 @@ export async function* streamMessageFromGroq(
   let lastError: Error | null = null;
   let response: Response | null = null;
   
-  // Try each API key until one works
+  
   for (let attempt = 0; attempt < apiKeys.length; attempt++) {
     const keyIndex = (currentKeyIndex + attempt) % apiKeys.length;
     const apiKey = apiKeys[keyIndex];
@@ -187,18 +187,18 @@ export async function* streamMessageFromGroq(
       response = await tryRequestWithKey(messages, apiKey);
       
       if (response.ok) {
-        // This key works, remember it for next time
+        
         currentKeyIndex = keyIndex;
         break;
       } else {
-        // API returned error, try next key
+        
         const error = await response.json().catch(() => ({}));
         lastError = new Error(error.error?.message || `API Key ${keyIndex + 1} ใช้งานไม่ได้`);
         console.warn(`API Key ${keyIndex + 1} failed:`, lastError.message);
         response = null;
       }
     } catch (err) {
-      // Network error or other issue, try next key
+      
       lastError = err instanceof Error ? err : new Error('Unknown error');
       console.warn(`API Key ${keyIndex + 1} error:`, lastError.message);
       response = null;
@@ -219,13 +219,13 @@ export async function* streamMessageFromGroq(
     const { done, value } = await reader.read();
     if (done) break;
     
-    // Decode with buffer to handle incomplete UTF-8 sequences
+    
     const chunk = decoder.decode(value, { stream: true });
     buffer += chunk;
     
-    // Process complete lines only
+    
     const lines = buffer.split('\n');
-    buffer = lines.pop() || ''; // Keep incomplete line in buffer
+    buffer = lines.pop() || ''; 
     
     for (const line of lines) {
       if (line.startsWith('data: ')) {
@@ -236,18 +236,18 @@ export async function* streamMessageFromGroq(
           const parsed = JSON.parse(data);
           const content = parsed.choices?.[0]?.delta?.content;
           if (content) {
-            // Clean markdown from each chunk
+            
             const cleaned = cleanMarkdown(content);
             yield cleaned;
           }
         } catch {
-          // Skip invalid JSON
+          
         }
       }
     }
   }
   
-  // Process any remaining buffer
+  
   if (buffer.startsWith('data: ')) {
     const data = buffer.slice(6).trim();
     if (data && data !== '[DONE]') {
@@ -258,13 +258,13 @@ export async function* streamMessageFromGroq(
           yield cleanMarkdown(content);
         }
       } catch {
-        // Skip invalid JSON
+        
       }
     }
   }
 }
 
-// Export function to get current API status
+
 export const getApiKeyStatus = () => {
   const keys = getApiKeys();
   return {

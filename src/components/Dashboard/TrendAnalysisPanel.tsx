@@ -72,7 +72,7 @@ export const TrendAnalysisPanel = ({ history, delay = 0 }: TrendAnalysisPanelPro
             </div>
 
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* Trend Indicator */}
+                {}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -101,7 +101,7 @@ export const TrendAnalysisPanel = ({ history, delay = 0 }: TrendAnalysisPanelPro
                     </div>
                 </div>
 
-                {/* Stats */}
+                {}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <div style={{ padding: 12, borderRadius: 12, border: `1px solid ${borderColor}` }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -123,7 +123,7 @@ export const TrendAnalysisPanel = ({ history, delay = 0 }: TrendAnalysisPanelPro
                     </div>
                 </div>
 
-                {/* AI Insight / Prediction */}
+                {}
                 <div style={{
                     marginTop: 'auto',
                     padding: 12,

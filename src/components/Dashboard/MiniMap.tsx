@@ -28,13 +28,13 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
   const expandedMarkersRef = useRef<L.Marker[]>([]);
   const expandedMapInitializedRef = useRef(false);
 
-  // Filter sensors with GPS coordinates
+  
   const sensorsWithGPS = useMemo(() =>
     sensors.filter(s => s.latitude && s.longitude),
     [sensors]
   );
 
-  // Calculate center
+  
   const center = useMemo(() => {
     if (sensorsWithGPS.length === 0) return { lat: 13.7563, lng: 100.5018 };
     const avgLat = sensorsWithGPS.reduce((sum, s) => sum + (s.latitude || 0), 0) / sensorsWithGPS.length;
@@ -48,7 +48,7 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
     return '#10B981';
   }, [settings.dangerThreshold, settings.warningThreshold]);
 
-  // Theme colors
+  
   const cardBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.8)';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.05)';
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
@@ -81,9 +81,9 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
   const openModal = useCallback(() => setIsExpanded(true), []);
   const closeModal = useCallback(() => setIsExpanded(false), []);
 
-  // Initialize mini map when component mounts and has sensors
+  
   useEffect(() => {
-    // Wait until we have sensors with GPS
+    
     if (sensorsWithGPS.length === 0) return;
     if (!miniMapRef.current) return;
     if (miniMapInitializedRef.current) return;
@@ -105,15 +105,15 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
     
     miniMapInitializedRef.current = true;
     
-    // Force map to recalculate size after render
+    
     setTimeout(() => {
       if (miniMapInstanceRef.current) {
         miniMapInstanceRef.current.invalidateSize();
       }
     }, 100);
-  }, [sensorsWithGPS.length > 0]); // Only re-run when sensors become available
+  }, [sensorsWithGPS.length > 0]); 
   
-  // Cleanup mini map on unmount
+  
   useEffect(() => {
     return () => {
       if (miniMapInstanceRef.current) {
@@ -124,17 +124,17 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
     };
   }, []);
 
-  // Update mini map markers when sensors change
+  
   useEffect(() => {
     if (!miniMapInstanceRef.current || sensorsWithGPS.length === 0) return;
 
     const map = miniMapInstanceRef.current;
 
-    // Clear old markers
+    
     miniMarkersRef.current.forEach(m => m.remove());
     miniMarkersRef.current = [];
 
-    // Add new markers
+    
     sensorsWithGPS.forEach(sensor => {
       const marker = L.marker([sensor.latitude!, sensor.longitude!], {
         icon: createMarkerIcon(getMarkerColor(sensor.value), sensor.value)
@@ -152,7 +152,7 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
       miniMarkersRef.current.push(marker);
     });
 
-    // Fit bounds only once (first time we have sensors)
+    
     if (!miniBoundsSetRef.current && sensorsWithGPS.length > 0) {
       if (sensorsWithGPS.length > 1) {
         const bounds = L.latLngBounds(sensorsWithGPS.map(s => [s.latitude!, s.longitude!]));
@@ -164,10 +164,10 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
     }
   }, [sensorsWithGPS, createMarkerIcon, getMarkerColor]);
 
-  // Initialize expanded map when modal opens
+  
   useEffect(() => {
     if (!isExpanded) {
-      // Cleanup when closing
+      
       if (expandedMapInstanceRef.current) {
         try { expandedMapInstanceRef.current.remove(); } catch (e) {}
         expandedMapInstanceRef.current = null;
@@ -176,7 +176,7 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
       return;
     }
 
-    // Wait for DOM
+    
     const timer = setTimeout(() => {
       if (!expandedMapRef.current || expandedMapInitializedRef.current) return;
 
@@ -191,7 +191,7 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
         maxZoom: 20,
       }).addTo(expandedMapInstanceRef.current);
 
-      // Add markers
+      
       sensorsWithGPS.forEach(sensor => {
         const marker = L.marker([sensor.latitude!, sensor.longitude!], {
           icon: createMarkerIcon(getMarkerColor(sensor.value), sensor.value)
@@ -212,7 +212,7 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
         expandedMarkersRef.current.push(marker);
       });
 
-      // Fit bounds
+      
       if (sensorsWithGPS.length > 1) {
         const bounds = L.latLngBounds(sensorsWithGPS.map(s => [s.latitude!, s.longitude!]));
         expandedMapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
@@ -224,7 +224,7 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [isExpanded]); // Only depend on isExpanded!
+  }, [isExpanded]); 
 
   if (sensorsWithGPS.length === 0) {
     return (
@@ -360,7 +360,7 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
         />
       </motion.div>
 
-      {/* Modal */}
+      {}
       {createPortal(
         <AnimatePresence>
           {isExpanded && (

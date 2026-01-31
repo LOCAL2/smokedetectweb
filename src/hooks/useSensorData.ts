@@ -11,10 +11,10 @@ const SENSOR_HISTORY_KEY = 'smoke-sensor-individual-history';
 const SENSOR_DATA_KEY = 'smoke-sensor-current-data';
 const SENSOR_BROADCAST_CHANNEL = 'smoke-sensor-sync';
 
-const GRAPH_RETENTION_MS = 30 * 60 * 1000; // 30 minutes
-const GRAPH_UPDATE_INTERVAL_MS = 60 * 1000; // 1 minute
+const GRAPH_RETENTION_MS = 30 * 60 * 1000; 
+const GRAPH_UPDATE_INTERVAL_MS = 60 * 1000; 
 
-// Sound alert
+
 const playAlertSound = () => {
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -30,7 +30,7 @@ const playAlertSound = () => {
 
     oscillator.start();
 
-    // Beep pattern: beep-beep-beep
+    
     setTimeout(() => { gainNode.gain.value = 0; }, 150);
     setTimeout(() => { gainNode.gain.value = 0.3; }, 250);
     setTimeout(() => { gainNode.gain.value = 0; }, 400);
@@ -45,7 +45,7 @@ const playAlertSound = () => {
   }
 };
 
-// Browser notification
+
 const showNotification = (title: string, body: string) => {
   if (!('Notification' in window)) return;
 
@@ -72,7 +72,7 @@ const showNotification = (title: string, body: string) => {
   }
 };
 
-// โหลด history จาก localStorage
+
 const loadHistoryFromStorage = (): SensorHistory[] => {
   try {
     const saved = localStorage.getItem(HISTORY_STORAGE_KEY);
@@ -95,7 +95,7 @@ const saveHistoryToStorage = (history: SensorHistory[]) => {
   }
 };
 
-// โหลด sensor individual history
+
 interface SensorHistoryMap {
   [sensorId: string]: SensorHistory[];
 }
@@ -128,7 +128,7 @@ const saveSensorHistoryToStorage = (history: SensorHistoryMap) => {
   }
 };
 
-// Save/Load current sensor data for cross-tab sync
+
 const saveSensorDataToStorage = (sensors: SensorData[]) => {
   try {
     localStorage.setItem(SENSOR_DATA_KEY, JSON.stringify({
@@ -152,7 +152,7 @@ const loadSensorDataFromStorage = (): { sensors: SensorData[]; timestamp: number
   return null;
 };
 
-// BroadcastChannel for real-time cross-tab sync
+
 let broadcastChannel: BroadcastChannel | null = null;
 try {
   broadcastChannel = new BroadcastChannel(SENSOR_BROADCAST_CHANNEL);
@@ -160,7 +160,7 @@ try {
   console.log('BroadcastChannel not supported, using localStorage fallback');
 }
 
-// โหลด sensor stats (max, min, sum, count สำหรับ 24 ชั่วโมง)
+
 interface StoredSensorMax {
   id: string;
   name: string;
@@ -224,11 +224,11 @@ export const useSensorData = (settings: SettingsConfig) => {
   const lastAlertTimeRef = useRef<number>(0);
   const wasInDangerRef = useRef<boolean>(false);
 
-  // Process incoming sensor data
+  
   const processSensorData = useCallback((rawData: SensorData[], fromBroadcast = false) => {
     if (rawData.length === 0) return;
 
-    // Merge coordinates from settings
+    
     const allData = rawData.map(sensor => {
       const coord = settings.sensorCoordinates?.find(
         c => c.sensorId === sensor.id || c.sensorId === sensor.location
@@ -245,7 +245,7 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     setSensors(allData);
 
-    // Save to localStorage and broadcast to other tabs (only if this is the source)
+    
     if (!fromBroadcast) {
       saveSensorDataToStorage(allData);
       if (broadcastChannel) {
@@ -259,7 +259,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     allData.forEach(sensor => {
       const locationKey = sensor.location || sensor.id;
 
-      // Update stats (max, min, avg)
+      
       const existing = sensorMaxRef.current.get(locationKey);
       if (!existing || existing.timestamp < oneDayAgo) {
         sensorMaxRef.current.set(locationKey, {
@@ -283,7 +283,7 @@ export const useSensorData = (settings: SettingsConfig) => {
         });
       }
 
-      // Update individual sensor history
+      
       if (!sensorHistoryRef.current[locationKey]) {
         sensorHistoryRef.current[locationKey] = [];
       }
@@ -307,7 +307,7 @@ export const useSensorData = (settings: SettingsConfig) => {
       }
     });
 
-    // Clean old max values
+    
     sensorMaxRef.current.forEach((value, key) => {
       if (value.timestamp < oneDayAgo) {
         sensorMaxRef.current.delete(key);
@@ -318,7 +318,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     saveSensorHistoryToStorage(sensorHistoryRef.current);
     setSensorHistory({ ...sensorHistoryRef.current });
 
-    // Sort max values with min/avg
+    
     const sortedMaxValues: SensorMaxValue[] = Array.from(sensorMaxRef.current.values())
       .map(item => ({
         id: item.id,
@@ -332,7 +332,7 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     setSensorMaxValues(sortedMaxValues);
 
-    // Calculate stats
+    
     const onlineSensors = allData.filter(s => s.isOnline);
     const values = onlineSensors.map(s => s.value);
     const avgValue = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
@@ -349,25 +349,25 @@ export const useSensorData = (settings: SettingsConfig) => {
       alertCount,
     });
 
-    // Check for danger alerts and trigger notifications
+    
     const dangerSensors = allData.filter(s =>
       getSensorStatusWithSettings(s.value, settings.warningThreshold, settings.dangerThreshold) === 'danger'
     );
 
     const isInDanger = dangerSensors.length > 0;
     const timeSinceLastAlert = now - lastAlertTimeRef.current;
-    const alertCooldown = 30000; // 30 seconds between alerts
+    const alertCooldown = 30000; 
 
-    // Only alert when entering danger state (not continuously)
+    
     if (isInDanger && !wasInDangerRef.current && timeSinceLastAlert > alertCooldown) {
       lastAlertTimeRef.current = now;
 
-      // Play sound alert
+      
       if (settings.enableSoundAlert) {
         playAlertSound();
       }
 
-      // Show browser notification
+      
       if (settings.enableNotification) {
         const sensorNames = dangerSensors.map(s => s.location || s.name || s.id).join(', ');
         const maxDangerValue = Math.max(...dangerSensors.map(s => s.value));
@@ -380,7 +380,7 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     wasInDangerRef.current = isInDanger;
 
-    // Save average history
+    
     const historyNow = new Date();
     const lastHistEntry = historyRef.current[historyRef.current.length - 1];
     const shouldAddEntry = !lastHistEntry ||
@@ -406,7 +406,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     setIsLoading(false);
   }, [settings.warningThreshold, settings.dangerThreshold, settings.sensorCoordinates]);
 
-  // Fetch via HTTP
+  
   const fetchSensorData = useCallback(async () => {
     try {
       const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
@@ -417,7 +417,7 @@ export const useSensorData = (settings: SettingsConfig) => {
         return;
       }
 
-      // Clear old sensors and rebuild from fresh data each fetch
+      
       const newSensorsMap = new Map<string, SensorData>();
 
       for (const endpoint of enabledEndpoints) {
@@ -428,7 +428,7 @@ export const useSensorData = (settings: SettingsConfig) => {
 
           let rawData: SensorData[] = [];
 
-          // Handle different response formats
+          
           if (Array.isArray(response.data)) {
             rawData = response.data;
           } else if (response.data && typeof response.data === 'object') {
@@ -441,7 +441,7 @@ export const useSensorData = (settings: SettingsConfig) => {
             }
           }
 
-          // Add to new sensors map (only sensors that responded)
+          
           rawData.forEach((sensor: SensorData, index: number) => {
             const sensorId = `${endpoint.id}-${sensor.id || index}`;
             newSensorsMap.set(sensorId, {
@@ -458,12 +458,12 @@ export const useSensorData = (settings: SettingsConfig) => {
         }
       }
 
-      // Replace sensorsRef with only the sensors that responded
+      
       sensorsRef.current = newSensorsMap;
       const allSensors = Array.from(newSensorsMap.values());
 
       if (allSensors.length === 0) {
-        // Clear sensors state when no data
+        
         setSensors([]);
         setError('ไม่สามารถเชื่อมต่อกับเซ็นเซอร์ได้');
         setIsLoading(false);
@@ -480,7 +480,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     }
   }, [settings.apiEndpoints, processSensorData]);
 
-  // Start HTTP polling
+  
   const startHttpPolling = useCallback(() => {
     fetchSensorData();
 
@@ -491,7 +491,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     intervalRef.current = window.setInterval(fetchSensorData, settings.pollingInterval);
   }, [fetchSensorData, settings.pollingInterval]);
 
-  // Demo mode: generate mock data
+  
   const startDemoMode = useCallback(() => {
     console.log('🎮 Demo Mode: Starting with mock sensor data');
     resetMockData();
@@ -500,7 +500,7 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     const updateMockData = () => {
       const mockSensors = generateMockSensorData();
-      // Clear and rebuild sensorsRef for demo mode too
+      
       sensorsRef.current.clear();
       mockSensors.forEach(sensor => {
         sensorsRef.current.set(sensor.id, sensor);
@@ -518,9 +518,9 @@ export const useSensorData = (settings: SettingsConfig) => {
     intervalRef.current = window.setInterval(updateMockData, settings.pollingInterval);
   }, [processSensorData, settings.pollingInterval]);
 
-  // Setup connections based on settings
+  
   useEffect(() => {
-    // Listen for cross-tab updates via BroadcastChannel
+    
     const handleBroadcastMessage = (event: MessageEvent) => {
       if (event.data?.type === 'sensor-update' && event.data?.sensors) {
         processSensorData(event.data.sensors, true);
@@ -533,22 +533,38 @@ export const useSensorData = (settings: SettingsConfig) => {
       broadcastChannel.addEventListener('message', handleBroadcastMessage);
     }
 
-    // Load existing data from localStorage immediately
-    const existingData = loadSensorDataFromStorage();
-    if (existingData && existingData.sensors.length > 0) {
-      processSensorData(existingData.sensors, true);
-      setConnectionStatus('connected');
+    
+    sensorsRef.current.clear();
+    setSensors([]);
+    
+    
+    const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
+    const hasEnabledEndpoints = enabledEndpoints.length > 0;
+    
+    if (settings.demoMode || hasEnabledEndpoints) {
+      const existingData = loadSensorDataFromStorage();
+      if (existingData && existingData.sensors.length > 0) {
+        processSensorData(existingData.sensors, true);
+        setConnectionStatus('connected');
+        setIsLoading(false);
+      }
+    } else {
+      
+      localStorage.removeItem(SENSOR_DATA_KEY);
       setIsLoading(false);
     }
 
-    // Always start fetching immediately - don't wait for primary tab logic
+    
     const startFetching = () => {
       if (settings.demoMode) {
         sensorsRef.current.clear();
         startDemoMode();
       } else {
-        const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
-        if (enabledEndpoints.length === 0) {
+        if (!hasEnabledEndpoints) {
+          
+          sensorsRef.current.clear();
+          setSensors([]);
+          localStorage.removeItem(SENSOR_DATA_KEY);
           setError('ไม่มี API endpoint ที่เปิดใช้งาน');
           setIsLoading(false);
         } else {
@@ -557,11 +573,10 @@ export const useSensorData = (settings: SettingsConfig) => {
       }
     };
 
-    // Start immediately
+    
     startFetching();
 
     return () => {
-      sensorsRef.current.clear();
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;

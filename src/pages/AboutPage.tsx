@@ -13,7 +13,7 @@ export const AboutPage = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
 
-  // Theme colors
+  
   const cardBg = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255, 255, 255, 0.9)';
   const cardBorder = isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0, 0, 0, 0.08)';
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
@@ -73,7 +73,7 @@ export const AboutPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: isDark ? '#0B0F1A' : '#F1F5F9' }}>
-      {/* Back Button - Absolute positioned */}
+      {}
       <motion.button
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -100,7 +100,7 @@ export const AboutPage = () => {
         กลับหน้าหลัก
       </motion.button>
 
-      {/* Hero Section with Lamp Effect */}
+      {}
       <LampContainer>
         <motion.h1 initial={{ opacity: 0.5, y: 100 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }}
@@ -114,7 +114,7 @@ export const AboutPage = () => {
       </LampContainer>
 
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 32px)' }}>
-        {/* Project Description */}
+        {}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
           <div style={{ background: cardBg, borderRadius: '20px', padding: 'clamp(24px, 4vw, 32px)', border: cardBorder, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
             <h2 style={{ color: textColor, fontSize: '20px', fontWeight: 600, margin: '0 0 16px' }}>เกี่ยวกับโปรเจค</h2>
@@ -127,7 +127,7 @@ export const AboutPage = () => {
           </div>
         </motion.section>
 
-        {/* Features Grid */}
+        {}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
           <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Target size={18} color="#3B82F6" /> คุณสมบัติหลัก
@@ -146,7 +146,7 @@ export const AboutPage = () => {
           </div>
         </motion.section>
 
-        {/* How It Works */}
+        {}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
           <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Clock size={18} color="#10B981" /> หลักการทำงาน
@@ -163,7 +163,7 @@ export const AboutPage = () => {
           </div>
         </motion.section>
 
-        {/* Specifications */}
+        {}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
           <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Smartphone size={18} color="#F59E0B" /> ข้อมูลจำเพาะ
@@ -178,7 +178,7 @@ export const AboutPage = () => {
           </div>
         </motion.section>
 
-        {/* Project Goals */}
+        {}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
           <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <CheckCircle size={18} color="#10B981" /> วัตถุประสงค์ของโปรเจค
@@ -195,7 +195,7 @@ export const AboutPage = () => {
           </div>
         </motion.section>
 
-        {/* Tech Stack */}
+        {}
         <motion.section initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8, ease: "easeInOut" }} style={{ marginBottom: '48px' }}>
           <h2 style={{ color: textColor, fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Cpu size={18} color="#8B5CF6" /> เทคโนโลยีที่ใช้

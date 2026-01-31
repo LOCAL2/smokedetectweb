@@ -60,7 +60,7 @@ export const UpdatesPage = () => {
   const [selectedType, setSelectedType] = useState<UpdateType | 'all'>('all');
   const [expandedVersion, setExpandedVersion] = useState<string | null>(updates[0]?.version || null);
 
-  // Theme colors
+  
   const colors = {
     cardBg: isDark ? 'rgba(30, 41, 59, 0.6)' : 'rgba(255, 255, 255, 0.95)',
     cardBorder: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
@@ -73,7 +73,7 @@ export const UpdatesPage = () => {
     statBg: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(255, 255, 255, 0.8)',
   };
 
-  // Statistics
+  
   const stats = useMemo(() => {
     const totalUpdates = updates.length;
     const totalChanges = updates.reduce((sum, u) => sum + u.changes.length, 0);
@@ -85,7 +85,7 @@ export const UpdatesPage = () => {
     return { totalUpdates, totalChanges, latestVersion, typeCount };
   }, [updates]);
 
-  // Filtered updates
+  
   const filteredUpdates = useMemo(() => {
     return updates.filter(update => {
       const matchesType = selectedType === 'all' || update.type === selectedType;
@@ -99,7 +99,7 @@ export const UpdatesPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: isDark ? '#0B0F1A' : '#F1F5F9' }}>
-      {/* Back Button - Absolute positioned */}
+      {}
       <motion.button
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -126,7 +126,7 @@ export const UpdatesPage = () => {
         กลับหน้าหลัก
       </motion.button>
 
-      {/* Hero Section */}
+      {}
       <LampContainer>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -175,10 +175,10 @@ export const UpdatesPage = () => {
         </motion.div>
       </LampContainer>
 
-      {/* Main Content */}
+      {}
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 clamp(16px, 4vw, 32px) 64px' }}>
 
-        {/* Stats Cards */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -235,7 +235,7 @@ export const UpdatesPage = () => {
           ))}
         </motion.div>
 
-        {/* Search & Filter */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -250,7 +250,7 @@ export const UpdatesPage = () => {
             boxShadow: isDark ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.05)',
           }}
         >
-          {/* Search Input */}
+          {}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -292,7 +292,7 @@ export const UpdatesPage = () => {
             )}
           </div>
 
-          {/* Filter Tabs */}
+          {}
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setSelectedType('all')}
@@ -362,7 +362,7 @@ export const UpdatesPage = () => {
           </div>
         </motion.div>
 
-        {/* Results Count */}
+        {}
         {(searchQuery || selectedType !== 'all') && (
           <motion.p
             initial={{ opacity: 0 }}
@@ -378,7 +378,7 @@ export const UpdatesPage = () => {
           </motion.p>
         )}
 
-        {/* Updates List */}
+        {}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <AnimatePresence mode="popLayout">
             {filteredUpdates.map((update, index) => {
@@ -409,7 +409,7 @@ export const UpdatesPage = () => {
                     position: 'relative',
                   }}
                 >
-                  {/* Header - Clickable */}
+                  {}
                   <button
                     onClick={() => setExpandedVersion(isExpanded ? null : update.version)}
                     style={{
@@ -425,7 +425,7 @@ export const UpdatesPage = () => {
                       textAlign: 'left',
                     }}
                   >
-                    {/* Icon */}
+                    {}
                     <div style={{
                       width: '52px',
                       height: '52px',
@@ -440,7 +440,7 @@ export const UpdatesPage = () => {
                       <Icon size={24} color="#FFF" />
                     </div>
 
-                    {/* Info */}
+                    {}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
                         <span style={{
@@ -453,7 +453,7 @@ export const UpdatesPage = () => {
                         }}>
                           v{update.version}
                         </span>
-                        {/* Latest Badge - Inline */}
+                        {}
                         {isLatest && (
                           <span style={{
                             display: 'inline-flex',
@@ -498,7 +498,7 @@ export const UpdatesPage = () => {
                       </h3>
                     </div>
 
-                    {/* Expand Icon */}
+                    {}
                     <motion.div
                       animate={{ rotate: isExpanded ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
@@ -517,7 +517,7 @@ export const UpdatesPage = () => {
                     </motion.div>
                   </button>
 
-                  {/* Expandable Content */}
+                  {}
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
@@ -592,7 +592,7 @@ export const UpdatesPage = () => {
           </AnimatePresence>
         </div>
 
-        {/* Empty State */}
+        {}
         {filteredUpdates.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -615,7 +615,7 @@ export const UpdatesPage = () => {
           </motion.div>
         )}
 
-        {/* Footer */}
+        {}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

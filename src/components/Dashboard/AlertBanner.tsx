@@ -59,7 +59,7 @@ export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
         }}
       >
         <div style={{ padding: '20px 24px' }}>
-          {/* Main Alert Header */}
+          {}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -136,7 +136,7 @@ export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
             </button>
           </div>
 
-          {/* Sensor Cards - Horizontal Scroll */}
+          {}
           <div style={{
             display: 'flex',
             gap: '12px',
@@ -188,7 +188,7 @@ export const AlertBanner = ({ sensors, settings }: AlertBannerProps) => {
             ))}
           </div>
 
-          {/* Footer */}
+          {}
           <div style={{
             display: 'flex',
             alignItems: 'center',

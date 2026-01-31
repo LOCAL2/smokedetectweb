@@ -52,7 +52,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
   const [isFullscreen, setIsFullscreen] = useState(initialFullscreen);
   const { isDark } = useTheme();
 
-  // Get unique sensors from history, filtered if needed
+  
   const allSensorIds = Object.keys(sensorHistory);
   const sensorIds = filteredSensorIds
     ? allSensorIds.filter(id => filteredSensorIds.includes(id))
@@ -60,7 +60,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
 
   const pinnedSensors = settings.pinnedSensors || [];
 
-  // Theme colors
+  
   const cardBg = isDark
     ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
     : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)';
@@ -74,7 +74,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
   const tooltipBody = isDark ? '#94A3B8' : '#64748B';
   const fullscreenBg = isDark ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)' : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)';
 
-  // Prepare data based on view mode
+  
   const prepareChartData = () => {
     if (viewMode === 'average') {
       const labels = data.map(item =>
@@ -108,12 +108,12 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
       };
     }
 
-    // Individual or Pinned sensor view
+    
     const displaySensorIds = viewMode === 'pinned'
       ? sensorIds.filter(id => pinnedSensors.includes(id))
       : sensorIds;
 
-    // Find all unique timestamps
+    
     const allTimestamps = new Set<string>();
     displaySensorIds.forEach(id => {
       sensorHistory[id]?.forEach(h => allTimestamps.add(h.timestamp));
@@ -133,7 +133,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
       const sensorData = sensorHistory[sensorId] || [];
       const displayName = sensorData[0]?.location || sensorData[0]?.sensorName || sensorId;
 
-      // Map values to timestamps
+      
       const valueMap = new Map<string, number>();
       sensorData.forEach(h => valueMap.set(h.timestamp, h.value));
 
@@ -255,7 +255,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
       const yAxis = chart.scales.y;
       const xAxis = chart.scales.x;
 
-      // Warning line
+      
       const warningY = yAxis.getPixelForValue(settings.warningThreshold);
       if (warningY >= yAxis.top && warningY <= yAxis.bottom) {
         ctx.save();
@@ -270,7 +270,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
         ctx.restore();
       }
 
-      // Danger line
+      
       const dangerY = yAxis.getPixelForValue(settings.dangerThreshold);
       if (dangerY >= yAxis.top && dangerY <= yAxis.bottom) {
         ctx.save();
@@ -315,7 +315,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
           </p>
         </div>
 
-        {/* View Mode Toggle & Fullscreen */}
+        {}
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
             onClick={() => setViewMode('individual')}
@@ -366,7 +366,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
             ค่าเฉลี่ย
           </button>
 
-          {/* Fullscreen Button */}
+          {}
           <button
             onClick={() => setIsFullscreen(true)}
             style={{
@@ -404,7 +404,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
         />
       </div>
 
-      {/* Legend for threshold lines */}
+      {}
       <div style={{
         display: 'flex',
         gap: '24px',
@@ -439,7 +439,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
         </div>
       </div>
 
-      {/* Fullscreen Modal */}
+      {}
       <AnimatePresence>
         {isFullscreen && (
           <motion.div
@@ -456,7 +456,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
               padding: 'clamp(16px, 4vw, 32px)',
             }}
           >
-            {/* Header */}
+            {}
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -491,7 +491,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
               </motion.button>
             </div>
 
-            {/* View Mode Toggle */}
+            {}
             <div style={{
               display: 'flex',
               gap: '10px',
@@ -546,7 +546,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
               </button>
             </div>
 
-            {/* Chart Container */}
+            {}
             <div style={{
               flex: 1,
               minHeight: 0,
@@ -598,7 +598,7 @@ export const SmokeChart = ({ data, sensorHistory, settings, initialViewMode = 'i
               </div>
             </div>
 
-            {/* Legend */}
+            {}
             <div style={{
               display: 'flex',
               gap: '32px',

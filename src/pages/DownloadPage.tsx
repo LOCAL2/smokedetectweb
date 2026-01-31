@@ -21,7 +21,7 @@ export const DownloadPage = () => {
   const { isDark } = useTheme();
   const [activePlatform, setActivePlatform] = useState<Platform>('android');
 
-  // Theme colors
+  
   const cardBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)';
   const cardBorder = isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0, 0, 0, 0.08)';
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
@@ -74,7 +74,7 @@ export const DownloadPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: isDark ? '#0B0F1A' : '#F1F5F9' }}>
-      {/* Back Button - Absolute positioned */}
+      {}
       <motion.button
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -101,7 +101,7 @@ export const DownloadPage = () => {
         กลับหน้าหลัก
       </motion.button>
 
-      {/* Hero Section with Lamp */}
+      {}
       <LampContainer>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -125,13 +125,13 @@ export const DownloadPage = () => {
         </motion.div>
       </LampContainer>
 
-      {/* Main Content */}
+      {}
       <div style={{ 
         maxWidth: '900px', 
         margin: '0 auto', 
         padding: '48px clamp(16px, 4vw, 32px) clamp(32px, 6vw, 64px)',
       }}>
-        {/* Platform Selector */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,7 +181,7 @@ export const DownloadPage = () => {
           })}
         </motion.div>
 
-        {/* Download Card */}
+        {}
         <AnimatePresence mode="wait">
           <motion.div
             key={activePlatform}
@@ -201,7 +201,7 @@ export const DownloadPage = () => {
               boxShadow: isDark ? 'none' : '0 8px 32px rgba(0, 0, 0, 0.08)',
             }}
           >
-            {/* Glow Effect */}
+            {}
             <div style={{
               position: 'absolute',
               top: '-50%',
@@ -214,7 +214,7 @@ export const DownloadPage = () => {
             }} />
 
             <div style={{ position: 'relative', textAlign: 'center' }}>
-              {/* Icon */}
+              {}
               <motion.div
                 key={`icon-${activePlatform}`}
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -235,7 +235,7 @@ export const DownloadPage = () => {
                 <PlatformIcon size={44} color="#FFF" />
               </motion.div>
 
-              {/* Title */}
+              {}
               <h2 style={{ 
                 color: textColor, 
                 fontSize: 'clamp(20px, 5vw, 28px)', 
@@ -245,7 +245,7 @@ export const DownloadPage = () => {
                 Smoke Detect
               </h2>
               
-              {/* Platform Badge */}
+              {}
               <div style={{ 
                 display: 'inline-flex', 
                 alignItems: 'center', 
@@ -261,7 +261,7 @@ export const DownloadPage = () => {
                 </span>
               </div>
 
-              {/* Info Grid */}
+              {}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
@@ -290,7 +290,7 @@ export const DownloadPage = () => {
                 </div>
               </div>
 
-              {/* Download Button */}
+              {}
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
@@ -321,7 +321,7 @@ export const DownloadPage = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* Features */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -365,7 +365,7 @@ export const DownloadPage = () => {
           ))}
         </motion.div>
 
-        {/* Footer */}
+        {}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

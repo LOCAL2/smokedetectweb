@@ -20,7 +20,7 @@ export interface LineNotifySettings {
   channelAccessToken: string;
   notifyOnWarning: boolean;
   notifyOnDanger: boolean;
-  cooldownMinutes: number; // ป้องกันส่งซ้ำถี่เกินไป
+  cooldownMinutes: number; 
   lastNotifyTime?: number;
 }
 
@@ -52,13 +52,14 @@ export interface SettingsConfig {
   demoMode: boolean;
   dashboardLayout: LayoutSettings;
   sensorGroups: SensorGroup[];
-  sensorAssignments: Record<string, string>; // sensorId -> groupId
+  sensorAssignments: Record<string, string>; 
+  groqApiKey?: string; 
 }
 
 const STORAGE_KEY = 'smoke-detection-settings';
 const SETTINGS_BROADCAST_CHANNEL = 'smoke-settings-sync';
 
-// BroadcastChannel for real-time cross-tab sync
+
 let settingsBroadcastChannel: BroadcastChannel | null = null;
 try {
   settingsBroadcastChannel = new BroadcastChannel(SETTINGS_BROADCAST_CHANNEL);
@@ -123,7 +124,7 @@ export const useSettings = () => {
     setSettings(prev => {
       const updated = { ...prev, ...newSettings };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      // Broadcast to other tabs
+      
       if (settingsBroadcastChannel) {
         settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: updated });
       }
@@ -135,25 +136,25 @@ export const useSettings = () => {
     const defaults = getDefaultSettings();
     localStorage.removeItem(STORAGE_KEY);
     setSettings(defaults);
-    // Broadcast reset to other tabs
+    
     if (settingsBroadcastChannel) {
       settingsBroadcastChannel.postMessage({ type: 'settings-update', settings: defaults });
     }
   }, []);
 
-  // Auto enable demo mode if no API endpoints configured
+  
   useEffect(() => {
     const autoDemoMode = import.meta.env.VITE_AUTO_DEMO_MODE === 'true';
     if (autoDemoMode) {
       const hasEnabledEndpoints = settings.apiEndpoints.some(ep => ep.enabled && ep.url);
       if (!hasEnabledEndpoints && !settings.demoMode) {
-        // Auto enable demo mode
+        
         updateSettings({ demoMode: true });
       }
     }
   }, [settings.apiEndpoints, settings.demoMode, updateSettings]);
 
-  // Listen for cross-tab settings changes
+  
   useEffect(() => {
     const handleBroadcastMessage = (event: MessageEvent) => {
       if (event.data?.type === 'settings-update' && event.data?.settings) {
@@ -165,7 +166,7 @@ export const useSettings = () => {
       settingsBroadcastChannel.addEventListener('message', handleBroadcastMessage);
     }
 
-    // Fallback: Listen for localStorage changes
+    
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === STORAGE_KEY && event.newValue) {
         try {
@@ -190,7 +191,7 @@ export const useSettings = () => {
   return { settings, updateSettings, resetSettings };
 };
 
-// Helper function to get sensor status based on current settings
+
 export const getSensorStatusWithSettings = (
   value: number,
   warningThreshold: number,

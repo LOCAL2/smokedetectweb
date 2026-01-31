@@ -28,10 +28,10 @@ export const SensorDataProvider = ({ children }: { children: ReactNode }) => {
   const { recordReading } = useAnalyticsData(settings.warningThreshold, settings.dangerThreshold);
   const lastRecordTime = useRef<number>(0);
 
-  // Record sensor data to analytics (every 5 minutes to avoid too much data)
+  
   useEffect(() => {
     const now = Date.now();
-    const RECORD_INTERVAL = 5 * 60 * 1000; // 5 minutes
+    const RECORD_INTERVAL = 5 * 60 * 1000; 
     
     if (sensorData.sensors.length > 0 && now - lastRecordTime.current > RECORD_INTERVAL) {
       lastRecordTime.current = now;

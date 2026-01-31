@@ -28,7 +28,7 @@ export const MaintenancePage = () => {
       alignItems: 'center',
       justifyContent: 'center',
     }}>
-      {/* Animated gradient background */}
+      {}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -40,7 +40,7 @@ export const MaintenancePage = () => {
         transition: 'background 0.3s ease',
       }} />
 
-      {/* Grid pattern */}
+      {}
       <div style={{
         position: 'absolute',
         inset: 0,
@@ -51,9 +51,9 @@ export const MaintenancePage = () => {
         backgroundSize: '60px 60px',
       }} />
 
-      {/* Main content */}
+      {}
       <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: '40px' }}>
-        {/* Logo */}
+        {}
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -113,7 +113,7 @@ export const MaintenancePage = () => {
           </div>
         </motion.div>
 
-        {/* Status badge */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -145,7 +145,7 @@ export const MaintenancePage = () => {
           </span>
         </motion.div>
 
-        {/* Title */}
+        {}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -163,7 +163,7 @@ export const MaintenancePage = () => {
           Coming Soon
         </motion.h1>
 
-        {/* Subtitle */}
+        {}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,7 +181,7 @@ export const MaintenancePage = () => {
           เราจะกลับมาพร้อมประสบการณ์ที่ดีกว่าเดิม
         </motion.p>
 
-        {/* Stats */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -215,7 +215,7 @@ export const MaintenancePage = () => {
           ))}
         </motion.div>
 
-        {/* Current time */}
+        {}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -244,7 +244,7 @@ export const MaintenancePage = () => {
           </p>
         </motion.div>
 
-        {/* Footer */}
+        {}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

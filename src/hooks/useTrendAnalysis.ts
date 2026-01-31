@@ -3,7 +3,7 @@ import type { SensorHistory } from '../types/sensor';
 
 export interface TrendInsight {
     trend: 'rising' | 'falling' | 'stable';
-    trendValue: number; // percentage change
+    trendValue: number; 
     peakTime: string | null;
     lowestTime: string | null;
     averageValue: number;
@@ -23,11 +23,11 @@ export const useTrendAnalysis = (history: SensorHistory[]): TrendInsight => {
             };
         }
 
-        // Sort by timestamp just in case
+        
         const sorted = [...history].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-        // 1. Calculate Trend (Compare last 10% vs first 10% of the visible window, or split half)
-        // Better: Split into two halves
+        
+        
         const midPoint = Math.floor(sorted.length / 2);
         const firstHalf = sorted.slice(0, midPoint);
         const secondHalf = sorted.slice(midPoint);
@@ -42,7 +42,7 @@ export const useTrendAnalysis = (history: SensorHistory[]): TrendInsight => {
         if (percentChange > 5) trend = 'rising';
         else if (percentChange < -5) trend = 'falling';
 
-        // 2. Find Peak and Lowest times
+        
         let maxVal = -Infinity;
         let minVal = Infinity;
         let peakTimestamp = '';
@@ -61,7 +61,7 @@ export const useTrendAnalysis = (history: SensorHistory[]): TrendInsight => {
 
         const averageValue = sorted.reduce((sum, item) => sum + item.value, 0) / sorted.length;
 
-        // 3. Generate Prediction / Insight
+        
         let prediction = '';
         if (trend === 'rising') {
             prediction = 'แนวโน้มค่าควันกำลังสูงขึ้น ควรเฝ้าระวัง';
@@ -71,7 +71,7 @@ export const useTrendAnalysis = (history: SensorHistory[]): TrendInsight => {
             prediction = 'ค่าควันค่อนข้างคงที่ อยู่ในระดับปกติ';
         }
 
-        if (maxVal > 100) { // Arbitrary high threshold
+        if (maxVal > 100) { 
             prediction += ' | พบช่วงที่มีค่าสูงผิดปกติ';
         }
 

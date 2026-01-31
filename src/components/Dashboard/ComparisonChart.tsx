@@ -9,7 +9,7 @@ interface ComparisonChartProps {
   sensors: SensorData[];
 }
 
-// Custom Dropdown Component
+
 const SensorDropdown = ({
   label,
   value,
@@ -228,7 +228,7 @@ export const ComparisonChart = ({ sensors }: ComparisonChartProps) => {
   const [sensor1Id, setSensor1Id] = useState<string>('');
   const [sensor2Id, setSensor2Id] = useState<string>('');
 
-  // Initialize defaults
+  
   useEffect(() => {
     if (sensors.length >= 2 && !sensor1Id && !sensor2Id) {
       const sorted = [...sensors].sort((a, b) => b.value - a.value);
@@ -303,7 +303,7 @@ export const ComparisonChart = ({ sensors }: ComparisonChartProps) => {
       background: cardBg, borderRadius: '16px', overflow: 'visible', border: `1px solid ${borderColor}`,
       backdropFilter: 'blur(10px)', boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
     }}>
-      {/* Header */}
+      {}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px', borderBottom: `1px solid ${borderColor}` }}>
         <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <ArrowRightLeft size={16} color="#8B5CF6" />
@@ -315,7 +315,7 @@ export const ComparisonChart = ({ sensors }: ComparisonChartProps) => {
       </div>
 
       <div style={{ padding: '16px' }}>
-        {/* Dual Dropdowns - Vertical Layout */}
+        {}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
           <SensorDropdown
             label="Sensor 1"
@@ -353,7 +353,7 @@ export const ComparisonChart = ({ sensors }: ComparisonChartProps) => {
           />
         </div>
 
-        {/* Comparison Results */}
+        {}
         <AnimatePresence mode="popLayout">
           {displaySensors.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -420,7 +420,7 @@ export const ComparisonChart = ({ sensors }: ComparisonChartProps) => {
                       </div>
                     </div>
                     
-                    {/* Progress Bar */}
+                    {}
                     <div style={{ 
                       height: '8px', 
                       background: barBg, 
@@ -463,7 +463,7 @@ export const ComparisonChart = ({ sensors }: ComparisonChartProps) => {
                 );
               })}
               
-              {/* Difference indicator */}
+              {}
               {displaySensors.length === 2 && (
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -504,7 +504,7 @@ export const ComparisonChart = ({ sensors }: ComparisonChartProps) => {
           )}
         </AnimatePresence>
 
-        {/* Legend */}
+        {}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 

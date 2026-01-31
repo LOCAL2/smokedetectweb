@@ -82,7 +82,7 @@ export const OfflineIndicator = ({ isOnline, cacheAge }: OfflineIndicatorProps) 
   );
 };
 
-// CSS animation for pulse
+
 const pulseKeyframes = `
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -90,7 +90,7 @@ const pulseKeyframes = `
   }
 `;
 
-// Inject keyframes
+
 if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.textContent = pulseKeyframes;

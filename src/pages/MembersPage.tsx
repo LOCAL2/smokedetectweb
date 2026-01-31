@@ -14,7 +14,7 @@ export const MembersPage = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
 
-  // แก้ไขข้อมูลสมาชิกตรงนี้
+  
   const leader: Member = {
     name: 'นาย นภัสพล ผู้แสนสะอาด',
     role: 'หัวหน้าโปรเจค',
@@ -69,7 +69,7 @@ export const MembersPage = () => {
         </div>
       )}
 
-      {/* Avatar */}
+      {}
       <div style={{
         width: isLeader ? 'clamp(90px, 20vw, 120px)' : 'clamp(80px, 18vw, 100px)',
         height: isLeader ? 'clamp(90px, 20vw, 120px)' : 'clamp(80px, 18vw, 100px)',
@@ -100,7 +100,7 @@ export const MembersPage = () => {
         )}
       </div>
 
-      {/* Info */}
+      {}
       <h3 style={{
         color: isDark ? '#F8FAFC' : '#0F172A',
         fontSize: isLeader ? 'clamp(18px, 4vw, 22px)' : 'clamp(16px, 3.5vw, 18px)',
@@ -137,7 +137,7 @@ export const MembersPage = () => {
       background: isDark ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)' : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%)',
       padding: 'clamp(16px, 4vw, 32px)',
     }}>
-      {/* Back Button - Outside container */}
+      {}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -166,7 +166,7 @@ export const MembersPage = () => {
       </motion.div>
 
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        {/* Header */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -194,24 +194,24 @@ export const MembersPage = () => {
           </div>
         </motion.div>
 
-        {/* Members Grid - Responsive */}
-        {/* Desktop: หัวหน้าอยู่ตรงกลาง | Mobile: หัวหน้าอยู่บนสุด */}
+        {}
+        {}
         <div className="members-grid" style={{
           display: 'grid',
           gap: 'clamp(16px, 3vw, 24px)',
           alignItems: 'center',
         }}>
-          {/* ซ้าย - วรเดช */}
+          {}
           <div className="member-left">
             <MemberCard member={leftMember} delay={0.2} />
           </div>
           
-          {/* กลาง - นภัสพล (หัวหน้า) */}
+          {}
           <div className="member-center">
             <MemberCard member={leader} isLeader delay={0.1} />
           </div>
           
-          {/* ขวา - ภูมิรพี */}
+          {}
           <div className="member-right">
             <MemberCard member={rightMember} delay={0.3} />
           </div>
@@ -235,7 +235,7 @@ export const MembersPage = () => {
           }
         `}</style>
 
-        {/* Project Info */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -258,7 +258,7 @@ export const MembersPage = () => {
           </p>
         </motion.div>
 
-        {/* Footer */}
+        {}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

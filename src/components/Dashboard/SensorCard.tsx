@@ -19,7 +19,7 @@ export const SensorCard = ({ sensor, settings, isPinned = false, onTogglePin, on
   const colors = STATUS_COLORS[status];
   const { isDark } = useTheme();
 
-  // Theme-aware colors
+  
   const cardBg = isDark
     ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)'
     : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)';

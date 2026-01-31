@@ -21,7 +21,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
   const [monthOffset, setMonthOffset] = useState(0);
   const { isDark } = useTheme();
 
-  // Get current month data
+  
   const { weeks, monthName, year, daysInMonth } = useMemo(() => {
     const today = new Date();
     const targetDate = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
@@ -35,29 +35,29 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
     
     const monthName = targetDate.toLocaleDateString('th-TH', { month: 'long' });
     
-    // Build calendar grid
+    
     const days: (DayData | null | 'empty')[] = [];
     
-    // Add empty cells for days before month starts
+    
     for (let i = 0; i < startDayOfWeek; i++) {
       days.push('empty');
     }
     
-    // Add days of month
+    
     for (let d = 1; d <= daysInMonth; d++) {
-      // Use local date format to avoid timezone issues
+      
       const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const dayData = data.find(item => item.date === dateStr);
       days.push(dayData || null);
     }
     
-    // Group into weeks
+    
     const result: (DayData | null | 'empty')[][] = [];
     for (let i = 0; i < days.length; i += 7) {
       result.push(days.slice(i, i + 7));
     }
     
-    // Pad last week if needed
+    
     const lastWeek = result[result.length - 1];
     while (lastWeek.length < 7) {
       lastWeek.push('empty');
@@ -82,7 +82,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
     return isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)';
   };
 
-  // Theme-aware colors
+  
   const colors = {
     cardBg: isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)',
     border: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.08)',
@@ -97,7 +97,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
     noDataText: isDark ? '#475569' : '#94A3B8',
   };
 
-  // Stats for current month
+  
   const monthStats = useMemo(() => {
     const today = new Date();
     const targetDate = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
@@ -133,7 +133,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
         boxShadow: isDark ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.08)',
       }}
     >
-      {/* Header */}
+      {}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -165,7 +165,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
           </div>
         </div>
         
-        {/* Month Navigation */}
+        {}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -220,9 +220,9 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
       </div>
 
       <div style={{ display: 'flex' }}>
-        {/* Calendar Grid */}
+        {}
         <div style={{ flex: 1, padding: '20px 24px' }}>
-          {/* Day names */}
+          {}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
@@ -242,7 +242,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
             ))}
           </div>
 
-          {/* Weeks */}
+          {}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {weeks.map((week, weekIndex) => (
               <div
@@ -261,7 +261,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
                   const dayNum = weekIndex * 7 + dayIndex - (new Date(year, new Date().getMonth() - monthOffset, 1).getDay()) + 1;
                   const isToday = monthOffset === 0 && dayNum === new Date().getDate();
                   
-                  // Check if this day is in the future
+                  
                   const today = new Date();
                   const currentYear = today.getFullYear();
                   const currentMonth = today.getMonth();
@@ -271,7 +271,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
                     ? dayNum > currentDay 
                     : (year > currentYear || (year === currentYear && targetMonth > currentMonth));
                   
-                  // Don't show data for future days
+                  
                   const hasData = day !== null && !isFutureDay;
                   const isSelected = selectedDay?.date === day?.date && !isFutureDay;
                   
@@ -336,7 +336,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
             ))}
           </div>
 
-          {/* Legend */}
+          {}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -366,7 +366,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
           </div>
         </div>
 
-        {/* Stats Panel */}
+        {}
         <div style={{
           width: '220px',
           borderLeft: `1px solid ${colors.border}`,
@@ -390,7 +390,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
                 <p style={{ color: colors.textMuted, fontSize: '11px', margin: '0 0 4px' }}>วันที่</p>
                 <p style={{ color: colors.textPrimary, fontSize: '15px', fontWeight: 600, margin: 0 }}>
                   {(() => {
-                    // Parse date string manually to avoid timezone issues
+                    
                     const [y, m, d] = selectedDay.date.split('-').map(Number);
                     const localDate = new Date(y, m - 1, d);
                     return localDate.toLocaleDateString('th-TH', { 

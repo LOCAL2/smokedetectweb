@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import type { Easing } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 
-// Skeleton shimmer animation
+
 const shimmer = {
   initial: { backgroundPosition: '-200% 0' },
   animate: { 
@@ -19,7 +19,7 @@ const getSkeletonStyle = (isDark: boolean) => ({
   borderRadius: '8px',
 });
 
-// Status Card Skeleton
+
 export const StatusCardSkeleton = () => {
   const { isDark } = useTheme();
   const skeletonStyle = getSkeletonStyle(isDark);
@@ -50,7 +50,7 @@ export const StatusCardSkeleton = () => {
   );
 };
 
-// Chart Skeleton
+
 export const ChartSkeleton = () => {
   const { isDark } = useTheme();
   const skeletonStyle = getSkeletonStyle(isDark);
@@ -86,7 +86,7 @@ export const ChartSkeleton = () => {
   );
 };
 
-// Sensor Card Skeleton
+
 export const SensorCardSkeleton = () => {
   const { isDark } = useTheme();
   const skeletonStyle = getSkeletonStyle(isDark);
@@ -121,7 +121,7 @@ export const SensorCardSkeleton = () => {
   );
 };
 
-// Ranking Skeleton
+
 export const RankingSkeleton = () => {
   const { isDark } = useTheme();
   const skeletonStyle = getSkeletonStyle(isDark);
@@ -158,11 +158,11 @@ export const RankingSkeleton = () => {
   );
 };
 
-// Full Dashboard Skeleton
+
 export const DashboardSkeleton = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Status Cards */}
+      {}
       <div className="status-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -171,7 +171,7 @@ export const DashboardSkeleton = () => {
         {[1, 2, 3, 4].map((i) => <StatusCardSkeleton key={i} />)}
       </div>
       
-      {/* Charts */}
+      {}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
@@ -181,7 +181,7 @@ export const DashboardSkeleton = () => {
         <RankingSkeleton />
       </div>
       
-      {/* Sensor Cards */}
+      {}
       <div className="sensor-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',

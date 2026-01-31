@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const ANALYTICS_STORAGE_KEY = 'smoke-sensor-analytics';
-const DATA_RETENTION_DAYS = 45; // 1 เดือน 15 วัน
+const DATA_RETENTION_DAYS = 45; 
 
 export interface HourlyData {
-  hour: string; // ISO string
+  hour: string; 
   avg: number;
   max: number;
   min: number;
@@ -59,7 +59,7 @@ const saveAnalyticsToStorage = (data: AnalyticsData) => {
 export const useAnalyticsData = (warningThreshold: number, dangerThreshold: number) => {
   const [analytics, setAnalytics] = useState<AnalyticsData>(loadAnalyticsFromStorage);
 
-  // Cleanup old data (older than 45 days)
+  
   const cleanupOldData = useCallback(() => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - DATA_RETENTION_DAYS);
@@ -74,7 +74,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
         );
         
         if (filteredHourly.length > 0) {
-          // Recalculate stats
+          
           const totalReadings = filteredHourly.reduce((sum, h) => sum + h.count, 0);
           const weightedSum = filteredHourly.reduce((sum, h) => sum + h.avg * h.count, 0);
           const overallAvg = totalReadings > 0 ? weightedSum / totalReadings : 0;
@@ -103,7 +103,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
     });
   }, []);
 
-  // Run cleanup on mount and daily
+  
   useEffect(() => {
     const lastCleanup = new Date(analytics.lastCleanup);
     const now = new Date();
@@ -114,7 +114,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
     }
   }, [analytics.lastCleanup, cleanupOldData]);
 
-  // Record sensor reading
+  
   const recordReading = useCallback((
     locationId: string,
     locationName: string,
@@ -137,7 +137,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
         lastUpdated: now.toISOString(),
       };
 
-      // Find or create hourly bucket
+      
       let hourlyIndex = location.hourlyData.findIndex(h => h.hour === hourKey);
       let hourly: HourlyData;
       
@@ -153,7 +153,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
         hourly.count = newCount;
       }
 
-      // Update overall stats
+      
       const newTotalReadings = location.totalReadings + 1;
       location.overallAvg = (location.overallAvg * location.totalReadings + value) / newTotalReadings;
       location.totalReadings = newTotalReadings;
@@ -161,7 +161,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
       location.overallMin = Math.min(location.overallMin === Infinity ? value : location.overallMin, value);
       location.lastUpdated = now.toISOString();
 
-      // Track danger/warning counts
+      
       if (value >= dangerThreshold) {
         location.dangerCount++;
       } else if (value >= warningThreshold) {
@@ -181,7 +181,7 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
     });
   }, [warningThreshold, dangerThreshold]);
 
-  // Get summary for date range
+  
   const getSummary = useCallback((days: number) => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
@@ -215,25 +215,25 @@ export const useAnalyticsData = (warningThreshold: number, dangerThreshold: numb
       };
     }).filter(Boolean);
 
-    // Sort by max value descending
+    
     locationSummaries.sort((a, b) => (b?.max || 0) - (a?.max || 0));
 
     return locationSummaries;
   }, [analytics.locations]);
 
-  // Reset all data
+  
   const resetData = useCallback(() => {
     const newData = getEmptyAnalytics();
     saveAnalyticsToStorage(newData);
     setAnalytics(newData);
   }, []);
 
-  // Export data as JSON
+  
   const exportAsJSON = useCallback(() => {
     return JSON.stringify(analytics, null, 2);
   }, [analytics]);
 
-  // Export data as text
+  
   const exportAsText = useCallback((days: number) => {
     const summary = getSummary(days);
     const now = new Date();

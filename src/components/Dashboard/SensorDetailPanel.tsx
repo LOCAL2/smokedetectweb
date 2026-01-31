@@ -24,10 +24,10 @@ interface SensorDetailPanelProps {
   onClose: () => void;
 }
 
-// Default coordinates (Bangkok) if sensor doesn't have GPS data
+
 const DEFAULT_COORDS = { lat: 13.7563, lng: 100.5018 };
 
-// Interactive Map Component using Leaflet
+
 const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: any; settings: SettingsConfig }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -35,8 +35,8 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
   const circleRef = useRef<L.Circle | null>(null);
   const { isDark } = useTheme();
 
-  // Priority: 1. Settings coordinates (by location or id), 2. Sensor data coordinates, 3. Default
-  // Use location as primary key for coordinates matching (more stable than endpoint-prefixed id)
+  
+  
   const settingsCoords = (settings.sensorCoordinates || []).find(c =>
     c.sensorId === sensor.location || c.sensorId === sensor.id
   );
@@ -45,7 +45,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
   const address = settingsCoords?.address || sensor.address || sensor.location;
   const hasCoordinates = settingsCoords !== undefined || (sensor.lat !== undefined && sensor.lng !== undefined);
 
-  // Theme colors
+  
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
   const textSecondary = isDark ? '#94A3B8' : '#64748B';
   const bgWarning = isDark ? 'rgba(245, 158, 11, 0.1)' : 'rgba(245, 158, 11, 0.05)';
@@ -55,7 +55,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Initialize map only once
+    
     if (!mapInstanceRef.current) {
       mapInstanceRef.current = L.map(mapRef.current, {
         center: [lat, lng],
@@ -64,24 +64,24 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
         attributionControl: false,
       });
 
-      // Simple filter for dark mode map (using CartoDB Dark Matter would be better but keeping it simple)
+      
       L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         className: isDark ? 'map-tiles-dark' : '',
       }).addTo(mapInstanceRef.current);
 
-      // Add zoom control to bottom right
+      
       L.control.zoom({ position: 'bottomright' }).addTo(mapInstanceRef.current);
     } else {
-      // Update tile layer class if theme changes
-      // Complex way to access layers, simpler to just force re-render if critical, 
-      // but for now let's hope CSS class approach works or just leave as is.
+      
+      
+      
     }
 
-    // Update map view
+    
     mapInstanceRef.current.setView([lat, lng], 18);
 
-    // Remove old marker and circle
+    
     if (markerRef.current) {
       markerRef.current.remove();
     }
@@ -89,7 +89,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
       circleRef.current.remove();
     }
 
-    // Create custom marker icon
+    
     const markerIcon = L.divIcon({
       className: 'custom-marker',
       html: `
@@ -132,11 +132,11 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
       iconAnchor: [20, 50],
     });
 
-    // Add new marker
+    
     markerRef.current = L.marker([lat, lng], { icon: markerIcon })
       .addTo(mapInstanceRef.current);
 
-    // Add pulsing circle
+    
     circleRef.current = L.circle([lat, lng], {
       color: colors.primary,
       fillColor: colors.primary,
@@ -146,7 +146,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
     }).addTo(mapInstanceRef.current);
 
     return () => {
-      // Cleanup on unmount
+      
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -195,7 +195,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
         </motion.button>
       </div>
 
-      {/* No coordinates warning */}
+      {}
       {!hasCoordinates && (
         <div style={{
           background: bgWarning,
@@ -214,7 +214,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
         </div>
       )}
 
-      {/* Map Container */}
+      {}
       <div style={{
         borderRadius: '16px',
         overflow: 'hidden',
@@ -231,7 +231,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
           }}
         />
 
-        {/* Overlay Info */}
+        {}
         <div style={{
           position: 'absolute',
           bottom: '12px',
@@ -256,7 +256,7 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
         </div>
       </div>
 
-      {/* Coordinates */}
+      {}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -320,7 +320,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
   const colors = STATUS_COLORS[status];
   const { isDark } = useTheme();
 
-  // Theme colors
+  
   const panelBg = isDark
     ? 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)'
     : 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)';
@@ -337,7 +337,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
 
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll when panel is open
+  
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
     document.body.style.overflow = 'hidden';
@@ -346,7 +346,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
     };
   }, []);
 
-  // Prevent scroll from bubbling to body when panel reaches edges
+  
   useEffect(() => {
     const panel = panelRef.current;
     if (!panel) return;
@@ -356,12 +356,12 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
       const atTop = scrollTop === 0;
       const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
 
-      // If scrolling up at top or scrolling down at bottom, prevent default
+      
       if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
         e.preventDefault();
       }
       
-      // Always stop propagation to prevent body scroll
+      
       e.stopPropagation();
     };
 
@@ -373,7 +373,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
 
   return (
     <>
-      {/* Backdrop */}
+      {}
       <div
         onClick={onClose}
         style={{
@@ -385,7 +385,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
         }}
       />
 
-      {/* Panel */}
+      {}
       <div
         ref={panelRef}
         data-scroll-container="true"
@@ -405,7 +405,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {}
         <div style={{
           padding: '20px',
           borderBottom: `1px solid ${borderColor}`,
@@ -444,7 +444,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
           </div>
         </div>
 
-        {/* Current Value */}
+        {}
         <div style={{ padding: '24px 20px', textAlign: 'center' }}>
           <p style={{ color: textSecondary, fontSize: '13px', marginBottom: '8px' }}>
             <Clock size={14} style={{ verticalAlign: 'middle', marginRight: '6px' }} />
@@ -481,7 +481,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {}
         <div style={{ padding: '0 20px 24px' }}>
           <div style={{
             height: '8px',
@@ -507,10 +507,10 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
           </div>
         </div>
 
-        {/* Floor Map */}
+        {}
         <SensorMap sensor={sensor} colors={colors} settings={settings} />
 
-        {/* 24h Stats */}
+        {}
         <div style={{ padding: '0 20px 24px' }}>
           <h3 style={{
             color: textColor,
@@ -526,7 +526,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Max */}
+            {}
             <div style={{
               background: 'rgba(239, 68, 68, 0.1)',
               border: '1px solid rgba(239, 68, 68, 0.2)',
@@ -551,7 +551,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
               </div>
             </div>
 
-            {/* Min */}
+            {}
             <div style={{
               background: 'rgba(16, 185, 129, 0.1)',
               border: '1px solid rgba(16, 185, 129, 0.2)',
@@ -576,7 +576,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
               </div>
             </div>
 
-            {/* Average */}
+            {}
             <div style={{
               background: 'rgba(59, 130, 246, 0.1)',
               border: '1px solid rgba(59, 130, 246, 0.2)',
@@ -603,7 +603,7 @@ export const SensorDetailPanel = ({ sensor, stats, settings, onClose }: SensorDe
           </div>
         </div>
 
-        {/* Sensor Info */}
+        {}
         <div style={{ padding: '0 20px 24px' }}>
           <h3 style={{
             color: textColor,

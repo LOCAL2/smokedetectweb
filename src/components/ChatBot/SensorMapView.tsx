@@ -26,6 +26,9 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
   const [selectedSensorId, setSelectedSensorId] = useState<string | null>(null);
   const [showLabels, setShowLabels] = useState(true);
 
+  
+  const sensorValuesKey = sensors.map(s => `${s.id}:${s.value}`).join('|');
+
   const getStatusColor = (value: number) => {
     if (value >= settings.dangerThreshold) return '#EF4444';
     if (value >= settings.warningThreshold) return '#F59E0B';
@@ -57,14 +60,14 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Initialize map
+    
     if (!mapInstanceRef.current) {
-      // Find center from sensors with coordinates
+      
       let centerLat = DEFAULT_COORDS.lat;
       let centerLng = DEFAULT_COORDS.lng;
       let hasValidCoords = false;
       
-      // First try to get coords from sensors
+      
       const sensorsWithCoords = sensors.map(s => getSensorCoords(s)).filter(c => c.hasCoords);
       
       if (sensorsWithCoords.length > 0) {
@@ -72,7 +75,7 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         centerLng = sensorsWithCoords.reduce((sum, c) => sum + c.lng, 0) / sensorsWithCoords.length;
         hasValidCoords = true;
       } else if (settings.sensorCoordinates && settings.sensorCoordinates.length > 0) {
-        // Fallback to settings coordinates
+        
         const settingsCoords = settings.sensorCoordinates;
         centerLat = settingsCoords.reduce((sum, c) => sum + c.lat, 0) / settingsCoords.length;
         centerLng = settingsCoords.reduce((sum, c) => sum + c.lng, 0) / settingsCoords.length;
@@ -95,11 +98,11 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
       L.control.zoom({ position: 'bottomright' }).addTo(mapInstanceRef.current);
     }
 
-    // Clear old markers
+    
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    // Add markers for each sensor
+    
     filteredSensors.forEach(sensor => {
       const { lat, lng, hasCoords } = getSensorCoords(sensor);
       if (!hasCoords) return;
@@ -163,7 +166,7 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
       markersRef.current.push(marker);
     });
 
-    // Fit bounds only on initial load or when filter changes
+    
     const filterChanged = lastFilterRef.current !== filter;
     lastFilterRef.current = filter;
     
@@ -174,10 +177,10 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
       
       if (sensorsWithCoords.length > 0) {
         if (sensorsWithCoords.length === 1) {
-          // Single sensor - center on it with good zoom
+          
           mapInstanceRef.current.setView([sensorsWithCoords[0].lat, sensorsWithCoords[0].lng], 17);
         } else {
-          // Multiple sensors - fit bounds
+          
           const bounds = L.latLngBounds(sensorsWithCoords.map(c => [c.lat, c.lng]));
           mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
         }
@@ -186,11 +189,11 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
     }
 
     return () => {
-      // Don't destroy map on filter change, only on unmount
+      
     };
-  }, [filteredSensors, selectedSensorId, showLabels, settings, filter]);
+  }, [sensorValuesKey, filteredSensors, selectedSensorId, showLabels, settings, filter]); 
 
-  // Cleanup on unmount
+  
   useEffect(() => {
     return () => {
       if (mapInstanceRef.current) {
@@ -216,7 +219,7 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         marginBottom: 20,
       }}
     >
-      {/* Header */}
+      {}
       <div style={{
         padding: '14px 16px',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
@@ -279,7 +282,7 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         </div>
       </div>
 
-      {/* Filters */}
+      {}
       <div style={{
         padding: '10px 16px',
         borderBottom: '1px solid rgba(255,255,255,0.05)',
@@ -355,7 +358,7 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         )}
       </div>
 
-      {/* Map */}
+      {}
       <div 
         ref={mapRef} 
         style={{ 
@@ -365,7 +368,7 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         }} 
       />
 
-      {/* Legend */}
+      {}
       <div style={{
         padding: '12px 16px',
         borderTop: '1px solid rgba(255,255,255,0.05)',

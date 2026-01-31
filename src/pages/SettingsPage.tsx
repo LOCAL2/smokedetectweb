@@ -11,7 +11,7 @@ import { useSettingsContext } from '../context/SettingsContext';
 import { useSensorDataContext } from '../context/SensorDataContext';
 import { useTheme } from '../context/ThemeContext';
 
-// Custom Zone Dropdown Component
+
 const ZoneDropdown = ({ 
   value, 
   groups, 
@@ -27,7 +27,7 @@ const ZoneDropdown = ({
   
   const selectedGroup = groups.find(g => g.id === value);
   
-  // Close on click outside
+  
   const handleClickOutside = (e: MouseEvent) => {
     if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
       setIsOpen(false);
@@ -104,7 +104,7 @@ const ZoneDropdown = ({
               overflow: 'hidden',
             }}
           >
-            {/* No zone option */}
+            {}
             <div
               onClick={() => { onChange(''); setIsOpen(false); }}
               style={{
@@ -124,7 +124,7 @@ const ZoneDropdown = ({
               {!value && <Check size={12} color="#10B981" />}
             </div>
             
-            {/* Zone options */}
+            {}
             {groups.map(group => (
               <div
                 key={group.id}
@@ -158,7 +158,7 @@ const ZoneDropdown = ({
   );
 };
 
-// Dashboard component info
+
 const dashboardComponents: Record<DashboardComponent, { name: string; icon: React.ElementType; color: string }> = {
   statusCards: { name: 'สถิติ', icon: Activity, color: '#3B82F6' },
   chart: { name: 'กราฟ', icon: BarChart3, color: '#8B5CF6' },
@@ -181,7 +181,7 @@ const defaultPositions: Record<LayoutPosition, DashboardComponent | null> = {
   trendPanel: 'trendAnalysis',
 };
 
-// Draggable Layout Slot Component
+
 let draggedComponent: DashboardComponent | null = null;
 let draggedFromPosition: LayoutPosition | null = null;
 
@@ -432,7 +432,7 @@ const LayoutSlot = ({
   );
 };
 
-// Reusable Components
+
 const Card = ({ children, delay = 0, highlight = false }: { children: React.ReactNode; delay?: number; highlight?: boolean }) => {
   const { isDark } = useTheme();
   return (
@@ -505,10 +505,10 @@ export const SettingsPage = () => {
   const [editingSensorId, setEditingSensorId] = useState<string | null>(null);
   const [newSensorId, setNewSensorId] = useState('');
 
-  // Handle notification toggle with permission request
+  
   const handleNotificationToggle = async () => {
     if (!settings.enableNotification) {
-      // Turning ON - request permission first
+      
       if ('Notification' in window) {
         if (Notification.permission === 'granted') {
           updateSettings({ enableNotification: true });
@@ -524,7 +524,7 @@ export const SettingsPage = () => {
         alert('เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน');
       }
     } else {
-      // Turning OFF
+      
       updateSettings({ enableNotification: false });
     }
   };
@@ -537,22 +537,22 @@ export const SettingsPage = () => {
     window.location.reload();
   };
 
-  // Get coordinates for a sensor from settings (match by location or id)
+  
   const getSensorCoords = (sensorId: string, location?: string): SensorCoordinates | undefined => {
     return (settings.sensorCoordinates || []).find(c =>
       c.sensorId === location || c.sensorId === sensorId
     );
   };
 
-  // Combine online sensors with saved coordinates
-  // Use location as primary key for better persistence across endpoint changes
   
-  // Create stable sensor key from locations only (not the whole sensors array)
+  
+  
+  
   const sensorLocationsKey = useMemo(() => {
     return sensors.map(s => s.location || s.id).sort().join(',');
   }, [sensors]);
 
-  // Track previous sensor data to prevent unnecessary re-renders
+  
   const prevSensorListRef = useRef<{ id: string; location: string; coordKey: string; isOnline: boolean }[]>([]);
   const prevKeyRef = useRef<string>('');
 
@@ -560,14 +560,14 @@ export const SettingsPage = () => {
     const coordsKey = (settings.sensorCoordinates || []).map(c => c.sensorId).sort().join(',');
     const combinedKey = `${sensorLocationsKey}|${coordsKey}`;
     
-    // Return cached list if key hasn't changed
+    
     if (combinedKey === prevKeyRef.current) {
       return prevSensorListRef.current;
     }
     
     const sensorMap = new Map<string, { id: string; location: string; coordKey: string; isOnline: boolean }>();
 
-    // Add online sensors - use location as coordKey for persistence
+    
     sensors.forEach(s => {
       const coordKey = s.location || s.id;
       sensorMap.set(coordKey, {
@@ -578,7 +578,7 @@ export const SettingsPage = () => {
       });
     });
 
-    // Add saved coordinates (even if sensor is offline)
+    
     (settings.sensorCoordinates || []).forEach(c => {
       if (!sensorMap.has(c.sensorId)) {
         sensorMap.set(c.sensorId, {
@@ -596,7 +596,7 @@ export const SettingsPage = () => {
     return prevSensorListRef.current;
   }, [sensors, sensorLocationsKey, settings.sensorCoordinates]);
 
-  // Add new sensor manually
+  
   const addNewSensor = () => {
     if (!newSensorId.trim()) return;
     const existing = settings.sensorCoordinates || [];
@@ -611,13 +611,13 @@ export const SettingsPage = () => {
     setEditingSensorId(newSensorId.trim());
   };
 
-  // Delete sensor coordinates
+  
   const deleteSensorCoords = (sensorId: string) => {
     const existing = settings.sensorCoordinates || [];
     updateSettings({ sensorCoordinates: existing.filter(c => c.sensorId !== sensorId) });
   };
 
-  // Update sensor coordinates
+  
   const updateSensorCoords = (sensorId: string, lat: number, lng: number, address?: string) => {
     const existing = settings.sensorCoordinates || [];
     const index = existing.findIndex(c => c.sensorId === sensorId);
@@ -631,7 +631,7 @@ export const SettingsPage = () => {
     }
   };
 
-  // Get current location
+  
   const getCurrentLocation = (sensorId: string) => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -648,7 +648,7 @@ export const SettingsPage = () => {
     }
   };
 
-  // Theme colors
+  
   const pageBg = isDark ? '#0B0F1A' : '#F1F5F9';
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
   const textSecondary = isDark ? '#64748B' : '#64748B';
@@ -666,7 +666,7 @@ export const SettingsPage = () => {
       transition: 'background 0.3s ease',
     }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        {/* Header */}
+        {}
         <motion.header
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -703,14 +703,14 @@ export const SettingsPage = () => {
           </div>
         </motion.header>
 
-        {/* Thresholds */}
+        {}
         <Card delay={0.05}>
           <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={16} color="#F59E0B" /> ระดับค่าควัน (PPM)
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Warning */}
+            {}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: '#F59E0B' }} />
               <span style={{ color: textSecondary, fontSize: '13px', width: '70px' }}>เฝ้าระวัง</span>
@@ -727,7 +727,7 @@ export const SettingsPage = () => {
               <span style={{ color: textSecondary, fontSize: '12px' }}>PPM</span>
             </div>
 
-            {/* Danger */}
+            {}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: '#EF4444' }} />
               <span style={{ color: textSecondary, fontSize: '13px', width: '70px' }}>อันตราย</span>
@@ -746,7 +746,7 @@ export const SettingsPage = () => {
           </div>
         </Card>
 
-        {/* Polling Interval */}
+        {}
         <Card delay={0.1}>
           <SettingRow icon={Clock} title="ความถี่รีเฟรช" subtitle={`ดึงข้อมูลทุกๆ ${(settings.pollingInterval / 1000).toFixed(1)} วินาที`} color="#3B82F6">
             <span style={{ color: '#3B82F6', fontSize: '15px', fontWeight: 600, minWidth: '50px', textAlign: 'right' }}>
@@ -804,7 +804,7 @@ export const SettingsPage = () => {
           `}</style>
         </Card>
 
-        {/* Alerts */}
+        {}
         <Card delay={0.15}>
           <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Bell size={16} color="#10B981" /> การแจ้งเตือน
@@ -820,14 +820,14 @@ export const SettingsPage = () => {
           </div>
         </Card>
 
-        {/* Smooth Scroll */}
+        {}
         <Card delay={0.17}>
           <SettingRow icon={MousePointer2} title="Smooth Scroll" subtitle="เลื่อนหน้าแบบ smooth (scroll hijacking)" color="#06B6D4">
             <Toggle enabled={settings.enableSmoothScroll} onChange={() => updateSettings({ enableSmoothScroll: !settings.enableSmoothScroll })} color="#06B6D4" />
           </SettingRow>
         </Card>
 
-        {/* API Endpoints */}
+        {}
         <Card delay={0.2}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -919,14 +919,14 @@ export const SettingsPage = () => {
           )}
         </Card>
 
-        {/* Demo Mode */}
+        {}
         <Card delay={0.25} highlight={settings.demoMode}>
           <SettingRow icon={Gamepad2} title="Demo Mode" subtitle="ใช้ข้อมูลจำลองสำหรับทดสอบ" color="#F59E0B">
             <Toggle enabled={settings.demoMode} onChange={() => updateSettings({ demoMode: !settings.demoMode })} color="#F59E0B" />
           </SettingRow>
         </Card>
 
-        {/* Sensor Groups Management */}
+        {}
         <Card delay={0.28}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -958,7 +958,7 @@ export const SettingsPage = () => {
             จัดกลุ่ม Sensor ตามโซนเพื่อกรองดูข้อมูลแยกตามพื้นที่
           </p>
 
-          {/* Visual Zone Grid */}
+          {}
           <div style={{
             background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
             borderRadius: '16px',
@@ -981,7 +981,7 @@ export const SettingsPage = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {settings.sensorGroups.map((group, index) => {
-                  // Count sensors in this group
+                  
                   const sensorCount = Object.values(settings.sensorAssignments).filter(gId => gId === group.id).length;
                   
                   return (
@@ -1001,7 +1001,7 @@ export const SettingsPage = () => {
                         gap: '12px',
                       }}
                     >
-                      {/* Drag Handle */}
+                      {}
                       <div style={{ color: textSecondary, cursor: 'grab', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         <div style={{ display: 'flex', gap: '2px' }}>
                           <div style={{ width: '3px', height: '3px', borderRadius: '50%', background: textSecondary }} />
@@ -1017,7 +1017,7 @@ export const SettingsPage = () => {
                         </div>
                       </div>
 
-                      {/* Color Badge with Icon */}
+                      {}
                       <div 
                         data-color-badge
                         style={{
@@ -1033,7 +1033,7 @@ export const SettingsPage = () => {
                           position: 'relative',
                         }}>
                         <Activity size={18} color={group.color} />
-                        {/* Color picker overlay */}
+                        {}
                         <input
                           type="color"
                           defaultValue={group.color}
@@ -1049,21 +1049,21 @@ export const SettingsPage = () => {
                             const color = target.value;
                             const zoneCard = target.closest('[data-zone-id]');
                             if (zoneCard) {
-                              // Update card border
+                              
                               (zoneCard as HTMLElement).style.borderColor = `${color}30`;
-                              // Update color badge
+                              
                               const badge = zoneCard.querySelector('[data-color-badge]') as HTMLElement;
                               if (badge) {
                                 badge.style.background = `${color}20`;
                                 badge.style.borderColor = `${color}40`;
-                                // Lucide icons use stroke, not fill
+                                
                                 const icon = badge.querySelector('svg');
                                 if (icon) {
                                   icon.style.stroke = color;
                                   icon.style.color = color;
                                 }
                               }
-                              // Update preview bars
+                              
                               const bars = zoneCard.querySelectorAll('[data-preview-bar]');
                               bars.forEach((bar, i) => {
                                 (bar as HTMLElement).style.background = i === 3 ? color : `${color}80`;
@@ -1082,7 +1082,7 @@ export const SettingsPage = () => {
                         />
                       </div>
 
-                      {/* Zone Name & Info */}
+                      {}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <input
@@ -1112,7 +1112,7 @@ export const SettingsPage = () => {
                         </p>
                       </div>
 
-                      {/* Preview Bars */}
+                      {}
                       <div style={{
                         display: 'flex',
                         alignItems: 'flex-end',
@@ -1134,7 +1134,7 @@ export const SettingsPage = () => {
                         ))}
                       </div>
 
-                      {/* Delete Button */}
+                      {}
                       <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -1166,7 +1166,7 @@ export const SettingsPage = () => {
             )}
           </div>
 
-          {/* Usage Hint */}
+          {}
           {settings.sensorGroups.length > 0 && (
             <p style={{ color: '#64748B', fontSize: '11px', margin: '12px 0 0', textAlign: 'center' }}>
               💡 กำหนดโซนให้ Sensor ได้ที่ส่วน "พิกัด GPS เซ็นเซอร์" ด้านล่าง
@@ -1174,7 +1174,7 @@ export const SettingsPage = () => {
           )}
         </Card>
 
-        {/* Sensor Coordinates */}
+        {}
         <Card delay={0.3}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1182,7 +1182,7 @@ export const SettingsPage = () => {
             </h3>
           </div>
 
-          {/* Add new sensor manually */}
+          {}
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
             <input
               type="text"
@@ -1239,7 +1239,7 @@ export const SettingsPage = () => {
                     borderRadius: '12px',
                     border: coords ? '1px solid rgba(16, 185, 129, 0.2)' : `1px solid ${inputBorder}`,
                   }}>
-                    {/* Sensor Header */}
+                    {}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: coords || isEditing ? '10px' : '0' }}>
                       <div style={{
                         width: '36px', height: '36px', borderRadius: '10px',
@@ -1261,7 +1261,7 @@ export const SettingsPage = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                           <p style={{ color: '#64748B', fontSize: '11px', margin: 0 }}>Key: {sensor.coordKey}</p>
 
-                          {/* Group Selector */}
+                          {}
                           <ZoneDropdown
                             value={settings.sensorAssignments[sensor.id] || ''}
                             groups={settings.sensorGroups}
@@ -1305,7 +1305,7 @@ export const SettingsPage = () => {
                       )}
                     </div>
 
-                    {/* Current Coordinates Display */}
+                    {}
                     {coords && !isEditing && (
                       <div style={{
                         display: 'flex',
@@ -1327,7 +1327,7 @@ export const SettingsPage = () => {
                       </div>
                     )}
 
-                    {/* Edit Form */}
+                    {}
                     <AnimatePresence>
                       {isEditing && (
                         <motion.div
@@ -1337,7 +1337,7 @@ export const SettingsPage = () => {
                           style={{ overflow: 'hidden' }}
                         >
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {/* Quick Paste: lat,lng in one line */}
+                            {}
                             <div>
                               <label style={{ color: textSecondary, fontSize: '11px', display: 'block', marginBottom: '4px' }}>วางพิกัด (lat,lng)</label>
                               <input
@@ -1375,7 +1375,7 @@ export const SettingsPage = () => {
                               />
                             </div>
 
-                            {/* Lat/Lng Inputs */}
+                            {}
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <div style={{ flex: 1 }}>
                                 <label style={{ color: textSecondary, fontSize: '11px', display: 'block', marginBottom: '4px' }}>Latitude</label>
@@ -1415,7 +1415,7 @@ export const SettingsPage = () => {
                               </div>
                             </div>
 
-                            {/* Address Input */}
+                            {}
                             <div>
                               <label style={{ color: textSecondary, fontSize: '11px', display: 'block', marginBottom: '4px' }}>ที่อยู่ (ไม่บังคับ)</label>
                               <input
@@ -1433,7 +1433,7 @@ export const SettingsPage = () => {
                               />
                             </div>
 
-                            {/* Get Current Location Button */}
+                            {}
                             <motion.button
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
@@ -1459,7 +1459,7 @@ export const SettingsPage = () => {
           )}
         </Card>
 
-        {/* Dashboard Layout */}
+        {}
         <Card delay={0.35}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1495,16 +1495,16 @@ export const SettingsPage = () => {
             ลาก component ไปวางแทนที่ตำแหน่งอื่นเพื่อสลับตำแหน่ง
           </p>
 
-          {/* Visual Layout Grid */}
+          {}
           <div style={{
             background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
             borderRadius: '16px',
             padding: '12px',
             border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
           }}>
-            {/* Layout Grid - เหมือนหน้าจริง */}
+            {}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {/* Top Row - Full Width */}
+              {}
               <LayoutSlot
                 position="top"
                 componentId={settings.dashboardLayout?.positions?.top || defaultPositions.top}
@@ -1512,7 +1512,7 @@ export const SettingsPage = () => {
                 updateSettings={updateSettings}
               />
 
-              {/* Middle Row - 2 Columns */}
+              {}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <LayoutSlot
                   position="middleLeft"
@@ -1528,7 +1528,7 @@ export const SettingsPage = () => {
                 />
               </div>
 
-              {/* Bottom Row - Full Width */}
+              {}
               <LayoutSlot
                 position="bottom"
                 componentId={settings.dashboardLayout?.positions?.bottom || defaultPositions.bottom}
@@ -1536,7 +1536,7 @@ export const SettingsPage = () => {
                 updateSettings={updateSettings}
               />
 
-              {/* Additional Row - 3 Columns */}
+              {}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                 <LayoutSlot
                   position="bottomLeft"
@@ -1561,7 +1561,7 @@ export const SettingsPage = () => {
           </div>
         </Card>
 
-        {/* Actions */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1594,7 +1594,7 @@ export const SettingsPage = () => {
           </motion.button>
         </motion.div>
 
-        {/* Clear History Confirmation Modal */}
+        {}
         <AnimatePresence>
           {showClearConfirm && (
             <motion.div
@@ -1614,7 +1614,7 @@ export const SettingsPage = () => {
                   boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
                 }}>
 
-                {/* Icon */}
+                {}
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                   <Trash size={28} color="#EF4444" />
                 </div>

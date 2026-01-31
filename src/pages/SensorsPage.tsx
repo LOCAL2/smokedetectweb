@@ -20,7 +20,7 @@ export const SensorsPage = () => {
   const [zoneFilter, setZoneFilter] = useState<string>('all');
   const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
 
-  // Auto-open sensor from URL query parameter
+  
   useEffect(() => {
     const sensorId = searchParams.get('id');
     if (sensorId && sensors.length > 0 && !selectedSensor) {
@@ -31,7 +31,7 @@ export const SensorsPage = () => {
     }
   }, [searchParams, sensors, selectedSensor]);
 
-  // Clear URL param when closing panel
+  
   const handleClosePanel = () => {
     setSelectedSensor(null);
     if (searchParams.has('id')) {
@@ -40,7 +40,7 @@ export const SensorsPage = () => {
     }
   };
 
-  // Update URL when selecting sensor
+  
   const handleSelectSensor = (sensor: SensorData) => {
     setSelectedSensor(sensor);
     setSearchParams({ id: sensor.id });
@@ -61,7 +61,7 @@ export const SensorsPage = () => {
 
     if (!matchesSearch) return false;
 
-    // Zone filter
+    
     if (zoneFilter !== 'all') {
       const sensorZone = settings.sensorAssignments?.[sensor.id];
       if (sensorZone !== zoneFilter) return false;
@@ -75,7 +75,7 @@ export const SensorsPage = () => {
     return true;
   });
 
-  // Theme colors
+  
   const bgGradient = isDark
     ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)'
     : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%)';
@@ -97,7 +97,7 @@ export const SensorsPage = () => {
       }}
     >
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Header */}
+        {}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: '32px' }}>
           <button
             onClick={() => navigate('/')}
@@ -132,7 +132,7 @@ export const SensorsPage = () => {
               </div>
             </div>
 
-            {/* Search */}
+            {}
             <div
               style={{
                 display: 'flex',
@@ -164,7 +164,7 @@ export const SensorsPage = () => {
           </div>
         </motion.div>
 
-        {/* Status Filters */}
+        {}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -198,7 +198,7 @@ export const SensorsPage = () => {
           ))}
         </motion.div>
 
-        {/* Zone Filters */}
+        {}
         {settings.sensorGroups && settings.sensorGroups.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -262,7 +262,7 @@ export const SensorsPage = () => {
           </motion.div>
         )}
 
-        {/* Sensors Grid */}
+        {}
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '60px', color: textSecondary }}>กำลังโหลด...</div>
         ) : filteredSensors.length === 0 ? (
@@ -353,7 +353,7 @@ export const SensorsPage = () => {
           </div>
         )}
 
-        {/* Footer */}
+        {}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -369,7 +369,7 @@ export const SensorsPage = () => {
         </motion.p>
       </div>
 
-      {/* Sensor Detail Panel */}
+      {}
       {selectedSensor && (
         <SensorDetailPanel
           sensor={selectedSensor}

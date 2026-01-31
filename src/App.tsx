@@ -20,17 +20,17 @@ import { useSmoothScroll } from './hooks/useSmoothScroll';
 import { useOfflineSupport } from './hooks/useOfflineSupport';
 import { useSettingsContext } from './context/SettingsContext';
 
-// Check maintenance mode from environment variable
+
 const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
-// Wrapper component to use hooks
+
 const AppContent = () => {
   const { settings } = useSettingsContext();
   
-  // Custom smooth scroll - ทำให้การเลื่อนหน้า smooth โดยไม่พึ่ง OS/Browser setting
+  
   useSmoothScroll(settings.enableSmoothScroll);
   
-  // Offline support
+  
   const { isOnline, formatCacheAge } = useOfflineSupport();
 
   return (
@@ -56,7 +56,7 @@ const AppContent = () => {
 };
 
 function App() {
-  // Show maintenance page if enabled
+  
   if (isMaintenanceMode) {
     return <MaintenancePage />;
   }

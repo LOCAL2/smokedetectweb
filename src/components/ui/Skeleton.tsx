@@ -38,7 +38,7 @@ export const Skeleton = ({
   );
 };
 
-// Skeleton for sensor card
+
 export const SensorCardSkeleton = () => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -62,7 +62,7 @@ export const SensorCardSkeleton = () => (
   </motion.div>
 );
 
-// Skeleton for chart
+
 export const ChartSkeleton = () => (
   <motion.div
     initial={{ opacity: 0 }}
@@ -99,7 +99,7 @@ export const ChartSkeleton = () => (
   </motion.div>
 );
 
-// Skeleton for stats card
+
 export const StatsCardSkeleton = () => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
@@ -119,16 +119,16 @@ export const StatsCardSkeleton = () => (
   </motion.div>
 );
 
-// Dashboard skeleton
+
 export const DashboardSkeleton = () => (
   <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-    {/* Header skeleton */}
+    {}
     <div style={{ marginBottom: '32px', paddingTop: '80px' }}>
       <Skeleton width={200} height={28} style={{ marginBottom: '8px' }} />
       <Skeleton width={300} height={14} />
     </div>
 
-    {/* Stats grid */}
+    {}
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -140,7 +140,7 @@ export const DashboardSkeleton = () => (
       ))}
     </div>
 
-    {/* Main content */}
+    {}
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',

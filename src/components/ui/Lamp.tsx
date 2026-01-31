@@ -12,7 +12,7 @@ export const LampContainer = ({
 }) => {
   const { isDark } = useTheme();
   
-  // Theme-aware colors
+  
   const bgColor = isDark ? 'bg-slate-950' : 'bg-slate-100';
   const maskBgColor = isDark ? 'bg-slate-950' : 'bg-slate-100';
   const glowColor = isDark ? 'from-cyan-500' : 'from-blue-500';
@@ -29,7 +29,7 @@ export const LampContainer = ({
         className
       )}
     >
-      {/* Lamp Effect */}
+      {}
       <div className="relative flex w-full h-[180px] items-center justify-center isolate z-0">
         <motion.div
           initial={{ opacity: 0.5, width: "15rem" }}
@@ -96,7 +96,7 @@ export const LampContainer = ({
         <div className={cn("absolute inset-auto z-40 h-32 w-full -translate-y-[9rem]", maskBgColor)}></div>
       </div>
 
-      {/* Content - อยู่ข้างหน้าและ animate ขึ้นมา */}
+      {}
       <motion.div 
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}

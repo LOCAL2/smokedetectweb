@@ -23,7 +23,7 @@ export const GuidePage = () => {
   const { isDark } = useTheme();
   const [expandedSection, setExpandedSection] = useState<string | null>('dashboard');
 
-  // Theme colors
+  
   const cardBg = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(255, 255, 255, 0.9)';
   const cardBorder = isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0, 0, 0, 0.08)';
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
@@ -87,7 +87,7 @@ export const GuidePage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: isDark ? '#0B0F1A' : '#F1F5F9' }}>
-      {/* Back Button - Fixed positioned */}
+      {}
       <motion.button
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}

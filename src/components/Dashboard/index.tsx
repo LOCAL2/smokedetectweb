@@ -12,7 +12,6 @@ import { Header } from './Header';
 import { StatusCard } from './StatusCard';
 import { AlertStatusCard } from './AlertStatusCard';
 import { SensorCard } from './SensorCard';
-import { AlertBanner } from './AlertBanner';
 import { SmokeChart } from './SmokeChart';
 import { SensorRanking } from './SensorRanking';
 import { SensorDetailPanel } from './SensorDetailPanel';
@@ -21,6 +20,11 @@ import { MiniMap } from './MiniMap';
 import { ComparisonChart } from './ComparisonChart';
 import { SensorStatusHistory } from './SensorStatusHistory';
 import { TrendAnalysisPanel } from './TrendAnalysisPanel';
+import { OnboardingTour } from '../Onboarding/OnboardingTour';
+import { TryDemoButton } from './TryDemoButton';
+import { SimpleView } from './SimpleView';
+import { AIInsightsPanel } from './AIInsightsPanel';
+import { generateInsights, getAISummary, generateAISummaryWithGroq, generateAIInsightsWithGroq } from '../../utils/aiInsights';
 import type { SensorData } from '../../types/sensor';
 
 const defaultPositions: Record<LayoutPosition, DashboardComponent | null> = {
@@ -40,6 +44,7 @@ export const Dashboard = () => {
   const { isDark } = useTheme();
   const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('all');
+  const [isSimpleView, setIsSimpleView] = useState(false);
 
   const handleTogglePin = (sensorId: string) => {
     const pinnedSensors = settings.pinnedSensors || [];
@@ -51,7 +56,7 @@ export const Dashboard = () => {
 
   const { sensors, history, sensorHistory, stats, sensorMaxValues, isLoading } = useSensorDataContext();
 
-  // Filter sensors based on group
+  
   const filteredSensors = useMemo(() => {
     if (selectedGroupId === 'all') return sensors;
     return sensors.filter(s => settings.sensorAssignments?.[s.id] === selectedGroupId);
@@ -59,7 +64,123 @@ export const Dashboard = () => {
 
   const filteredSensorIds = useMemo(() => filteredSensors.map(s => s.id), [filteredSensors]);
 
-  // Recalculate stats for filtered sensors
+  
+  const sensorHistoryMap = useMemo(() => {
+    const map = new Map<string, number[]>();
+    Object.entries(sensorHistory).forEach(([id, historyArray]) => {
+      map.set(id, historyArray.map(h => h.value));
+    });
+    return map;
+  }, [sensorHistory]);
+
+  
+  const [aiInsights, setAiInsights] = useState<any[]>([]);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const aiTimeoutRef = useRef<number | null>(null);
+  const lastAICallRef = useRef<number>(0);
+  const aiCacheRef = useRef<{ summary: string; insights: any[]; timestamp: number } | null>(null);
+
+  useEffect(() => {
+    if (sensors.length === 0) {
+      setAiInsights([]);
+      setAiSummary('');
+      return;
+    }
+
+    
+    const basicInsights = generateInsights(
+      filteredSensors,
+      sensorHistoryMap,
+      settings.warningThreshold,
+      settings.dangerThreshold
+    );
+    
+    const basicSummary = getAISummary(
+      filteredSensors, 
+      settings.warningThreshold, 
+      settings.dangerThreshold
+    );
+
+    
+    setAiInsights(basicInsights);
+    setAiSummary(basicSummary);
+
+    
+    if (aiTimeoutRef.current) {
+      clearTimeout(aiTimeoutRef.current);
+    }
+
+    
+    if (!settings.groqApiKey) {
+      return;
+    }
+
+    
+    aiTimeoutRef.current = window.setTimeout(async () => {
+      const now = Date.now();
+      const timeSinceLastCall = now - lastAICallRef.current;
+      
+      
+      if (timeSinceLastCall < 30000 && aiCacheRef.current) {
+        setAiSummary(aiCacheRef.current.summary);
+        setAiInsights(aiCacheRef.current.insights);
+        return;
+      }
+
+      setIsLoadingAI(true);
+      lastAICallRef.current = now;
+
+      try {
+        
+        const aiSummaryResult = await generateAISummaryWithGroq(
+          filteredSensors,
+          sensorHistoryMap,
+          settings.warningThreshold,
+          settings.dangerThreshold,
+          settings.groqApiKey
+        );
+        setAiSummary(aiSummaryResult);
+
+        
+        const enhancedInsights = await generateAIInsightsWithGroq(
+          basicInsights,
+          filteredSensors,
+          settings.groqApiKey
+        );
+        setAiInsights(enhancedInsights);
+
+        
+        aiCacheRef.current = {
+          summary: aiSummaryResult,
+          insights: enhancedInsights,
+          timestamp: now,
+        };
+      } catch (error) {
+        console.error('Error generating AI insights:', error);
+        
+      }
+      
+      setIsLoadingAI(false);
+    }, 3000); 
+
+    return () => {
+      if (aiTimeoutRef.current) {
+        clearTimeout(aiTimeoutRef.current);
+      }
+    };
+  }, [filteredSensors, sensorHistoryMap, settings.warningThreshold, settings.dangerThreshold, settings.groqApiKey]);
+
+  
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  
   const filteredStats = useMemo(() => {
     if (selectedGroupId === 'all') return stats;
 
@@ -75,7 +196,7 @@ export const Dashboard = () => {
     };
   }, [filteredSensors, stats, selectedGroupId]);
 
-  // Filter max values (ranking)
+  
   const filteredMaxValues = useMemo(() => {
     if (selectedGroupId === 'all') return sensorMaxValues;
     return sensorMaxValues.filter(s => filteredSensors.some(fs => fs.id === s.id || fs.location === s.id));
@@ -83,10 +204,10 @@ export const Dashboard = () => {
 
   const lastAlertRef = useRef<number>(0);
 
-  // Show skeleton only during actual loading, not waiting for data
+  
   const showSkeleton = isLoading && sensors.length === 0;
 
-  // Sound alert for danger sensors
+  
   useEffect(() => {
     if (!settings.enableSoundAlert) return;
 
@@ -96,11 +217,11 @@ export const Dashboard = () => {
 
     if (dangerSensors.length > 0) {
       const now = Date.now();
-      // Play sound max every 30 seconds
+      
       if (now - lastAlertRef.current > 30000) {
         lastAlertRef.current = now;
 
-        // Create beep sound using Web Audio API
+        
         try {
           const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
           const oscillator = audioContext.createOscillator();
@@ -115,7 +236,7 @@ export const Dashboard = () => {
 
           oscillator.start();
 
-          // Beep pattern: 3 short beeps
+          
           setTimeout(() => { gainNode.gain.value = 0; }, 200);
           setTimeout(() => { gainNode.gain.value = 0.3; }, 300);
           setTimeout(() => { gainNode.gain.value = 0; }, 500);
@@ -132,7 +253,7 @@ export const Dashboard = () => {
     }
   }, [sensors, settings.enableSoundAlert, settings.warningThreshold, settings.dangerThreshold]);
 
-  // Theme-aware colors
+  
   const bgGradient = isDark
     ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%)'
     : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%)';
@@ -164,14 +285,23 @@ export const Dashboard = () => {
       }} />
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
-        <Header onSettingsClick={() => navigate('/settings')} />
+        <OnboardingTour />
+        <Header 
+          onSettingsClick={() => navigate('/settings')} 
+          onSimpleViewToggle={() => setIsSimpleView(!isSimpleView)}
+          isSimpleView={isSimpleView}
+        />
 
-        {/* Show Skeleton on initial load */}
+        {}
         {showSkeleton ? (
           <DashboardSkeleton />
+        ) : (isMobile || isSimpleView) && sensors.length > 0 ? (
+          <SimpleView sensors={filteredSensors} />
+        ) : sensors.length === 0 && !settings.demoMode ? (
+          <TryDemoButton />
         ) : (
           <>
-            {/* Zone Filter */}
+            {}
             {settings.sensorGroups && settings.sensorGroups.length > 0 && (
               <div style={{ marginBottom: '24px', overflowX: 'auto', paddingBottom: '4px' }}>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -196,7 +326,7 @@ export const Dashboard = () => {
                     ทั้งหมด ({sensors.length})
                   </button>
                   {settings.sensorGroups.map(group => {
-                    // Count sensors in this group
+                    
                     const count = sensors.filter(s => settings.sensorAssignments?.[s.id] === group.id).length;
                     return (
                       <button
@@ -235,9 +365,12 @@ export const Dashboard = () => {
               </div>
             )}
 
-            <AlertBanner sensors={filteredSensors} settings={settings} />
+            {}
+            <div style={{ marginBottom: '32px' }}>
+              <AIInsightsPanel insights={aiInsights} summary={aiSummary} isLoading={isLoadingAI} />
+            </div>
 
-            {/* Render components based on layout positions */}
+            {}
             {(() => {
               const positions = settings.dashboardLayout?.positions || defaultPositions;
 
@@ -418,12 +551,12 @@ export const Dashboard = () => {
 
               return (
                 <>
-                  {/* Top Row */}
+                  {}
                   <div style={{ marginBottom: '32px' }}>
                     {renderComponent(positions.top)}
                   </div>
 
-                  {/* Middle Row - 2 Columns */}
+                  {}
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 500px), 1fr))',
@@ -434,12 +567,12 @@ export const Dashboard = () => {
                     {renderComponent(positions.middleRight)}
                   </div>
 
-                  {/* Bottom Row */}
+                  {}
                   <div style={{ marginBottom: '32px' }}>
                     {renderComponent(positions.bottom)}
                   </div>
 
-                  {/* Additional Components Row - 3 Columns */}
+                  {}
                   <div style={{
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))',
@@ -473,7 +606,7 @@ export const Dashboard = () => {
         )}
       </div>
 
-      {/* Sensor Detail Panel */}
+      {}
       {selectedSensor && (
         <SensorDetailPanel
           sensor={selectedSensor}

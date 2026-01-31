@@ -15,7 +15,7 @@ export const SensorQRCode = ({ sensor, baseUrl = window.location.origin }: Senso
 
   const sensorUrl = `${baseUrl}/sensors?id=${sensor.id}`;
   
-  // Generate QR code using Google Charts API
+  
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(sensorUrl)}`;
 
   const handleCopy = async () => {
@@ -68,7 +68,7 @@ export const SensorQRCode = ({ sensor, baseUrl = window.location.origin }: Senso
               border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            {/* Header */}
+            {}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -97,7 +97,7 @@ export const SensorQRCode = ({ sensor, baseUrl = window.location.origin }: Senso
               </button>
             </div>
 
-            {/* QR Code */}
+            {}
             <div style={{
               background: '#FFFFFF',
               borderRadius: '12px',
@@ -114,7 +114,7 @@ export const SensorQRCode = ({ sensor, baseUrl = window.location.origin }: Senso
               />
             </div>
 
-            {/* URL */}
+            {}
             <div style={{
               background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '8px',
@@ -140,7 +140,7 @@ export const SensorQRCode = ({ sensor, baseUrl = window.location.origin }: Senso
               </p>
             </div>
 
-            {/* Actions */}
+            {}
             <div style={{ display: 'flex', gap: '12px' }}>
               <motion.button
                 whileHover={{ scale: 1.02 }}

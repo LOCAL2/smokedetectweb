@@ -25,9 +25,9 @@ export const SensorStatusHistory = ({ sensors }: SensorStatusHistoryProps) => {
   const { isDark } = useTheme();
 
   useEffect(() => {
-    // Skip first render to avoid false positives
+    
     if (isFirstRender.current) {
-      // Initialize previous status from current sensors
+      
       sensors.forEach(sensor => {
         prevStatusRef.current.set(sensor.id, sensor.isOnline ?? true);
       });
@@ -38,12 +38,12 @@ export const SensorStatusHistory = ({ sensors }: SensorStatusHistoryProps) => {
     const now = Date.now();
     const newEvents: StatusEvent[] = [];
 
-    // Check each sensor's online status
+    
     sensors.forEach(sensor => {
       const currentOnline = sensor.isOnline ?? true;
       const prevOnline = prevStatusRef.current.get(sensor.id);
 
-      // If status changed
+      
       if (prevOnline !== undefined && prevOnline !== currentOnline) {
         newEvents.push({
           sensorId: sensor.id,
@@ -53,7 +53,7 @@ export const SensorStatusHistory = ({ sensors }: SensorStatusHistoryProps) => {
         });
       }
 
-      // Update previous status
+      
       prevStatusRef.current.set(sensor.id, currentOnline);
     });
 
@@ -80,7 +80,7 @@ export const SensorStatusHistory = ({ sensors }: SensorStatusHistoryProps) => {
     localStorage.removeItem('sensor-status-history');
   };
 
-  // Theme colors
+  
   const cardBg = isDark
     ? 'rgba(30, 41, 59, 0.5)'
     : 'rgba(255, 255, 255, 0.8)';
@@ -104,7 +104,7 @@ export const SensorStatusHistory = ({ sensors }: SensorStatusHistoryProps) => {
         boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)',
       }}
     >
-      {/* Header */}
+      {}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -151,7 +151,7 @@ export const SensorStatusHistory = ({ sensors }: SensorStatusHistoryProps) => {
         )}
       </div>
 
-      {/* History List */}
+      {}
       <div style={{ padding: '12px', minHeight: '200px', maxHeight: '250px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {history.length === 0 ? (
           <div style={{ 

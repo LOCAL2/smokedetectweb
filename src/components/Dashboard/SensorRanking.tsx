@@ -16,13 +16,13 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
   const { isDark } = useTheme();
 
   const getRankColor = (index: number) => {
-    if (index === 0) return '#FFD700'; // Gold
-    if (index === 1) return isDark ? '#C0C0C0' : '#94A3B8'; // Silver (darker in light mode for visibility)
-    if (index === 2) return '#CD7F32'; // Bronze
+    if (index === 0) return '#FFD700'; 
+    if (index === 1) return isDark ? '#C0C0C0' : '#94A3B8'; 
+    if (index === 2) return '#CD7F32'; 
     return isDark ? '#64748B' : '#94A3B8';
   };
 
-  // Theme colors
+  
   const cardBg = isDark
     ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
     : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)';
@@ -48,7 +48,7 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
         boxShadow: isDark ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.05)',
       }}
     >
-      {/* Header */}
+      {}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -97,16 +97,16 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
               xmlns="http://www.w3.org/2000/svg"
               style={{ marginBottom: '16px', opacity: 0.6 }}
             >
-              {/* Chart base */}
+              {}
               <rect x="10" y="60" width="60" height="4" rx="2" fill={emptyBarFill} />
               <rect x="10" y="20" width="4" height="44" rx="2" fill={emptyBarFill} />
 
-              {/* Empty bars */}
+              {}
               <rect x="22" y="45" width="10" height="15" rx="3" fill={emptyBarStroke} stroke={emptyBarFill} strokeWidth="1.5" strokeDasharray="3 2" />
               <rect x="36" y="35" width="10" height="25" rx="3" fill={emptyBarStroke} stroke={emptyBarFill} strokeWidth="1.5" strokeDasharray="3 2" />
               <rect x="50" y="40" width="10" height="20" rx="3" fill={emptyBarStroke} stroke={emptyBarFill} strokeWidth="1.5" strokeDasharray="3 2" />
 
-              {/* Question mark */}
+              {}
               <circle cx="60" cy="20" r="12" fill={emptyBarStroke} stroke={emptyStateColor} strokeWidth="2" />
               <text x="60" y="25" textAnchor="middle" fill={emptyStateColor} fontSize="14" fontWeight="bold">?</text>
             </svg>
@@ -142,7 +142,7 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
                     : `1px solid ${colors.primary}20`,
                 }}
               >
-                {/* Rank */}
+                {}
                 <div style={{
                   width: '32px',
                   height: '32px',
@@ -159,7 +159,7 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
                   {index + 1}
                 </div>
 
-                {/* Info */}
+                {}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{
                     color: textColor,
@@ -186,7 +186,7 @@ export const SensorRanking = ({ data, settings }: SensorRankingProps) => {
                   </div>
                 </div>
 
-                {/* Max Value */}
+                {}
                 <div style={{
                   background: colors.bg,
                   borderRadius: '10px',

@@ -13,7 +13,7 @@ interface CachedData {
 }
 
 const CACHE_KEY = 'offline-sensor-cache';
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_DURATION = 24 * 60 * 60 * 1000; 
 
 export const useOfflineSupport = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -21,7 +21,7 @@ export const useOfflineSupport = () => {
     const saved = localStorage.getItem(CACHE_KEY);
     if (saved) {
       const data = JSON.parse(saved) as CachedData;
-      // Check if cache is still valid
+      
       if (Date.now() - data.timestamp < CACHE_DURATION) {
         return data;
       }
@@ -94,4 +94,4 @@ export const useOfflineSupport = () => {
   };
 };
 
-// OfflineIndicator component อยู่ใน src/components/OfflineIndicator.tsx
+

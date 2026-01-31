@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 
-// Extend Window interface for Electron API
+
 declare global {
   interface Window {
     electronAPI?: {
@@ -14,7 +14,7 @@ declare global {
 export const UpdateButton = () => {
   const [updating, setUpdating] = useState(false);
 
-  // Only show in Electron
+  
   if (!window.electronAPI?.isElectron) {
     return null;
   }

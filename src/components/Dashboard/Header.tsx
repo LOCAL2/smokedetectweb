@@ -8,9 +8,11 @@ import { ThemeToggle } from '../ThemeToggle';
 
 interface HeaderProps {
   onSettingsClick: () => void;
+  onSimpleViewToggle?: () => void;
+  isSimpleView?: boolean;
 }
 
-export const Header = ({ onSettingsClick }: HeaderProps) => {
+export const Header = ({ onSettingsClick, onSimpleViewToggle, isSimpleView }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useSettingsContext();
@@ -19,18 +21,18 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const menuItems = [
-    { icon: Bot, label: 'AI Chat', path: '/chat', gradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)' },
-    { icon: BarChart3, label: 'Analytics', path: '/analytics', gradient: 'linear-gradient(135deg, #8B5CF6, #A855F7)' },
-    { icon: BookOpen, label: 'คู่มือ', path: '/guide', gradient: 'linear-gradient(135deg, #3B82F6, #6366F1)' },
-    { icon: Download, label: 'App', path: '/download', gradient: 'linear-gradient(135deg, #10B981, #059669)' },
-    { icon: History, label: 'Changelog', path: '/changelog', gradient: 'linear-gradient(135deg, #F59E0B, #EF4444)' },
-    { icon: Info, label: 'เกี่ยวกับ', path: '/about', gradient: 'linear-gradient(135deg, #0EA5E9, #3B82F6)' },
-    { icon: Users, label: 'ผู้จัดทำ', path: '/members', gradient: 'linear-gradient(135deg, #EC4899, #F43F5E)' },
+    { icon: Bot, label: 'AI Chat', path: '/chat', gradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)', tourId: null },
+    { icon: BarChart3, label: 'Analytics', path: '/analytics', gradient: 'linear-gradient(135deg, #8B5CF6, #A855F7)', tourId: null },
+    { icon: BookOpen, label: 'คู่มือ', path: '/guide', gradient: 'linear-gradient(135deg, #3B82F6, #6366F1)', tourId: null },
+    { icon: Download, label: 'App', path: '/download', gradient: 'linear-gradient(135deg, #10B981, #059669)', tourId: null },
+    { icon: History, label: 'Changelog', path: '/changelog', gradient: 'linear-gradient(135deg, #F59E0B, #EF4444)', tourId: null },
+    { icon: Info, label: 'เกี่ยวกับ', path: '/about', gradient: 'linear-gradient(135deg, #0EA5E9, #3B82F6)', tourId: null },
+    { icon: Users, label: 'ผู้จัดทำ', path: '/members', gradient: 'linear-gradient(135deg, #EC4899, #F43F5E)', tourId: 'sensors' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Theme-aware colors - Transparent design
+  
   const textColor = isDark ? '#F8FAFC' : '#0F172A';
   const textSecondary = isDark ? '#94A3B8' : '#475569';
   const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
@@ -54,8 +56,9 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
       >
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-          {/* Logo Section */}
+          {}
           <motion.div
+            data-tour="dashboard"
             style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}
             onClick={() => navigate('/')}
             whileHover={{ scale: 1.02 }}
@@ -101,6 +104,7 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
               </h1>
               {settings.demoMode && (
                 <motion.span
+                  data-tour="demo-mode"
                   animate={{
                     boxShadow: ['0 0 10px rgba(245, 158, 11, 0.3)', '0 0 20px rgba(245, 158, 11, 0.5)', '0 0 10px rgba(245, 158, 11, 0.3)']
                   }}
@@ -122,9 +126,9 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
             </div>
           </motion.div>
 
-          {/* Desktop Navigation */}
+          {}
           <nav className="desktop-menu" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {/* Navigation Container with Glass Effect */}
+            {}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -182,14 +186,44 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
               })}
             </div>
 
-            {/* Divider */}
+            {}
             <div style={{ width: '1px', height: '32px', background: borderColor, margin: '0 8px' }} />
 
-            {/* Theme Toggle */}
+            {}
             <ThemeToggle />
 
-            {/* Settings Button */}
+            {}
+            {location.pathname === '/' && onSimpleViewToggle && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onSimpleViewToggle}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '0 16px',
+                  height: '44px',
+                  borderRadius: '12px',
+                  border: `1px solid ${borderColor}`,
+                  background: isSimpleView ? 'linear-gradient(135deg, #8B5CF6, #6366F1)' : hoverBg,
+                  color: isSimpleView ? '#FFF' : textSecondary,
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  transition: 'all 0.3s ease',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <BarChart3 size={18} />
+                {isSimpleView ? 'โหมดปกติ' : 'โหมดง่าย'}
+              </motion.button>
+            )}
+
+            {}
             <motion.button
+              data-tour="settings"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onSettingsClick}
@@ -211,7 +245,7 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
             </motion.button>
           </nav>
 
-          {/* Mobile Menu Button */}
+          {}
           <motion.button
             className="mobile-menu-btn"
             whileTap={{ scale: 0.95 }}
@@ -234,10 +268,10 @@ export const Header = ({ onSettingsClick }: HeaderProps) => {
         </div>
       </motion.header>
 
-      {/* Spacer */}
+      {}
       <div style={{ height: '80px' }} />
 
-      {/* Mobile Menu */}
+      {}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>

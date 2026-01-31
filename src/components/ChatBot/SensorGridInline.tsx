@@ -109,7 +109,7 @@ export const SensorGridInline = ({
                 overflow: 'hidden'
               }}
             >
-              {/* Rank badge for top 3 */}
+              {}
               {index < 3 && (
                 <div style={{
                   position: 'absolute',
@@ -129,7 +129,7 @@ export const SensorGridInline = ({
                   {index + 1}
                 </div>
               )}
-              {/* Icon + Name in same row */}
+              {}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <StatusIcon size={16} color={statusColor} />
                 <div style={{ 
@@ -144,7 +144,7 @@ export const SensorGridInline = ({
                   {realTimeSensor.location || realTimeSensor.id}
                 </div>
               </div>
-              {/* Value */}
+              {}
               <div style={{ textAlign: 'center' }}>
                 <div style={{ 
                   color: statusColor, 
@@ -165,7 +165,7 @@ export const SensorGridInline = ({
                   {statusText}
                 </div>
               </div>
-              {/* Progress bar */}
+              {}
               <div style={{ 
                 width: '100%', 
                 height: 3, 

@@ -49,11 +49,11 @@ const checkNavigation = (input: string): { path: string; name: string } | null =
   return null;
 };
 
-// Check if user wants features that require full page (map, chart, download)
+
 const checkNeedsFullPage = (input: string): { type: 'map' | 'chart' | 'download' | 'sensor' | null; query: string } => {
   const lower = input.toLowerCase().trim();
   
-  // Exclude keywords (คำถาม ไม่ใช่คำสั่ง)
+  
   const excludeKeywords = ['วิธี', 'ยังไง', 'อย่างไร', 'ตั้งค่า', 'เพิ่ม', 'ลบ', 'แก้ไข', 'ล้าง', 'reset', 'clear'];
   const hasExclude = excludeKeywords.some(e => lower.includes(e));
   
@@ -61,11 +61,11 @@ const checkNeedsFullPage = (input: string): { type: 'map' | 'chart' | 'download'
     return { type: null, query: '' };
   }
   
-  // คำกริยาที่บ่งบอกว่าต้องการดู
+  
   const actionVerbs = ['แสดง', 'ดู', 'โชว์', 'show', 'display', 'ทำการแสดง', 'ขอดู', 'เปิด', 'ขอ'];
   const hasAction = actionVerbs.some(v => lower.includes(v));
   
-  // Sensor keywords (รวมคำที่พิมพ์ไม่ครบ/พิมพ์ผิด)
+  
   const sensorWords = [
     'sensor', 'sensors', 
     'เซ็นเซอร์', 'เซนเซอร์', 'เซ็นเซอ', 'เซนเซอ', 'เซ็นเซ', 'เซนเซ',
@@ -73,39 +73,39 @@ const checkNeedsFullPage = (input: string): { type: 'map' | 'chart' | 'download'
   ];
   const hasSensor = sensorWords.some(s => lower.includes(s));
   
-  // คำที่บ่งบอกว่าต้องการดูเฉพาะที่ (ถ้ามีคำเหล่านี้ ไม่ใช่การขอดูทั้งหมด แต่ยังต้องไป /chat)
+  
   const locationKeywords = ['โรงรถ', 'ห้องนั่งเล่น', 'ห้องครัว', 'ห้องนอนใหญ่', 'ห้องนอนเล็ก', 'ห้องนอน', 'ชั้น 1', 'ชั้น 2'];
   const hasLocation = locationKeywords.some(l => lower.includes(l.toLowerCase()));
   
-  // ถ้าพิมพ์แค่คำ sensor เฉยๆ หรือ action + sensor (ไม่ว่าจะมี location หรือไม่) ก็ไป /chat
+  
   const isSensorOnly = sensorWords.some(s => lower === s || lower === s + 's');
   if (isSensorOnly || (hasAction && hasSensor) || (hasSensor && hasLocation)) {
     return { type: 'sensor', query: input };
   }
   
-  // Map keywords (รวมคำที่พิมพ์ไม่ครบ)
+  
   const mapWords = ['แผนที่', 'แมพ', 'แม็พ', 'map', 'ตำแหน่ง', 'location', 'พิกัด', 'gps', 'ที่ตั้ง'];
   const locationQuestions = ['อยู่ไหน', 'อยู่ที่ไหน', 'อยู่ตรงไหน', 'ตั้งอยู่'];
   const hasMapWord = mapWords.some(m => lower.includes(m));
   const hasLocationQuestion = locationQuestions.some(q => lower.includes(q));
   
-  // ถ้าพิมพ์แค่คำ map เฉยๆ ก็แสดง map เลย
+  
   const isMapOnly = mapWords.some(m => lower === m);
   if (isMapOnly || hasMapWord || hasLocationQuestion) {
     return { type: 'map', query: input };
   }
   
-  // Chart keywords (รวมคำที่พิมพ์ไม่ครบ)
+  
   const chartWords = ['กราฟ', 'กร๊าฟ', 'graph', 'chart', 'แนวโน้ม', 'trend', 'ประวัติค่า', 'ประวัติควัน'];
   const hasChartWord = chartWords.some(c => lower.includes(c));
   
-  // ถ้าพิมพ์แค่คำ chart เฉยๆ ก็แสดง chart เลย
+  
   const isChartOnly = chartWords.some(c => lower === c);
   if (isChartOnly || hasChartWord) {
     return { type: 'chart', query: input };
   }
   
-  // Download keywords
+  
   const downloadKeywords = ['ดาวน์โหลด', 'download', 'โหลด'];
   const platformKeywords = ['android', 'apk', 'windows', 'exe', 'มือถือ', 'คอม'];
   if (downloadKeywords.some(k => lower.includes(k)) && platformKeywords.some(k => lower.includes(k))) {
@@ -115,7 +115,7 @@ const checkNeedsFullPage = (input: string): { type: 'map' | 'chart' | 'download'
   return { type: null, query: '' };
 };
 
-// Settings command interface
+
 interface SettingsCommand {
   type: 'polling' | 'warning' | 'danger' | 'demo' | 'sound' | 'notification';
   value?: number;
@@ -123,11 +123,11 @@ interface SettingsCommand {
   message: string;
 }
 
-// Check for settings commands (same as ChatBotPage)
+
 const checkSettingsCommand = (input: string): SettingsCommand | null => {
   const lower = input.toLowerCase();
   
-  // Polling interval
+  
   const pollingMatch = lower.match(/(?:ปรับ|ตั้ง|เปลี่ยน)?.*(?:ความถี่|รีเฟรช|refresh|polling).*?(\d+(?:\.\d+)?)\s*(?:วิ|วินาที|s|sec)?/);
   if (pollingMatch) {
     const seconds = parseFloat(pollingMatch[1]);
@@ -136,7 +136,7 @@ const checkSettingsCommand = (input: string): SettingsCommand | null => {
     }
   }
   
-  // Warning threshold
+  
   const warningMatch = lower.match(/(?:ปรับ|ตั้ง|เปลี่ยน)?.*(?:เฝ้าระวัง|warning).*?(\d+)/);
   if (warningMatch) {
     const value = parseInt(warningMatch[1]);
@@ -145,7 +145,7 @@ const checkSettingsCommand = (input: string): SettingsCommand | null => {
     }
   }
   
-  // Danger threshold
+  
   const dangerMatch = lower.match(/(?:ปรับ|ตั้ง|เปลี่ยน)?.*(?:อันตราย|danger).*?(\d+)/);
   if (dangerMatch) {
     const value = parseInt(dangerMatch[1]);
@@ -154,7 +154,7 @@ const checkSettingsCommand = (input: string): SettingsCommand | null => {
     }
   }
   
-  // Demo mode
+  
   if (lower.includes('demo')) {
     if (lower.includes('เปิด') || lower.includes('on') || lower.includes('enable')) {
       return { type: 'demo', enabled: true, message: 'เปิด Demo Mode แล้วครับ' };
@@ -164,7 +164,7 @@ const checkSettingsCommand = (input: string): SettingsCommand | null => {
     }
   }
   
-  // Sound alert
+  
   if (lower.includes('เสียง') || lower.includes('sound')) {
     if (lower.includes('เปิด') || lower.includes('on')) {
       return { type: 'sound', enabled: true, message: 'เปิดเสียงแจ้งเตือนแล้วครับ' };
@@ -174,7 +174,7 @@ const checkSettingsCommand = (input: string): SettingsCommand | null => {
     }
   }
   
-  // Notification
+  
   if (lower.includes('notification') || lower.includes('แจ้งเตือน')) {
     if (lower.includes('เปิด') || lower.includes('on')) {
       return { type: 'notification', enabled: true, message: 'เปิด Notification แล้วครับ' };
@@ -187,17 +187,17 @@ const checkSettingsCommand = (input: string): SettingsCommand | null => {
   return null;
 };
 
-// Check for settings query (asking current values)
+
 type SettingsQueryType = 'polling' | 'warning' | 'danger' | 'demo' | 'sound' | 'notification' | 'all';
 
 const checkSettingsQuery = (input: string): SettingsQueryType | null => {
   const lower = input.toLowerCase();
   
-  // Must contain question words
+  
   const hasQuestion = ['เท่าไหร่', 'เท่าไร', 'อะไร', 'ยังไง', 'ตอนนี้', 'ปัจจุบัน', 'ค่า', 'สถานะ', 'ดู', 'แสดง', 'บอก', 'เปิดอยู่', 'ปิดอยู่'].some(w => lower.includes(w));
   if (!hasQuestion) return null;
   
-  // Check for "all settings"
+  
   if ((lower.includes('ตั้งค่า') || lower.includes('setting')) && (lower.includes('ทั้งหมด') || lower.includes('all'))) {
     return 'all';
   }
@@ -233,46 +233,46 @@ const checkSensorQuery = (input: string): boolean => {
 const getThinkingSteps = (input: string): string[] => {
   const lower = input.toLowerCase();
   
-  // Download related
+  
   if (['ดาวน์โหลด', 'download', 'โหลด', 'apk', 'exe', 'ติดตั้ง'].some(k => lower.includes(k))) {
     return ['ตรวจสอบแพลตฟอร์ม', 'เตรียมลิงก์', 'แสดงผล'];
   }
   
-  // Health/Effect related
+  
   if (['สุขภาพ', 'อันตราย', 'ผลกระทบ', 'เป็นอันตราย', 'health', 'effect'].some(k => lower.includes(k))) {
     return ['วิเคราะห์คำถาม', 'ค้นหาข้อมูลสุขภาพ', 'สรุปผล'];
   }
   
-  // Prevention related
+  
   if (['ป้องกัน', 'หลีกเลี่ยง', 'ลด', 'prevent', 'avoid'].some(k => lower.includes(k))) {
     return ['วิเคราะห์คำถาม', 'ค้นหาวิธีป้องกัน', 'สรุปคำแนะนำ'];
   }
   
-  // Smoke types
+  
   if (['ควันบุหรี่', 'ควันไฟ', 'ควันรถ', 'cigarette', 'fire smoke'].some(k => lower.includes(k))) {
     return ['วิเคราะห์ประเภทควัน', 'ค้นหาข้อมูล', 'สรุปผล'];
   }
   
-  // Sensor related
+  
   if (checkSensorQuery(input)) {
     return ['ดึงข้อมูล Sensor', 'วิเคราะห์ค่าควัน', 'สรุปผล'];
   }
   
-  // Settings related
+  
   if (['ตั้งค่า', 'setting', 'config', 'ปรับ', 'เปลี่ยน'].some(k => lower.includes(k))) {
     return ['ตรวจสอบการตั้งค่า', 'ดำเนินการ', 'ยืนยันผล'];
   }
   
-  // Navigation
+  
   if (['ไป', 'เปิด', 'พา', 'นำทาง'].some(k => lower.includes(k))) {
     return ['ค้นหาหน้า', 'เตรียมนำทาง'];
   }
   
-  // Default
+  
   return ['วิเคราะห์คำถาม', 'ค้นหาคำตอบ', 'สรุปผล'];
 };
 
-// Quick action prompts
+
 const ALL_QUICK_PROMPTS = [
   'สรุปค่า Sensor ตอนนี้',
   'ตั้งค่า Threshold ยังไง',
@@ -423,7 +423,7 @@ export const ChatBot = () => {
     const settingsCommand = checkSettingsCommand(msg);
     const fullPageFeature = checkNeedsFullPage(msg);
 
-    // Handle features that need full page (map, chart, download, sensor)
+    
     if (fullPageFeature.type) {
       if (!isRegen) setMessages(prev => [...prev, userMessage]);
       setInput('');
@@ -450,12 +450,12 @@ export const ChatBot = () => {
       setIsLoading(false);
       setIsOpen(false);
       
-      // Navigate to /chat with the query as state
+      
       navigate('/chat', { state: { initialQuery: fullPageFeature.query } });
       return;
     }
 
-    // Handle settings query (asking current values)
+    
     if (settingsQuery) {
       if (!isRegen) setMessages(prev => [...prev, userMessage]);
       setInput('');
@@ -509,7 +509,7 @@ export const ChatBot = () => {
       return;
     }
 
-    // Handle settings commands (change settings)
+    
     if (settingsCommand) {
       if (!isRegen) setMessages(prev => [...prev, userMessage]);
       setInput('');
@@ -520,7 +520,7 @@ export const ChatBot = () => {
       await new Promise(r => setTimeout(r, 400));
       setCurrentStep(1);
       
-      // Apply settings
+      
       switch (settingsCommand.type) {
         case 'polling':
           updateSettings({ pollingInterval: settingsCommand.value! });
@@ -563,7 +563,7 @@ export const ChatBot = () => {
       setIsThinking(true);
       await new Promise(r => setTimeout(r, 800));
       setIsThinking(false);
-      // Add response message before navigating
+      
       setMessages(prev => [...prev, { 
         id: `msg-${Date.now()}`, 
         role: 'assistant', 
@@ -623,7 +623,7 @@ export const ChatBot = () => {
 
   if (!API_KEY || location.pathname === '/chat') return null;
 
-  // Theme colors
+  
   const popupBg = isDark ? '#0F172A' : '#FFFFFF';
   const popupBorder = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
   const inputBg = isDark ? '#1E293B' : '#F1F5F9';
@@ -639,7 +639,7 @@ export const ChatBot = () => {
 
   return (
     <>
-      {/* Floating Chat Button */}
+      {}
       <motion.button 
         whileHover={{ scale: 1.1 }} 
         whileTap={{ scale: 0.95 }} 
@@ -665,7 +665,7 @@ export const ChatBot = () => {
       >
         {isOpen ? <X size={26} color="#FFF" strokeWidth={2.5} /> : <MessageCircle size={26} color="#FFF" strokeWidth={2.5} />}
         
-        {/* Pulse animation - only when closed */}
+        {}
         {!isOpen && (
           <motion.div
             animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
@@ -690,7 +690,7 @@ export const ChatBot = () => {
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             style={{ position: 'fixed', bottom: 'calc(clamp(20px,4vw,28px) + 70px)', right: 'clamp(16px,4vw,24px)', width: 'min(380px, calc(100vw - 32px))', height: 'min(520px, calc(100vh - 140px))', background: popupBg, borderRadius: 20, border: `1px solid ${popupBorder}`, display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: isDark ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(0,0,0,0.15)', zIndex: 1001, transformOrigin: 'bottom right' }}>
             
-            {/* Header */}
+            {}
             <div style={{ padding: 'clamp(12px,3vw,16px)', background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -713,7 +713,7 @@ export const ChatBot = () => {
               </div>
             </div>
 
-            {/* Messages */}
+            {}
             <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(12px,3vw,16px)', display: 'flex', flexDirection: 'column', gap: 12 }}>
               {messages.length === 0 && !streamingText && !isThinking && (
                 <div style={{ textAlign: 'center', padding: '24px 12px' }}>
@@ -809,7 +809,7 @@ export const ChatBot = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
+            {}
             <div style={{ padding: 'clamp(10px,2.5vw,14px)', borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }}>
               <div style={{ display: 'flex', gap: 8, background: inputBg, borderRadius: 12, padding: 4 }}>
                 {recognitionRef.current && (

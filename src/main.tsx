@@ -4,7 +4,7 @@ import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
 
-// Register PWA service worker
+
 registerSW({
   onNeedRefresh() {
     if (confirm('มีเวอร์ชันใหม่ ต้องการอัปเดตหรือไม่?')) {

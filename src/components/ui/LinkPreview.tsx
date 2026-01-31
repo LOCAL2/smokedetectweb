@@ -51,7 +51,7 @@ export const LinkPreview = ({
   const [isOpen, setOpen] = React.useState(false);
   const [imageLoaded, setImageLoaded] = React.useState(false);
 
-  // Reset image loaded state when URL changes
+  
   React.useEffect(() => {
     setImageLoaded(false);
   }, [url]);

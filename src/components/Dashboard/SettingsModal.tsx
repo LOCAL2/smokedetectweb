@@ -25,12 +25,12 @@ export const SettingsModal = ({ isOpen, onClose, settings, onSave, onReset }: Se
     onReset();
   };
 
-  // Sync localSettings when settings change (e.g., after reset)
+  
   if (JSON.stringify(localSettings) !== JSON.stringify(settings)) {
     setLocalSettings(settings);
   }
 
-  // Theme colors
+  
   const modalBg = isDark
     ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.99) 100%)'
     : 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)';
@@ -191,7 +191,7 @@ export const SettingsModal = ({ isOpen, onClose, settings, onSave, onReset }: Se
               </div>
             </div>
 
-            {/* Preview */}
+            {}
             <div style={{
               background: previewBg,
               borderRadius: '14px',
@@ -220,7 +220,7 @@ export const SettingsModal = ({ isOpen, onClose, settings, onSave, onReset }: Se
               </div>
             </div>
 
-            {/* Polling Interval */}
+            {}
             <div style={{ marginBottom: '28px' }}>
               <h3 style={{ color: textSecondary, fontSize: '13px', fontWeight: 600, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 การอัพเดทข้อมูล
@@ -270,7 +270,7 @@ export const SettingsModal = ({ isOpen, onClose, settings, onSave, onReset }: Se
               </p>
             </div>
 
-            {/* Alert Settings */}
+            {}
             <div style={{ marginBottom: '28px' }}>
               <h3 style={{ color: textSecondary, fontSize: '13px', fontWeight: 600, marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 การแจ้งเตือน
@@ -351,7 +351,7 @@ export const SettingsModal = ({ isOpen, onClose, settings, onSave, onReset }: Se
               </div>
             </div>
 
-            {/* Actions */}
+            {}
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
                 onClick={handleReset}
