@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { X, Activity, TrendingUp, TrendingDown, BarChart3, Clock, MapPin, Navigation } from 'lucide-react';
 import { motion } from 'framer-motion';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import type { SensorData } from '../../types/sensor';
 import type { SettingsConfig } from '../../hooks/useSettings';
 import { getSensorStatusWithSettings } from '../../hooks/useSettings';
@@ -30,9 +30,8 @@ const DEFAULT_COORDS = { lat: 13.7563, lng: 100.5018 };
 
 const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: any; settings: SettingsConfig }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
-  const circleRef = useRef<L.Circle | null>(null);
+  const mapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
   const { isDark } = useTheme();
 
   
@@ -57,93 +56,85 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
 
     
     if (!mapInstanceRef.current) {
-      mapInstanceRef.current = L.map(mapRef.current, {
-        center: [lat, lng],
-        zoom: 18,
-        zoomControl: false,
-        attributionControl: false,
+      mapInstanceRef.current = new maplibregl.Map({
+        container: mapRef.current,
+        style: {
+          version: 8,
+          sources: {
+            'osm-tiles': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            }
+          },
+          layers: [{
+            id: 'osm-tiles',
+            type: 'raster',
+            source: 'osm-tiles',
+            minzoom: 0,
+            maxzoom: 19
+          }]
+        },
+        center: [lng, lat],
+        zoom: 18
       });
 
       
-      L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-        className: isDark ? 'map-tiles-dark' : '',
-      }).addTo(mapInstanceRef.current);
-
-      
-      L.control.zoom({ position: 'bottomright' }).addTo(mapInstanceRef.current);
-    } else {
-      
-      
-      
+      mapInstanceRef.current.addControl(new maplibregl.NavigationControl(), 'bottom-right');
     }
 
     
-    mapInstanceRef.current.setView([lat, lng], 18);
+    mapInstanceRef.current.setCenter([lng, lat]);
+    mapInstanceRef.current.setZoom(18);
 
     
     if (markerRef.current) {
       markerRef.current.remove();
     }
-    if (circleRef.current) {
-      circleRef.current.remove();
-    }
 
     
-    const markerIcon = L.divIcon({
-      className: 'custom-marker',
-      html: `
-        <div style="position: relative;">
-          <div style="
-            width: 40px;
-            height: 40px;
-            background: ${colors.primary};
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            border: 3px solid white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
-            <div style="
-              transform: rotate(45deg);
-              color: white;
-              font-weight: bold;
-              font-size: 11px;
-            ">${sensor.value.toFixed(0)}</div>
-          </div>
-          <div style="
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            white-space: nowrap;
-            font-weight: 500;
-          ">${sensor.location}</div>
-        </div>
-      `,
-      iconSize: [40, 50],
-      iconAnchor: [20, 50],
-    });
+    const el = document.createElement('div');
+    el.style.position = 'relative';
+    el.innerHTML = `
+      <div style="
+        width: 40px;
+        height: 40px;
+        background: ${colors.primary};
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        border: 3px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <div style="
+          transform: rotate(45deg);
+          color: white;
+          font-weight: bold;
+          font-size: 11px;
+        ">${sensor.value.toFixed(0)}</div>
+      </div>
+      <div style="
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.85);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        white-space: nowrap;
+        font-weight: 500;
+      ">${sensor.location}</div>
+    `;
 
     
-    markerRef.current = L.marker([lat, lng], { icon: markerIcon })
+    markerRef.current = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      .setLngLat([lng, lat])
       .addTo(mapInstanceRef.current);
-
-    
-    circleRef.current = L.circle([lat, lng], {
-      color: colors.primary,
-      fillColor: colors.primary,
-      fillOpacity: 0.2,
-      radius: 15,
-      weight: 2,
-    }).addTo(mapInstanceRef.current);
 
     return () => {
       
@@ -227,7 +218,6 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
             width: '100%',
             height: '200px',
             background: '#1a1a2e',
-            filter: isDark ? 'invert(1) hue-rotate(180deg) brightness(0.8)' : 'none',
           }}
         />
 
@@ -272,41 +262,17 @@ const SensorMap = ({ sensor, colors, settings }: { sensor: SensorData; colors: a
       </div>
 
       <style>{`
-        .custom-marker {
-          background: transparent !important;
-          border: none !important;
-        }
-        .leaflet-container {
-          background: #f2f2f2 !important;
-        }
-        .leaflet-tile-pane {
-          opacity: 1 !important;
-        }
-        .leaflet-tile {
-          border: none !important;
-          outline: none !important;
-        }
-        .leaflet-control-zoom {
-          border: none !important;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        .maplibregl-ctrl-group {
           border-radius: 8px !important;
           overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
         }
-        .leaflet-control-zoom a {
-          background: #fff !important;
-          color: #333 !important;
-          border: none !important;
+        .maplibregl-ctrl-group button {
           width: 32px !important;
           height: 32px !important;
-          line-height: 32px !important;
-          font-size: 18px !important;
         }
-        .leaflet-control-zoom a:hover {
-          background: #f0f0f0 !important;
-          color: #000 !important;
-        }
-        .leaflet-control-zoom-in {
-          border-bottom: 1px solid #ddd !important;
+        .maplibregl-ctrl-group button + button {
+          border-top: 1px solid #ddd !important;
         }
       `}</style>
     </div>

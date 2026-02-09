@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Settings, Info, Users, BookOpen, Download, Bot, Menu, X, History, BarChart3, ChevronRight } from 'lucide-react';
+import { Settings, Info, Users, BookOpen, Download, Bot, Menu, X, History, BarChart3, ChevronRight, MapPin } from 'lucide-react';
 import { useSettingsContext } from '../../context/SettingsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ThemeToggle } from '../ThemeToggle';
 
 interface HeaderProps {
   onSettingsClick: () => void;
-  onSimpleViewToggle?: () => void;
-  isSimpleView?: boolean;
 }
 
-export const Header = ({ onSettingsClick, onSimpleViewToggle, isSimpleView }: HeaderProps) => {
+export const Header = ({ onSettingsClick }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useSettingsContext();
@@ -22,6 +20,7 @@ export const Header = ({ onSettingsClick, onSimpleViewToggle, isSimpleView }: He
 
   const menuItems = [
     { icon: Bot, label: 'AI Chat', path: '/chat', gradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)', tourId: null },
+    { icon: MapPin, label: 'แผนที่', path: '/map', gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)', tourId: null },
     { icon: BarChart3, label: 'Analytics', path: '/analytics', gradient: 'linear-gradient(135deg, #8B5CF6, #A855F7)', tourId: null },
     { icon: BookOpen, label: 'คู่มือ', path: '/guide', gradient: 'linear-gradient(135deg, #3B82F6, #6366F1)', tourId: null },
     { icon: Download, label: 'App', path: '/download', gradient: 'linear-gradient(135deg, #10B981, #059669)', tourId: null },
@@ -191,35 +190,6 @@ export const Header = ({ onSettingsClick, onSimpleViewToggle, isSimpleView }: He
 
             {}
             <ThemeToggle />
-
-            {}
-            {location.pathname === '/' && onSimpleViewToggle && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onSimpleViewToggle}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '0 16px',
-                  height: '44px',
-                  borderRadius: '12px',
-                  border: `1px solid ${borderColor}`,
-                  background: isSimpleView ? 'linear-gradient(135deg, #8B5CF6, #6366F1)' : hoverBg,
-                  color: isSimpleView ? '#FFF' : textSecondary,
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  transition: 'all 0.3s ease',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <BarChart3 size={18} />
-                {isSimpleView ? 'โหมดปกติ' : 'โหมดง่าย'}
-              </motion.button>
-            )}
 
             {}
             <motion.button

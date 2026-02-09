@@ -1,6 +1,47 @@
 {
   "updates": [
     {
+      "version": "2.19.0",
+      "date": "2026-02-09",
+      "title": "เพิ่มหน้าแผนที่ Sensor แบบ Real-time",
+      "type": "feature",
+      "changes": [
+        "เพิ่มหน้า /map แสดงแผนที่ Sensor ทั้งหมด",
+        "อัพเดทค่า Sensor แบบ Real-time บนแผนที่",
+        "แสดงสีของจุด Sensor ตามสถานะ (ปกติ/เตือน/อันตราย)",
+        "คลิกที่จุดเพื่อดูรายละเอียด Sensor",
+        "เพิ่มปุ่มแผนที่ใน Navigation Bar",
+        "รองรับ Dark/Light Mode",
+        "เปลี่ยนจาก Leaflet เป็น MapLibre GL สำหรับความเสถียร",
+        "แก้ไขปัญหาแผนที่หายหลัง F5 refresh"
+      ]
+    },
+    {
+      "version": "2.18.0",
+      "date": "2026-02-08",
+      "title": "ลบโหมดง่าย (Simple View)",
+      "type": "improvement",
+      "changes": [
+        "ลบโหมดง่าย (Simple View) ออกจากระบบ",
+        "ลบปุ่มสลับโหมดง่ายออกจาก Header",
+        "ลบไฟล์ SimpleView.tsx",
+        "ลบ state และ logic ที่เกี่ยวข้องกับ isSimpleView",
+        "อัพเดทเอกสาร FEATURES.md"
+      ]
+    },
+    {
+      "version": "2.17.0",
+      "date": "2026-02-08",
+      "title": "ลบระบบ Onboarding Tour",
+      "type": "improvement",
+      "changes": [
+        "ลบ Onboarding Tour ออกจากระบบทั้งหมด",
+        "ลบไฟล์ OnboardingTour.tsx และโฟลเดอร์ Onboarding",
+        "ลบการ import และใช้งาน OnboardingTour จาก Dashboard",
+        "อัพเดทเอกสาร FEATURES.md ให้สอดคล้องกับการเปลี่ยนแปลง"
+      ]
+    },
+    {
       "version": "2.16.0",
       "date": "2026-01-31",
       "title": "ลบคอมเมนต์ออกจากโค้ดทั้งหมด",

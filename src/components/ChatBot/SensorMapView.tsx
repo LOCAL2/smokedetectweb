@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, X, Eye, EyeOff } from 'lucide-react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import type { SensorData } from '../../types/sensor';
 import type { SettingsConfig } from '../../hooks/useSettings';
 
@@ -16,18 +16,12 @@ interface SensorMapViewProps {
 const DEFAULT_COORDS = { lat: 13.7563, lng: 100.5018 };
 
 export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: SensorMapViewProps) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersRef = useRef<L.Marker[]>([]);
-  const initialBoundsSetRef = useRef(false);
-  const lastFilterRef = useRef<string>('all');
-  
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const [filter, setFilter] = useState<'all' | 'danger' | 'warning' | 'safe'>('all');
   const [selectedSensorId, setSelectedSensorId] = useState<string | null>(null);
   const [showLabels, setShowLabels] = useState(true);
-
-  
-  const sensorValuesKey = sensors.map(s => `${s.id}:${s.value}`).join('|');
 
   const getStatusColor = (value: number) => {
     if (value >= settings.dangerThreshold) return '#EF4444';
@@ -58,51 +52,46 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
   };
 
   useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    mapRef.current = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: {
+        version: 8,
+        sources: {
+          'osm-tiles': {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '© OpenStreetMap'
+          }
+        },
+        layers: [{
+          id: 'osm-tiles',
+          type: 'raster',
+          source: 'osm-tiles',
+          minzoom: 0,
+          maxzoom: 19
+        }]
+      },
+      center: [DEFAULT_COORDS.lng, DEFAULT_COORDS.lat],
+      zoom: 12
+    });
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!mapRef.current) return;
 
-    
-    if (!mapInstanceRef.current) {
-      
-      let centerLat = DEFAULT_COORDS.lat;
-      let centerLng = DEFAULT_COORDS.lng;
-      let hasValidCoords = false;
-      
-      
-      const sensorsWithCoords = sensors.map(s => getSensorCoords(s)).filter(c => c.hasCoords);
-      
-      if (sensorsWithCoords.length > 0) {
-        centerLat = sensorsWithCoords.reduce((sum, c) => sum + c.lat, 0) / sensorsWithCoords.length;
-        centerLng = sensorsWithCoords.reduce((sum, c) => sum + c.lng, 0) / sensorsWithCoords.length;
-        hasValidCoords = true;
-      } else if (settings.sensorCoordinates && settings.sensorCoordinates.length > 0) {
-        
-        const settingsCoords = settings.sensorCoordinates;
-        centerLat = settingsCoords.reduce((sum, c) => sum + c.lat, 0) / settingsCoords.length;
-        centerLng = settingsCoords.reduce((sum, c) => sum + c.lng, 0) / settingsCoords.length;
-        hasValidCoords = true;
-      }
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.clear();
 
-      mapInstanceRef.current = L.map(mapRef.current, {
-        center: [centerLat, centerLng],
-        zoom: hasValidCoords ? 15 : 12,
-        zoomControl: false,
-        attributionControl: false,
-        maxZoom: 20,
-        minZoom: 3,
-      });
-
-      L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-      }).addTo(mapInstanceRef.current);
-
-      L.control.zoom({ position: 'bottomright' }).addTo(mapInstanceRef.current);
-    }
-
-    
-    markersRef.current.forEach(m => m.remove());
-    markersRef.current = [];
-
-    
     filteredSensors.forEach(sensor => {
       const { lat, lng, hasCoords } = getSensorCoords(sensor);
       if (!hasCoords) return;
@@ -110,98 +99,46 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
       const color = getStatusColor(sensor.value);
       const isSelected = selectedSensorId === sensor.id;
 
-      const markerIcon = L.divIcon({
-        className: 'custom-marker',
-        html: `
-          <div style="position: relative; cursor: pointer;">
-            <div style="
-              width: ${isSelected ? '50px' : '36px'};
-              height: ${isSelected ? '50px' : '36px'};
-              background: ${color};
-              border-radius: 50% 50% 50% 0;
-              transform: rotate(-45deg);
-              border: 3px solid ${isSelected ? '#FFF' : 'rgba(255,255,255,0.8)'};
-              box-shadow: 0 4px 12px rgba(0,0,0,0.4)${isSelected ? ', 0 0 20px ' + color : ''};
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              transition: all 0.2s;
-            ">
-              <div style="
-                transform: rotate(45deg);
-                color: white;
-                font-weight: bold;
-                font-size: ${isSelected ? '13px' : '10px'};
-              ">${sensor.value.toFixed(0)}</div>
-            </div>
-            ${showLabels ? `
-              <div style="
-                position: absolute;
-                top: -28px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(0,0,0,0.85);
-                color: white;
-                padding: 3px 8px;
-                border-radius: 6px;
-                font-size: 10px;
-                white-space: nowrap;
-                font-weight: 500;
-              ">${sensor.location || sensor.id}</div>
-            ` : ''}
-          </div>
-        `,
-        iconSize: [isSelected ? 50 : 36, isSelected ? 60 : 46],
-        iconAnchor: [isSelected ? 25 : 18, isSelected ? 60 : 46],
-      });
+      const el = document.createElement('div');
+      el.style.width = isSelected ? '50px' : '36px';
+      el.style.height = isSelected ? '50px' : '36px';
+      el.style.borderRadius = '50%';
+      el.style.background = color;
+      el.style.border = `3px solid ${isSelected ? '#FFF' : 'rgba(255,255,255,0.8)'}`;
+      el.style.boxShadow = `0 4px 12px rgba(0,0,0,0.4)${isSelected ? ', 0 0 20px ' + color : ''}`;
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.color = 'white';
+      el.style.fontSize = isSelected ? '13px' : '10px';
+      el.style.fontWeight = 'bold';
+      el.style.cursor = 'pointer';
+      el.textContent = sensor.value.toFixed(0);
 
-      const marker = L.marker([lat, lng], { icon: markerIcon })
-        .addTo(mapInstanceRef.current!);
-      
-      marker.on('click', () => {
+      el.onclick = () => {
         setSelectedSensorId(sensor.id);
         if (onSelectSensor) onSelectSensor(sensor);
-      });
+      };
 
-      markersRef.current.push(marker);
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([lng, lat])
+        .addTo(mapRef.current!);
+
+      markersRef.current.set(sensor.id, marker);
     });
 
-    
-    const filterChanged = lastFilterRef.current !== filter;
-    lastFilterRef.current = filter;
-    
-    if (!initialBoundsSetRef.current || filterChanged) {
+    if (filteredSensors.length > 0) {
       const sensorsWithCoords = filteredSensors
         .map(s => getSensorCoords(s))
         .filter(c => c.hasCoords);
-      
+
       if (sensorsWithCoords.length > 0) {
-        if (sensorsWithCoords.length === 1) {
-          
-          mapInstanceRef.current.setView([sensorsWithCoords[0].lat, sensorsWithCoords[0].lng], 17);
-        } else {
-          
-          const bounds = L.latLngBounds(sensorsWithCoords.map(c => [c.lat, c.lng]));
-          mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
-        }
-        initialBoundsSetRef.current = true;
+        const bounds = new maplibregl.LngLatBounds();
+        sensorsWithCoords.forEach(c => bounds.extend([c.lng, c.lat]));
+        mapRef.current.fitBounds(bounds, { padding: 50, maxZoom: 18 });
       }
     }
-
-    return () => {
-      
-    };
-  }, [sensorValuesKey, filteredSensors, selectedSensorId, showLabels, settings, filter]); 
-
-  
-  useEffect(() => {
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, []);
+  }, [filteredSensors, selectedSensorId, settings]);
 
   const dangerCount = sensors.filter(s => s.value >= settings.dangerThreshold).length;
   const warningCount = sensors.filter(s => s.value >= settings.warningThreshold && s.value < settings.dangerThreshold).length;
@@ -219,7 +156,6 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         marginBottom: 20,
       }}
     >
-      {}
       <div style={{
         padding: '14px 16px',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
@@ -282,7 +218,6 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         </div>
       </div>
 
-      {}
       <div style={{
         padding: '10px 16px',
         borderBottom: '1px solid rgba(255,255,255,0.05)',
@@ -358,9 +293,8 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         )}
       </div>
 
-      {}
       <div 
-        ref={mapRef} 
+        ref={mapContainerRef} 
         style={{ 
           width: '100%', 
           height: '350px',
@@ -368,7 +302,6 @@ export const SensorMapView = ({ sensors, settings, onClose, onSelectSensor }: Se
         }} 
       />
 
-      {}
       <div style={{
         padding: '12px 16px',
         borderTop: '1px solid rgba(255,255,255,0.05)',

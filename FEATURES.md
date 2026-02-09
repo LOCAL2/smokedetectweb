@@ -2,25 +2,7 @@
 
 ## ✨ Version 2.13.0 - WOW Factor Update
 
-### 🎓 1. Interactive Onboarding Tour
-**ไฟล์:** `src/components/Onboarding/OnboardingTour.tsx`
-
-- แนะนำผู้ใช้ใหม่อัตโนมัติเมื่อเข้าใช้งานครั้งแรก
-- Tour Guide แบบ step-by-step
-- แสดงเฉพาะครั้งแรก (เก็บใน localStorage)
-- สามารถข้ามหรือปิดได้ตลอดเวลา
-
-**การใช้งาน:**
-```tsx
-import { OnboardingTour } from './components/Onboarding/OnboardingTour';
-
-// เพิ่มใน App.tsx หรือ Dashboard
-<OnboardingTour />
-```
-
----
-
-### 🎮 2. Try Demo Button
+### 🎮 1. Try Demo Button
 **ไฟล์:** `src/components/Dashboard/TryDemoButton.tsx`
 
 - แสดงเมื่อไม่มีข้อมูล Sensor
@@ -38,25 +20,7 @@ import { TryDemoButton } from './components/Dashboard/TryDemoButton';
 
 ---
 
-### 📱 3. Simple View Mode
-**ไฟล์:** `src/components/Dashboard/SimpleView.tsx`
-
-- โหมดแสดงผลแบบง่ายสำหรับหน้าจอเล็ก
-- แสดงเฉพาะสถานะรวมและจุดที่มีปัญหา
-- เหมาะสำหรับมือถือและ tablet
-- ลดความซับซ้อนของ UI
-
-**การใช้งาน:**
-```tsx
-import { SimpleView } from './components/Dashboard/SimpleView';
-
-// ใช้แทน Dashboard ปกติบนมือถือ
-{isMobile ? <SimpleView sensors={sensors} /> : <Dashboard />}
-```
-
----
-
-### 🤖 4. AI Insights & Predictive Analytics
+### 🤖 2. AI Insights & Predictive Analytics
 **ไฟล์:** 
 - `src/utils/aiInsights.ts` - Logic การวิเคราะห์
 - `src/components/Dashboard/AIInsightsPanel.tsx` - UI Component
@@ -87,7 +51,7 @@ const summary = getAISummary(sensors, warningThreshold, dangerThreshold);
 
 ---
 
-### 📊 5. Weekly AI Report
+### 📊 3. Weekly AI Report
 **ไฟล์:** `src/utils/weeklyReport.ts`
 
 **ฟีเจอร์:**
@@ -136,16 +100,13 @@ console.log(reportText);
 ## 🎯 การใช้งานทั้งหมดใน Dashboard
 
 ```tsx
-import { OnboardingTour } from './components/Onboarding/OnboardingTour';
 import { TryDemoButton } from './components/Dashboard/TryDemoButton';
-import { SimpleView } from './components/Dashboard/SimpleView';
 import { AIInsightsPanel } from './components/Dashboard/AIInsightsPanel';
 import { generateInsights, getAISummary } from './utils/aiInsights';
 
 export const Dashboard = () => {
   const { sensors, sensorHistory } = useSensorDataContext();
   const { settings } = useSettingsContext();
-  const isMobile = useMediaQuery('(max-width: 768px)');
 
   // AI Insights
   const insights = generateInsights(
@@ -158,12 +119,8 @@ export const Dashboard = () => {
 
   return (
     <>
-      <OnboardingTour />
-      
       {sensors.length === 0 ? (
         <TryDemoButton />
-      ) : isMobile ? (
-        <SimpleView sensors={sensors} />
       ) : (
         <>
           <AIInsightsPanel insights={insights} summary={summary} />
@@ -179,12 +136,10 @@ export const Dashboard = () => {
 
 ## 📦 ไฟล์ที่สร้างใหม่
 
-1. `src/components/Onboarding/OnboardingTour.tsx`
-2. `src/components/Dashboard/TryDemoButton.tsx`
-3. `src/components/Dashboard/SimpleView.tsx`
-4. `src/components/Dashboard/AIInsightsPanel.tsx`
-5. `src/utils/aiInsights.ts`
-6. `src/utils/weeklyReport.ts`
+1. `src/components/Dashboard/TryDemoButton.tsx`
+2. `src/components/Dashboard/AIInsightsPanel.tsx`
+3. `src/utils/aiInsights.ts`
+4. `src/utils/weeklyReport.ts`
 
 ---
 

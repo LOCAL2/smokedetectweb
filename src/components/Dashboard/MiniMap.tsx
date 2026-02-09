@@ -2,8 +2,8 @@ import { useEffect, useRef, useMemo, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Maximize2, X } from 'lucide-react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import type { SensorData } from '../../types/sensor';
 import { useSettingsContext } from '../../context/SettingsContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -18,14 +18,14 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
   const { isDark } = useTheme();
 
   const miniMapRef = useRef<HTMLDivElement>(null);
-  const miniMapInstanceRef = useRef<L.Map | null>(null);
-  const miniMarkersRef = useRef<L.Marker[]>([]);
+  const miniMapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const miniMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const miniMapInitializedRef = useRef(false);
   const miniBoundsSetRef = useRef(false);
 
   const expandedMapRef = useRef<HTMLDivElement>(null);
-  const expandedMapInstanceRef = useRef<L.Map | null>(null);
-  const expandedMarkersRef = useRef<L.Marker[]>([]);
+  const expandedMapInstanceRef = useRef<maplibregl.Map | null>(null);
+  const expandedMarkersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
   const expandedMapInitializedRef = useRef(false);
 
   
@@ -56,27 +56,24 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
   const iconBg = isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.1)';
   const buttonBg = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)';
 
-  const createMarkerIcon = useCallback((color: string, value: number) => L.divIcon({
-    className: 'custom-marker',
-    html: `
-      <div style="
-        width: 28px;
-        height: 28px;
-        background: ${color};
-        border-radius: 50%;
-        border: 3px solid white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 9px;
-        font-weight: bold;
-      ">${value.toFixed(0)}</div>
-    `,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  }), []);
+  const createMarkerElement = useCallback((color: string, value: number) => {
+    const el = document.createElement('div');
+    el.style.width = '28px';
+    el.style.height = '28px';
+    el.style.background = color;
+    el.style.borderRadius = '50%';
+    el.style.border = '3px solid white';
+    el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.justifyContent = 'center';
+    el.style.color = 'white';
+    el.style.fontSize = '9px';
+    el.style.fontWeight = 'bold';
+    el.style.cursor = 'pointer';
+    el.textContent = value.toFixed(0);
+    return el;
+  }, []);
 
   const openModal = useCallback(() => setIsExpanded(true), []);
   const closeModal = useCallback(() => setIsExpanded(false), []);
@@ -88,29 +85,32 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
     if (!miniMapRef.current) return;
     if (miniMapInitializedRef.current) return;
     
-    miniMapInstanceRef.current = L.map(miniMapRef.current, {
-      center: [center.lat, center.lng],
+    miniMapInstanceRef.current = new maplibregl.Map({
+      container: miniMapRef.current,
+      style: {
+        version: 8,
+        sources: {
+          'osm-tiles': {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors'
+          }
+        },
+        layers: [{
+          id: 'osm-tiles',
+          type: 'raster',
+          source: 'osm-tiles',
+          minzoom: 0,
+          maxzoom: 19
+        }]
+      },
+      center: [center.lng, center.lat],
       zoom: 10,
-      zoomControl: false,
-      attributionControl: false,
-      dragging: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      touchZoom: false,
+      interactive: false
     });
-
-    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-    }).addTo(miniMapInstanceRef.current);
     
     miniMapInitializedRef.current = true;
-    
-    
-    setTimeout(() => {
-      if (miniMapInstanceRef.current) {
-        miniMapInstanceRef.current.invalidateSize();
-      }
-    }, 100);
   }, [sensorsWithGPS.length > 0]); 
   
   
@@ -132,37 +132,43 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
 
     
     miniMarkersRef.current.forEach(m => m.remove());
-    miniMarkersRef.current = [];
+    miniMarkersRef.current.clear();
 
     
     sensorsWithGPS.forEach(sensor => {
-      const marker = L.marker([sensor.latitude!, sensor.longitude!], {
-        icon: createMarkerIcon(getMarkerColor(sensor.value), sensor.value)
-      }).addTo(map);
+      const color = getMarkerColor(sensor.value);
+      const el = createMarkerElement(color, sensor.value);
 
-      marker.bindPopup(`
+      const popup = new maplibregl.Popup({ offset: 15 }).setHTML(`
         <div style="text-align: center; min-width: 100px;">
           <strong>${sensor.location || sensor.id}</strong><br/>
-          <span style="color: ${getMarkerColor(sensor.value)}; font-weight: 600;">
+          <span style="color: ${color}; font-weight: 600;">
             ${sensor.value.toFixed(1)} PPM
           </span>
         </div>
       `);
 
-      miniMarkersRef.current.push(marker);
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([sensor.longitude!, sensor.latitude!])
+        .setPopup(popup)
+        .addTo(map);
+
+      miniMarkersRef.current.set(sensor.id, marker);
     });
 
     
     if (!miniBoundsSetRef.current && sensorsWithGPS.length > 0) {
       if (sensorsWithGPS.length > 1) {
-        const bounds = L.latLngBounds(sensorsWithGPS.map(s => [s.latitude!, s.longitude!]));
-        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 10, animate: false });
+        const bounds = new maplibregl.LngLatBounds();
+        sensorsWithGPS.forEach(s => bounds.extend([s.longitude!, s.latitude!]));
+        map.fitBounds(bounds, { padding: 30, maxZoom: 10 });
       } else {
-        map.setView([sensorsWithGPS[0].latitude!, sensorsWithGPS[0].longitude!], 10, { animate: false });
+        map.setCenter([sensorsWithGPS[0].longitude!, sensorsWithGPS[0].latitude!]);
+        map.setZoom(10);
       }
       miniBoundsSetRef.current = true;
     }
-  }, [sensorsWithGPS, createMarkerIcon, getMarkerColor]);
+  }, [sensorsWithGPS, createMarkerElement, getMarkerColor]);
 
   
   useEffect(() => {
@@ -180,27 +186,39 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
     const timer = setTimeout(() => {
       if (!expandedMapRef.current || expandedMapInitializedRef.current) return;
 
-      expandedMapInstanceRef.current = L.map(expandedMapRef.current, {
-        center: [center.lat, center.lng],
-        zoom: 10,
-        zoomControl: true,
-        attributionControl: false,
+      expandedMapInstanceRef.current = new maplibregl.Map({
+        container: expandedMapRef.current,
+        style: {
+          version: 8,
+          sources: {
+            'osm-tiles': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '© OpenStreetMap contributors'
+            }
+          },
+          layers: [{
+            id: 'osm-tiles',
+            type: 'raster',
+            source: 'osm-tiles',
+            minzoom: 0,
+            maxzoom: 19
+          }]
+        },
+        center: [center.lng, center.lat],
+        zoom: 10
       });
-
-      L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-        maxZoom: 20,
-      }).addTo(expandedMapInstanceRef.current);
 
       
       sensorsWithGPS.forEach(sensor => {
-        const marker = L.marker([sensor.latitude!, sensor.longitude!], {
-          icon: createMarkerIcon(getMarkerColor(sensor.value), sensor.value)
-        }).addTo(expandedMapInstanceRef.current!);
+        const color = getMarkerColor(sensor.value);
+        const el = createMarkerElement(color, sensor.value);
 
-        marker.bindPopup(`
+        const popup = new maplibregl.Popup({ offset: 15 }).setHTML(`
           <div style="text-align: center; min-width: 120px;">
             <strong style="font-size: 14px;">${sensor.location || sensor.id}</strong><br/>
-            <span style="color: ${getMarkerColor(sensor.value)}; font-weight: 600; font-size: 16px;">
+            <span style="color: ${color}; font-weight: 600; font-size: 16px;">
               ${sensor.value.toFixed(1)} PPM
             </span><br/>
             <span style="font-size: 11px; color: #666;">
@@ -209,15 +227,22 @@ export const MiniMap = ({ sensors }: MiniMapProps) => {
           </div>
         `);
 
-        expandedMarkersRef.current.push(marker);
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([sensor.longitude!, sensor.latitude!])
+          .setPopup(popup)
+          .addTo(expandedMapInstanceRef.current!);
+
+        expandedMarkersRef.current.set(sensor.id, marker);
       });
 
       
       if (sensorsWithGPS.length > 1) {
-        const bounds = L.latLngBounds(sensorsWithGPS.map(s => [s.latitude!, s.longitude!]));
-        expandedMapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 10 });
+        const bounds = new maplibregl.LngLatBounds();
+        sensorsWithGPS.forEach(s => bounds.extend([s.longitude!, s.latitude!]));
+        expandedMapInstanceRef.current.fitBounds(bounds, { padding: 50, maxZoom: 10 });
       } else if (sensorsWithGPS.length === 1) {
-        expandedMapInstanceRef.current.setView([sensorsWithGPS[0].latitude!, sensorsWithGPS[0].longitude!], 10);
+        expandedMapInstanceRef.current.setCenter([sensorsWithGPS[0].longitude!, sensorsWithGPS[0].latitude!]);
+        expandedMapInstanceRef.current.setZoom(10);
       }
 
       expandedMapInitializedRef.current = true;

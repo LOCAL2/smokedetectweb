@@ -20,9 +20,7 @@ import { MiniMap } from './MiniMap';
 import { ComparisonChart } from './ComparisonChart';
 import { SensorStatusHistory } from './SensorStatusHistory';
 import { TrendAnalysisPanel } from './TrendAnalysisPanel';
-import { OnboardingTour } from '../Onboarding/OnboardingTour';
 import { TryDemoButton } from './TryDemoButton';
-import { SimpleView } from './SimpleView';
 import { AIInsightsPanel } from './AIInsightsPanel';
 import { generateInsights, getAISummary, generateAISummaryWithGroq, generateAIInsightsWithGroq } from '../../utils/aiInsights';
 import type { SensorData } from '../../types/sensor';
@@ -44,7 +42,6 @@ export const Dashboard = () => {
   const { isDark } = useTheme();
   const [selectedSensor, setSelectedSensor] = useState<SensorData | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('all');
-  const [isSimpleView, setIsSimpleView] = useState(false);
 
   const handleTogglePin = (sensorId: string) => {
     const pinnedSensors = settings.pinnedSensors || [];
@@ -172,15 +169,6 @@ export const Dashboard = () => {
   }, [filteredSensors, sensorHistoryMap, settings.warningThreshold, settings.dangerThreshold, settings.groqApiKey]);
 
   
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  
   const filteredStats = useMemo(() => {
     if (selectedGroupId === 'all') return stats;
 
@@ -285,18 +273,13 @@ export const Dashboard = () => {
       }} />
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative' }}>
-        <OnboardingTour />
         <Header 
           onSettingsClick={() => navigate('/settings')} 
-          onSimpleViewToggle={() => setIsSimpleView(!isSimpleView)}
-          isSimpleView={isSimpleView}
         />
 
         {}
         {showSkeleton ? (
           <DashboardSkeleton />
-        ) : (isMobile || isSimpleView) && sensors.length > 0 ? (
-          <SimpleView sensors={filteredSensors} />
         ) : sensors.length === 0 && !settings.demoMode ? (
           <TryDemoButton />
         ) : (

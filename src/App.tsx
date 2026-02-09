@@ -13,6 +13,7 @@ import { ChatBotPage } from './pages/ChatBotPage';
 import { UpdatesPage } from './pages/UpdatesPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { MaintenancePage } from './pages/MaintenancePage';
+import { MapPage } from './pages/MapPage';
 import { ChatBot } from './components/ChatBot/ChatBot';
 import { UpdateButton } from './components/UpdateButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -47,6 +48,7 @@ const AppContent = () => {
         <Route path="/updates" element={<UpdatesPage />} />
         <Route path="/changelog" element={<UpdatesPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
+        <Route path="/map" element={<MapPage />} />
       </Routes>
       <ChatBot />
       <UpdateButton />
