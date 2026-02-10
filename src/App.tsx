@@ -17,20 +17,13 @@ import { MapPage } from './pages/MapPage';
 import { ChatBot } from './components/ChatBot/ChatBot';
 import { UpdateButton } from './components/UpdateButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
-import { useSmoothScroll } from './hooks/useSmoothScroll';
 import { useOfflineSupport } from './hooks/useOfflineSupport';
-import { useSettingsContext } from './context/SettingsContext';
 
 
 const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
 
 const AppContent = () => {
-  const { settings } = useSettingsContext();
-  
-  
-  useSmoothScroll(settings.enableSmoothScroll);
-  
   
   const { isOnline, formatCacheAge } = useOfflineSupport();
 

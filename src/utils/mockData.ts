@@ -2,11 +2,11 @@ import type { SensorData } from '../types/sensor';
 
 
 const MOCK_SENSORS = [
-  { id: 'demo-1', name: 'Sensor ห้องนั่งเล่น', location: 'ชั้น 1 - ห้องนั่งเล่น', lat: 13.7563, lng: 100.5018, address: 'อาคาร A ชั้น 1' },
-  { id: 'demo-2', name: 'Sensor ห้องครัว', location: 'ชั้น 1 - ห้องครัว', lat: 13.7565, lng: 100.5020, address: 'อาคาร A ชั้น 1' },
-  { id: 'demo-3', name: 'Sensor ห้องนอนใหญ่', location: 'ชั้น 2 - ห้องนอนใหญ่', lat: 13.7567, lng: 100.5015, address: 'อาคาร A ชั้น 2' },
-  { id: 'demo-4', name: 'Sensor ห้องนอนเล็ก', location: 'ชั้น 2 - ห้องนอนเล็ก', lat: 13.7564, lng: 100.5022, address: 'อาคาร A ชั้น 2' },
-  { id: 'demo-5', name: 'Sensor โรงรถ', location: 'โรงรถ', lat: 13.7560, lng: 100.5012, address: 'โรงรถ อาคาร A' },
+  { id: 'demo-1', name: 'Sensor ห้องนั่งเล่น', location: 'ชั้น 1 - ห้องนั่งเล่น',  address: 'อาคาร A ชั้น 1' },
+  { id: 'demo-2', name: 'Sensor ห้องครัว', location: 'ชั้น 1 - ห้องครัว', address: 'อาคาร A ชั้น 1' },
+  { id: 'demo-3', name: 'Sensor ห้องนอนใหญ่', location: 'ชั้น 2 - ห้องนอนใหญ่', address: 'อาคาร A ชั้น 2' },
+  { id: 'demo-4', name: 'Sensor ห้องนอนเล็ก', location: 'ชั้น 2 - ห้องนอนเล็ก', address: 'อาคาร A ชั้น 2' },
+  { id: 'demo-5', name: 'Sensor โรงรถ', location: 'โรงรถ', address: 'โรงรถ อาคาร A' },
 ];
 
 
@@ -46,7 +46,6 @@ const generateDeterministicValue = (sensorIndex: number, baseValue: number): num
 export const generateMockSensorData = (): SensorData[] => {
   const now = new Date().toISOString();
   
-  
   const baseValues = [23, 45, 18, 32, 28];
   
   return MOCK_SENSORS.map((sensor, index) => {
@@ -60,8 +59,6 @@ export const generateMockSensorData = (): SensorData[] => {
       unit: 'ppm',
       timestamp: now,
       isOnline: true,
-      lat: sensor.lat,
-      lng: sensor.lng,
       address: sensor.address,
     };
   });

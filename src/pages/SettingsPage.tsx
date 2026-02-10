@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, RotateCcw, AlertTriangle, Clock, Bell, Volume2,
   Plus, Trash2, Server, MapPin, Gamepad2, Trash, Navigation, Activity,
-  Layout, GripVertical, BarChart3, Pin, TrendingUp, MousePointer2, ChevronDown, Check,
+  Layout, GripVertical, BarChart3, Pin, TrendingUp, ChevronDown, Check,
 } from 'lucide-react';
 import type { ApiEndpoint, SensorCoordinates, DashboardComponent, LayoutPosition, SettingsConfig, SensorGroup } from '../hooks/useSettings';
 import { useSettingsContext } from '../context/SettingsContext';
@@ -818,13 +818,6 @@ export const SettingsPage = () => {
               <Toggle enabled={settings.enableNotification} onChange={handleNotificationToggle} color="#10B981" />
             </SettingRow>
           </div>
-        </Card>
-
-        {}
-        <Card delay={0.17}>
-          <SettingRow icon={MousePointer2} title="Smooth Scroll" subtitle="เลื่อนหน้าแบบ smooth (scroll hijacking)" color="#06B6D4">
-            <Toggle enabled={settings.enableSmoothScroll} onChange={() => updateSettings({ enableSmoothScroll: !settings.enableSmoothScroll })} color="#06B6D4" />
-          </SettingRow>
         </Card>
 
         {}

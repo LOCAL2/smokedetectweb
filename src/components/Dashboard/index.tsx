@@ -16,9 +16,7 @@ import { SmokeChart } from './SmokeChart';
 import { SensorRanking } from './SensorRanking';
 import { SensorDetailPanel } from './SensorDetailPanel';
 import { DashboardSkeleton } from './Skeleton';
-import { MiniMap } from './MiniMap';
-import { ComparisonChart } from './ComparisonChart';
-import { SensorStatusHistory } from './SensorStatusHistory';
+
 import { TrendAnalysisPanel } from './TrendAnalysisPanel';
 import { TryDemoButton } from './TryDemoButton';
 import { AIInsightsPanel } from './AIInsightsPanel';
@@ -416,11 +414,11 @@ export const Dashboard = () => {
                   case 'ranking':
                     return <SensorRanking data={filteredMaxValues} settings={settings} />;
                   case 'miniMap':
-                    return <MiniMap sensors={filteredSensors} />;
+                    return null;
                   case 'comparisonChart':
-                    return <ComparisonChart sensors={filteredSensors} />;
+                    return null;
                   case 'statusHistory':
-                    return <SensorStatusHistory sensors={filteredSensors} />;
+                    return null;
                   case 'trendAnalysis':
                     return <TrendAnalysisPanel history={history} />;
                   case 'pinnedSensors':

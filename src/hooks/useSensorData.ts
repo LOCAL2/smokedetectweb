@@ -230,16 +230,21 @@ export const useSensorData = (settings: SettingsConfig) => {
 
     
     const allData = rawData.map(sensor => {
+      // Try to get coordinates from settings first (priority)
       const coord = settings.sensorCoordinates?.find(
         c => c.sensorId === sensor.id || c.sensorId === sensor.location
       );
+      
       if (coord) {
+        // Use coordinates from settings
         return {
           ...sensor,
-          latitude: coord.lat,
-          longitude: coord.lng,
+          lat: coord.lat,
+          lng: coord.lng,
         };
       }
+      
+      // Fallback to sensor's existing coordinates (from mock data or API)
       return sensor;
     });
 

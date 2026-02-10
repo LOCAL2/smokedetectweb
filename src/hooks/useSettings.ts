@@ -44,7 +44,6 @@ export interface SettingsConfig {
   pollingInterval: number;
   enableSoundAlert: boolean;
   enableNotification: boolean;
-  enableSmoothScroll: boolean;
   apiEndpoints: ApiEndpoint[];
   pinnedSensors: string[];
   sensorCoordinates: SensorCoordinates[];
@@ -73,7 +72,6 @@ const getDefaultSettings = (): SettingsConfig => ({
   pollingInterval: Number(import.meta.env.VITE_POLLING_INTERVAL) || 500,
   enableSoundAlert: false,
   enableNotification: import.meta.env.VITE_ENABLE_NOTIFICATION === 'true',
-  enableSmoothScroll: true,
   apiEndpoints: [{
     id: 'default',
     name: 'สถานที่หลัก',
