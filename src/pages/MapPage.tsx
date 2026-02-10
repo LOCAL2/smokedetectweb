@@ -48,46 +48,42 @@ export const MapPage = () => {
     
     if (mapRef.current) return;
 
-    try {
-      const map = new maplibregl.Map({
-        container: mapContainerRef.current,
-        style: {
-          version: 8,
-          sources: {
-            'osm-tiles': {
-              type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              attribution: '© OpenStreetMap contributors'
-            }
-          },
-          layers: [{
-            id: 'osm-tiles',
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: {
+        version: 8,
+        sources: {
+          'osm-tiles': {
             type: 'raster',
-            source: 'osm-tiles',
-            minzoom: 0,
-            maxzoom: 19
-          }]
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors'
+          }
         },
-        center: [100.5018, 13.7563],
-        zoom: 5.5,
-        interactive: true,
-        scrollZoom: true,
-        boxZoom: true,
-        dragRotate: true,
-        dragPan: true,
-        keyboard: true,
-        doubleClickZoom: true,
-        touchZoomRotate: true,
-        touchPitch: true
-      });
+        layers: [{
+          id: 'osm-tiles',
+          type: 'raster',
+          source: 'osm-tiles',
+          minzoom: 0,
+          maxzoom: 19
+        }]
+      },
+      center: [100.5018, 13.7563],
+      zoom: 5.5,
+      interactive: true,
+      scrollZoom: true,
+      boxZoom: true,
+      dragRotate: true,
+      dragPan: true,
+      keyboard: true,
+      doubleClickZoom: true,
+      touchZoomRotate: true,
+      touchPitch: true
+    });
 
-      map.addControl(new maplibregl.NavigationControl(), 'top-right');
-      
-      mapRef.current = map;
-    } catch (error) {
-      console.error('Error initializing map:', error);
-    }
+    map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    
+    mapRef.current = map;
 
     return () => {
       markersRef.current.forEach(marker => marker.remove());

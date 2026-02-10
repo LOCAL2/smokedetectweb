@@ -498,7 +498,6 @@ export const useSensorData = (settings: SettingsConfig) => {
 
   
   const startDemoMode = useCallback(() => {
-    console.log('🎮 Demo Mode: Starting with mock sensor data');
     resetMockData();
     setConnectionStatus('connected');
     setError(null);
