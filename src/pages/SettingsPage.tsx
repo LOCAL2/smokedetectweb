@@ -505,6 +505,14 @@ export const SettingsPage = () => {
   const [editingSensorId, setEditingSensorId] = useState<string | null>(null);
   const [newSensorId, setNewSensorId] = useState('');
 
+  const handleThresholdChange = (type: 'warning' | 'danger', value: number) => {
+    if (type === 'warning') {
+      updateSettings({ warningThreshold: value });
+    } else {
+      updateSettings({ dangerThreshold: value });
+    }
+  };
+
   
   const handleNotificationToggle = async () => {
     if (!settings.enableNotification) {
@@ -703,50 +711,163 @@ export const SettingsPage = () => {
           </div>
         </motion.header>
 
-        {}
+        {/* Threshold Settings */}
         <Card delay={0.05}>
           <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <AlertTriangle size={16} color="#F59E0B" /> ระดับค่าควัน (PPM)
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: '#F59E0B' }} />
-              <span style={{ color: textSecondary, fontSize: '13px', width: '70px' }}>เฝ้าระวัง</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Warning Threshold */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '5px', background: '#F59E0B' }} />
+                  <span style={{ color: textColor, fontSize: '14px', fontWeight: 500 }}>เฝ้าระวัง</span>
+                </div>
+                <div style={{
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: '10px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}>
+                  <input
+                    type="number"
+                    value={settings.warningThreshold}
+                    onChange={(e) => handleThresholdChange('warning', Number(e.target.value) || 0)}
+                    style={{
+                      width: '60px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#F59E0B',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      outline: 'none',
+                      textAlign: 'right',
+                    }}
+                  />
+                  <span style={{ color: '#F59E0B', fontSize: '13px', fontWeight: 600 }}>PPM</span>
+                </div>
+              </div>
               <input
-                type="number"
+                type="range"
+                min="10"
+                max="500"
+                step="5"
                 value={settings.warningThreshold}
-                onChange={(e) => updateSettings({ warningThreshold: Number(e.target.value) || 0 })}
+                onChange={(e) => handleThresholdChange('warning', Number(e.target.value))}
                 style={{
-                  flex: 1, padding: '10px 14px', background: 'rgba(245, 158, 11, 0.1)',
-                  border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '10px',
-                  color: '#F59E0B', fontSize: '16px', fontWeight: 600, outline: 'none', textAlign: 'center',
+                  width: '100%',
+                  height: '8px',
+                  borderRadius: '4px',
+                  background: `linear-gradient(to right, #F59E0B 0%, #F59E0B ${((settings.warningThreshold - 10) / 490) * 100}%, ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} ${((settings.warningThreshold - 10) / 490) * 100}%, ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} 100%)`,
+                  outline: 'none',
+                  cursor: 'pointer',
+                  WebkitAppearance: 'none',
+                  appearance: 'none',
                 }}
               />
-              <span style={{ color: textSecondary, fontSize: '12px' }}>PPM</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+                <span style={{ color: textSecondary, fontSize: '11px' }}>10 PPM</span>
+                <span style={{ color: textSecondary, fontSize: '11px' }}>500 PPM</span>
+              </div>
             </div>
 
-            {}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '4px', background: '#EF4444' }} />
-              <span style={{ color: textSecondary, fontSize: '13px', width: '70px' }}>อันตราย</span>
+            {/* Danger Threshold */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '5px', background: '#EF4444' }} />
+                  <span style={{ color: textColor, fontSize: '14px', fontWeight: 500 }}>อันตราย</span>
+                </div>
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '10px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}>
+                  <input
+                    type="number"
+                    value={settings.dangerThreshold}
+                    onChange={(e) => handleThresholdChange('danger', Number(e.target.value) || 0)}
+                    style={{
+                      width: '60px',
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#EF4444',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      outline: 'none',
+                      textAlign: 'right',
+                    }}
+                  />
+                  <span style={{ color: '#EF4444', fontSize: '13px', fontWeight: 600 }}>PPM</span>
+                </div>
+              </div>
               <input
-                type="number"
+                type="range"
+                min="50"
+                max="1000"
+                step="10"
                 value={settings.dangerThreshold}
-                onChange={(e) => updateSettings({ dangerThreshold: Number(e.target.value) || 0 })}
+                onChange={(e) => handleThresholdChange('danger', Number(e.target.value))}
                 style={{
-                  flex: 1, padding: '10px 14px', background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '10px',
-                  color: '#EF4444', fontSize: '16px', fontWeight: 600, outline: 'none', textAlign: 'center',
+                  width: '100%',
+                  height: '8px',
+                  borderRadius: '4px',
+                  background: `linear-gradient(to right, #EF4444 0%, #EF4444 ${((settings.dangerThreshold - 50) / 950) * 100}%, ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} ${((settings.dangerThreshold - 50) / 950) * 100}%, ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} 100%)`,
+                  outline: 'none',
+                  cursor: 'pointer',
+                  WebkitAppearance: 'none',
+                  appearance: 'none',
                 }}
               />
-              <span style={{ color: textSecondary, fontSize: '12px' }}>PPM</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+                <span style={{ color: textSecondary, fontSize: '11px' }}>50 PPM</span>
+                <span style={{ color: textSecondary, fontSize: '11px' }}>1000 PPM</span>
+              </div>
             </div>
           </div>
+
+          <style>{`
+            input[type="range"]::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              appearance: none;
+              width: 22px;
+              height: 22px;
+              border-radius: 50%;
+              background: #FFF;
+              cursor: pointer;
+              border: 3px solid currentColor;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+            input[type="range"]::-moz-range-thumb {
+              width: 22px;
+              height: 22px;
+              border-radius: 50%;
+              background: #FFF;
+              cursor: pointer;
+              border: 3px solid currentColor;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            }
+            input[type="number"]::-webkit-inner-spin-button,
+            input[type="number"]::-webkit-outer-spin-button {
+              -webkit-appearance: none;
+              margin: 0;
+            }
+            input[type="number"] {
+              -moz-appearance: textfield;
+            }
+          `}</style>
         </Card>
 
-        {}
+        {/* Polling Interval */}
         <Card delay={0.1}>
           <SettingRow icon={Clock} title="ความถี่รีเฟรช" subtitle={`ดึงข้อมูลทุกๆ ${(settings.pollingInterval / 1000).toFixed(1)} วินาที`} color="#3B82F6">
             <span style={{ color: '#3B82F6', fontSize: '15px', fontWeight: 600, minWidth: '50px', textAlign: 'right' }}>
@@ -768,7 +889,7 @@ export const SettingsPage = () => {
                 width: '100%',
                 height: '6px',
                 borderRadius: '3px',
-                background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((settings.pollingInterval / 1000 - 0.5) / 29.5) * 100}%, rgba(130, 130, 130, 0.2) ${((settings.pollingInterval / 1000 - 0.5) / 29.5) * 100}%, rgba(130, 130, 130, 0.2) 100%)`,
+                background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((settings.pollingInterval / 1000 - 0.5) / 29.5) * 100}%, ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} ${((settings.pollingInterval / 1000 - 0.5) / 29.5) * 100}%, ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} 100%)`,
                 outline: 'none',
                 cursor: 'pointer',
                 WebkitAppearance: 'none',
@@ -780,31 +901,7 @@ export const SettingsPage = () => {
               <span style={{ color: textSecondary, fontSize: '11px' }}>30s</span>
             </div>
           </div>
-          <style>{`
-            input[type="range"]::-webkit-slider-thumb {
-              -webkit-appearance: none;
-              appearance: none;
-              width: 20px;
-              height: 20px;
-              border-radius: 50%;
-              background: #3B82F6;
-              cursor: pointer;
-              border: 3px solid #1E293B;
-              box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
-            }
-            input[type="range"]::-moz-range-thumb {
-              width: 20px;
-              height: 20px;
-              border-radius: 50%;
-              background: #3B82F6;
-              cursor: pointer;
-              border: 3px solid #1E293B;
-              box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
-            }
-          `}</style>
         </Card>
-
-        {}
         <Card delay={0.15}>
           <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Bell size={16} color="#10B981" /> การแจ้งเตือน

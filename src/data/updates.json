@@ -1,6 +1,85 @@
 {
   "updates": [
     {
+      "version": "2.22.5",
+      "date": "2026-02-15",
+      "title": "ปรับค่าเริ่มต้น Threshold ใหม่",
+      "type": "improvement",
+      "changes": [
+        "เปลี่ยนค่าเริ่มต้น Warning Threshold เป็น 70 PPM (เดิม 50)",
+        "เปลี่ยนค่าเริ่มต้น Danger Threshold เป็น 150 PPM (เดิม 200)",
+        "สอดคล้องกับค่าที่ตั้งไว้ใน ESP32 Arduino",
+        "แก้ไข TypeScript build errors"
+      ]
+    },
+    {
+      "version": "2.22.4",
+      "date": "2026-02-15",
+      "title": "แก้ไข MQTT Error Missing Protocol",
+      "type": "fix",
+      "changes": [
+        "แก้ไข MQTT error 'Missing protocol' เมื่อ broker URL ไม่มี ws:// หรือ wss://",
+        "เพิ่ม validation ตรวจสอบและเพิ่ม protocol อัตโนมัติ",
+        "เพิ่ม migration logic แก้ไขค่าเก่าใน localStorage",
+        "ลบฟังก์ชัน publishThresholds ที่ไม่ได้ใช้งานออก"
+      ]
+    },
+    {
+      "version": "2.22.3",
+      "date": "2026-02-15",
+      "title": "ปรับปรุง UI การตั้งค่า Threshold",
+      "type": "improvement",
+      "changes": [
+        "เพิ่ม Slider ปรับค่า Warning Threshold (10-500 PPM)",
+        "เพิ่ม Slider ปรับค่า Danger Threshold (50-1000 PPM)",
+        "แสดงค่าแบบ Real-time ขณะปรับ Slider",
+        "ออกแบบ UI ใหม่ให้สวยงามและใช้งานง่ายขึ้น",
+        "รองรับการพิมพ์ค่าตัวเลขโดยตรงได้ด้วย"
+      ]
+    },
+    {
+      "version": "2.22.2",
+      "date": "2026-02-15",
+      "title": "ลบส่วนแสดงตำแหน่งเซ็นเซอร์ออกจาก Sensor Details",
+      "type": "improvement",
+      "changes": [
+        "ลบแผนที่และข้อมูลตำแหน่งออกจาก Sensor Detail Panel",
+        "ผู้ใช้สามารถดูตำแหน่งเซ็นเซอร์ได้จากหน้า Map แทน",
+        "ลดความซับซ้อนของ Detail Panel ให้โฟกัสที่ข้อมูลค่าควัน",
+        "ปรับปรุงประสิทธิภาพการโหลดโดยไม่ต้องโหลด MapLibre"
+      ]
+    },
+    {
+      "version": "2.22.1",
+      "date": "2026-02-15",
+      "title": "ปรับปรุงประสิทธิภาพ MQTT และการโหลดหน้าเว็บ",
+      "type": "improvement",
+      "changes": [
+        "ลดเวลาโหลดหน้าเว็บจาก 2 วินาที เหลือทันที",
+        "ลบข้อความ debug ที่แสดงบนหน้าเว็บ (Connecting, Connected, Publish failed)",
+        "เพิ่มความเร็วรับข้อมูล MQTT จาก 100ms เหลือ 50ms",
+        "ลบ delay 200ms ในการ subscribe MQTT topics",
+        "ข้อมูลจาก ESP32 แสดงผลเร็วขึ้นภายใน 1-2 วินาที",
+        "เพิ่มกราฟเส้นแสดงประวัติ 30 นาทีใน Detail Panel แผนที่",
+        "ปรับ Marker แผนที่เป็นวงกลมสีขาวขอบสีตามสถานะ"
+      ]
+    },
+    {
+      "version": "2.22.0",
+      "date": "2026-02-15",
+      "title": "ปรับปรุงหน้าแผนที่แบบมืออาชีพ",
+      "type": "improvement",
+      "changes": [
+        "เปลี่ยน Marker เป็นวงกลมแสดงค่า PPM พร้อมสีตามสถานะ",
+        "เพิ่ม Pulse Animation รอบๆ Marker",
+        "เพิ่ม Detail Panel เลื่อนเข้ามาจากด้านขวาเมื่อคลิก Marker",
+        "แสดงค่าปัจจุบัน สถานะ เวลาอัพเดท และประวัติ 30 นาที",
+        "แสดงเกณฑ์การแจ้งเตือนและพิกัด GPS",
+        "เพิ่ม Hover Effect บน Marker ขยายเมื่อเอาเมาส์ชี้",
+        "ปิด Detail Panel ได้ด้วยปุ่ม X หรือคลิก Marker อื่น"
+      ]
+    },
+    {
       "version": "2.21.0",
       "date": "2026-02-15",
       "title": "เปลี่ยนจาก HTTP API เป็น MQTT Real-time",

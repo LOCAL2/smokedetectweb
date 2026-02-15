@@ -28,8 +28,8 @@ export const useMqtt = (config: MqttConfig): UseMqttReturn => {
     const now = Date.now();
     const lastUpdate = lastUpdateRef.current.get(sensorData.id) || 0;
     
-    // Update only if more than 100ms has passed (prevent too frequent updates)
-    if (now - lastUpdate < 100) return;
+    // Update immediately (no throttle for real-time data)
+    if (now - lastUpdate < 50) return;
     
     sensorsRef.current.set(sensorData.id, sensorData);
     lastUpdateRef.current.set(sensorData.id, now);
@@ -44,10 +44,21 @@ export const useMqtt = (config: MqttConfig): UseMqttReturn => {
       return;
     }
 
+    // Validate and fix broker URL
+    let brokerUrl = config.broker.trim();
+    
+    // Check if broker URL has protocol
+    if (!brokerUrl.startsWith('ws://') && !brokerUrl.startsWith('wss://')) {
+      // Add default protocol based on current page protocol
+      const defaultProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+      brokerUrl = defaultProtocol + brokerUrl;
+      console.warn('⚠️ MQTT broker URL missing protocol, added:', defaultProtocol);
+    }
+    
     // Determine broker URL based on protocol
-    const brokerUrl = window.location.protocol === 'https:' 
-      ? config.broker.replace('ws://', 'wss://').replace(':8083', ':8884')
-      : config.broker;
+    if (window.location.protocol === 'https:') {
+      brokerUrl = brokerUrl.replace('ws://', 'wss://').replace(':8083', ':8884');
+    }
 
     const mqttClient = mqtt.connect(brokerUrl, {
       clientId: 'web_' + Math.random().toString(16).substr(2, 8),
@@ -61,18 +72,14 @@ export const useMqtt = (config: MqttConfig): UseMqttReturn => {
       setConnected(true);
       setError(null);
       
-      // รอให้ connection stable และเช็คสถานะก่อน subscribe
-      setTimeout(() => {
-        if (mqttClient.connected) {
-          config.topics.forEach(topic => {
-            mqttClient.subscribe(topic, { qos: 0 }, (err) => {
-              if (err) {
-                console.error(`Failed to subscribe to ${topic}:`, err);
-              }
-            });
-          });
-        }
-      }, 200);
+      // Subscribe ทันทีหลัง connect
+      config.topics.forEach(topic => {
+        mqttClient.subscribe(topic, { qos: 0 }, (err) => {
+          if (err) {
+            setError(`ไม่สามารถ subscribe ${topic}`);
+          }
+        });
+      });
     });
 
     mqttClient.on('message', (_topic, message) => {
@@ -81,7 +88,6 @@ export const useMqtt = (config: MqttConfig): UseMqttReturn => {
         
         // Validate required fields
         if (!data.id || data.value === undefined) {
-          console.warn('Invalid sensor data received:', data);
           return;
         }
 
@@ -97,13 +103,12 @@ export const useMqtt = (config: MqttConfig): UseMqttReturn => {
         };
 
         updateSensor(sensorData);
-      } catch (err) {
-        console.error('Error parsing MQTT message:', err);
+      } catch (_err) {
+        // Ignore invalid messages silently
       }
     });
 
-    mqttClient.on('error', (err) => {
-      console.error('MQTT Error:', err);
+    mqttClient.on('error', () => {
       setError('เกิดข้อผิดพลาดในการเชื่อมต่อ MQTT');
       setConnected(false);
     });

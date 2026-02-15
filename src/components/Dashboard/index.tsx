@@ -278,8 +278,50 @@ export const Dashboard = () => {
         {}
         {showSkeleton ? (
           <DashboardSkeleton />
-        ) : sensors.length === 0 && !settings.demoMode ? (
+        ) : sensors.length === 0 && !settings.demoMode && !settings.mqtt.enabled ? (
           <TryDemoButton />
+        ) : sensors.length === 0 && settings.mqtt.enabled ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+            gap: '24px',
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              border: '4px solid rgba(59, 130, 246, 0.2)',
+              borderTop: '4px solid #3B82F6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }} />
+            <div style={{
+              textAlign: 'center',
+            }}>
+              <h3 style={{
+                color: isDark ? '#F8FAFC' : '#0F172A',
+                fontSize: '18px',
+                fontWeight: 600,
+                margin: '0 0 8px',
+              }}>
+                กำลังเชื่อมต่อ MQTT...
+              </h3>
+              <p style={{
+                color: isDark ? '#94A3B8' : '#64748B',
+                fontSize: '14px',
+                margin: 0,
+              }}>
+                รอข้อมูลจาก Sensor
+              </p>
+            </div>
+            <style>{`
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
         ) : (
           <>
             {}
@@ -588,26 +630,24 @@ export const Dashboard = () => {
       </div>
 
       {}
-      {selectedSensor && (
-        <SensorDetailPanel
-          sensor={selectedSensor}
-          stats={(() => {
-            const sensorStats = sensorMaxValues.find(s =>
-              s.id === selectedSensor.location || s.id === selectedSensor.id
-            );
-            if (sensorStats) {
-              return {
-                max24h: sensorStats.maxValue,
-                min24h: sensorStats.minValue,
-                avg24h: sensorStats.avgValue,
-              };
-            }
-            return null;
-          })()}
-          settings={settings}
-          onClose={() => setSelectedSensor(null)}
-        />
-      )}
+      {selectedSensor && (() => {
+        const currentSensor = sensors.find(s => s.id === selectedSensor.id) || selectedSensor;
+        const sensorStats = sensorMaxValues.find(s =>
+          s.id === currentSensor.location || s.id === currentSensor.id
+        );
+        return (
+          <SensorDetailPanel
+            sensor={currentSensor}
+            stats={sensorStats ? {
+              max24h: sensorStats.maxValue,
+              min24h: sensorStats.minValue,
+              avg24h: sensorStats.avgValue,
+            } : null}
+            settings={settings}
+            onClose={() => setSelectedSensor(null)}
+          />
+        );
+      })()}
     </div>
   );
 };

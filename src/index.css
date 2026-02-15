@@ -270,6 +270,11 @@ input[type="range"]::-moz-range-track {
   will-change: transform !important;
 }
 
+/* Hide default marker SVG only */
+.maplibregl-marker > svg {
+  display: none !important;
+}
+
 .maplibregl-canvas-container {
   position: relative !important;
 }
@@ -278,6 +283,7 @@ input[type="range"]::-moz-range-track {
   pointer-events: auto !important;
   user-select: none !important;
   -webkit-user-select: none !important;
+  display: flex !important;
 }
 
 .maplibregl-popup {

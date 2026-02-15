@@ -74,8 +74,8 @@ try {
 }
 
 const getDefaultSettings = (): SettingsConfig => ({
-  warningThreshold: Number(import.meta.env.VITE_THRESHOLD_WARNING) || 50,
-  dangerThreshold: Number(import.meta.env.VITE_THRESHOLD_DANGER) || 200,
+  warningThreshold: Number(import.meta.env.VITE_THRESHOLD_WARNING) || 70,
+  dangerThreshold: Number(import.meta.env.VITE_THRESHOLD_DANGER) || 150,
   pollingInterval: Number(import.meta.env.VITE_POLLING_INTERVAL) || 500,
   enableSoundAlert: false,
   enableNotification: import.meta.env.VITE_ENABLE_NOTIFICATION === 'true',
@@ -122,7 +122,16 @@ export const useSettings = () => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        return { ...getDefaultSettings(), ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        const defaults = getDefaultSettings();
+        
+        // Migration: Fix MQTT broker URL if missing protocol
+        if (parsed.mqtt?.broker && !parsed.mqtt.broker.startsWith('ws://') && !parsed.mqtt.broker.startsWith('wss://')) {
+          console.log('🔧 Migrating MQTT broker URL to include protocol');
+          parsed.mqtt.broker = 'wss://' + parsed.mqtt.broker;
+        }
+        
+        return { ...defaults, ...parsed };
       } catch {
         return getDefaultSettings();
       }

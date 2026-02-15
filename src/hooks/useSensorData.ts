@@ -213,7 +213,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     maxValue: 0,
     alertCount: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
@@ -530,7 +530,6 @@ export const useSensorData = (settings: SettingsConfig) => {
     intervalRef.current = window.setInterval(updateMockData, settings.pollingInterval);
   }, [processSensorData, settings.pollingInterval]);
 
-  // Handle MQTT sensor updates
   useEffect(() => {
     if (!settings.mqtt.enabled || settings.demoMode || mqttSensors.size === 0) return;
 
@@ -540,6 +539,7 @@ export const useSensorData = (settings: SettingsConfig) => {
     if (mqttConnected) {
       setConnectionStatus('connected');
       setError(null);
+      setIsLoading(false);
     } else if (mqttError) {
       setConnectionStatus('disconnected');
       setError(mqttError);
@@ -569,9 +569,11 @@ export const useSensorData = (settings: SettingsConfig) => {
     const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
     const hasEnabledEndpoints = enabledEndpoints.length > 0;
     
-    if (settings.demoMode || hasEnabledEndpoints) {
+    // โหลดข้อมูลเก่าจาก localStorage ทันที (สำหรับทุกโหมด)
+    if (settings.demoMode || hasEnabledEndpoints || settings.mqtt.enabled) {
       const existingData = loadSensorDataFromStorage();
       if (existingData && existingData.sensors.length > 0) {
+        // แสดงข้อมูลเก่าทันที
         processSensorData(existingData.sensors, true);
         setConnectionStatus('connected');
         setIsLoading(false);

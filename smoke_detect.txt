@@ -6,6 +6,7 @@
 
 #include <WiFi.h>
 #include <WiFiManager.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <time.h>
@@ -19,10 +20,19 @@ const char* mqtt_server = "broker.hivemq.com";
 const int mqtt_port = 1883;
 const char* mqtt_topic = "mq2/sensor001/data";
 
+// LINE Messaging API Configuration
+const char* lineChannelToken = "sHf/1fMyEF2qJxt3u3ipdecE/P6JolfzaWRUWPCHaB9QqRKGfStSUNyvNtCo0oK4wy1Njdu97p0H6Cfu7a/5jCy1OTKJ3cVKmIDczgPG7r+HRvvMBSaz36JZ66stQN6QmoOm3GP463LeguKFppdKkwdB04t89/1O/w1cDnyilFU="; // ใส่ Channel Access Token
+const char* lineUserId = "U415f3ebdb0643946326ed242d827ed6a"; // ใส่ User ID ของผู้รับ
+const char* lineApiHost = "api.line.me";
+const int lineApiPort = 443;
+
 // MQTT Client
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
 WiFiManager wifiManager;
+
+// LINE Notify Client
+WiFiClientSecure lineClient;
 
 // Web Server สำหรับตั้งค่า
 #include <WebServer.h>
@@ -31,6 +41,7 @@ WebServer configServer(80);
 // Pin Configuration
 #define RESET_WIFI_PIN 0  // ปุ่ม BOOT สำหรับรีเซ็ต WiFi
 #define MQ2_PIN 35        // GPIO 35 สำหรับ MQ-2 Sensor (เปลี่ยนจาก 34)
+#define POWER_SWITCH_PIN 4 // GPIO 4 สำหรับ Switch เปิด-ปิดระบบ
 
 // Sensor info (จะถูกตั้งค่าผ่าน Web Config)
 String sensorId = "";  // จะสร้างจาก MAC Address
@@ -41,6 +52,33 @@ String sensorLocation = "Room A";
 uint16_t lastGasValue = 0;
 unsigned long lastMqttPublish = 0;
 const unsigned long mqttPublishInterval = 200; // Publish ทุก 200ms
+
+// Statistics Variables
+int dailyReadings = 0;
+long dailySum = 0;
+int dailyMax = 0;
+int exceedCount = 0; // จำนวนครั้งที่เกิน 70 ADC
+unsigned long lastDailySummary = 0;
+const unsigned long dailySummaryInterval = 86400000; // 24 ชั่วโมง
+
+// Moving Average Filter
+const int numReadings = 30; // เพิ่มเป็น 30 เพื่อความเสถียร
+int readings[numReadings];
+int readIndex = 0;
+int total = 0;
+int average = 0;
+
+// Calibration
+int baselineValue = 0;
+bool isCalibrated = false;
+
+// LINE Notify Variables
+unsigned long lastLineNotify = 0;
+const unsigned long lineNotifyInterval = 60000; // ส่งแจ้งเตือนทุก 1 นาที (60 วินาที)
+const unsigned long criticalNotifyInterval = 30000; // ส่งแจ้งเตือนวิกฤตทุก 30 วินาที
+bool warningNotified = false;
+bool dangerNotified = false;
+int lastNotifiedLevel = 0; // 0=ปกติ, 1=เฝ้าระวัง, 2=อันตราย
 
 // Load/Save Config
 void loadConfig() {
@@ -180,7 +218,8 @@ String getTimestamp() {
 
 // MQTT Reconnect
 void reconnectMQTT() {
-  while (!mqtt.connected()) {
+  // ลองเชื่อมต่อครั้งเดียว ไม่ loop
+  if (!mqtt.connected()) {
     Serial.print("Connecting to MQTT...");
     
     // สร้าง client ID แบบ unique
@@ -189,23 +228,9 @@ void reconnectMQTT() {
     
     if (mqtt.connect(clientId.c_str())) {
       Serial.println(" Connected!");
-      
-      // กระพริบสีเขียว 2 ครั้ง
-      for (int i = 0; i < 2; i++) {
-        digitalWrite(GREEN_PIN, HIGH);
-        delay(100);
-        digitalWrite(GREEN_PIN, LOW);
-        delay(100);
-      }
     } else {
       Serial.print(" Failed, rc=");
-      Serial.print(mqtt.state());
-      Serial.println(" Retrying in 5s...");
-      
-      // กระพริบสีแดง
-      digitalWrite(RED_PIN, HIGH);
-      delay(5000);
-      digitalWrite(RED_PIN, LOW);
+      Serial.println(mqtt.state());
     }
   }
 }
@@ -214,9 +239,7 @@ void reconnectMQTT() {
 void publishSensorData(int value) {
   // ตรวจสอบการเชื่อมต่อก่อน publish
   if (!mqtt.connected()) {
-    Serial.println("MQTT disconnected, reconnecting...");
-    reconnectMQTT();
-    return;
+    return; // ไม่ต้อง reconnect ทุกครั้ง ให้ loop() จัดการ
   }
   
   StaticJsonDocument<256> doc;
@@ -231,12 +254,441 @@ void publishSensorData(int value) {
   String json;
   serializeJson(doc, json);
   
-  // ลองส่ง 2 ครั้ง ถ้าไม่สำเร็จ
-  if (!mqtt.publish(mqtt_topic, json.c_str(), false)) {
-    delay(50);
-    if (!mqtt.publish(mqtt_topic, json.c_str(), false)) {
-      Serial.println("✗ Publish failed!");
+  // ส่งแบบ non-blocking ไม่ retry
+  mqtt.publish(mqtt_topic, json.c_str(), false);
+}
+
+// Send LINE Message via Messaging API (Optimized - Non-blocking)
+void sendLineMessage(String message) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("❌ WiFi not connected");
+    return;
+  }
+  
+  lineClient.setInsecure();
+  lineClient.setTimeout(2000); // เพิ่มเป็น 2 วินาที
+  
+  Serial.println("📱 Sending LINE...");
+  
+  if (!lineClient.connect(lineApiHost, lineApiPort)) {
+    Serial.println("❌ Connection failed");
+    lineClient.stop();
+    return;
+  }
+  
+  // สร้าง JSON payload
+  StaticJsonDocument<512> doc;
+  doc["to"] = lineUserId;
+  
+  JsonArray messages = doc.createNestedArray("messages");
+  JsonObject textMessage = messages.createNestedObject();
+  textMessage["type"] = "text";
+  textMessage["text"] = message;
+  
+  String payload;
+  serializeJson(doc, payload);
+  
+  // ส่ง HTTP Request
+  lineClient.println("POST /v2/bot/message/push HTTP/1.1");
+  lineClient.println("Host: " + String(lineApiHost));
+  lineClient.println("Authorization: Bearer " + String(lineChannelToken));
+  lineClient.println("Content-Type: application/json");
+  lineClient.println("Content-Length: " + String(payload.length()));
+  lineClient.println("Connection: close");
+  lineClient.println();
+  lineClient.print(payload);
+  
+  // อ่าน response แบบเร็วมาก (รอแค่ 1000ms)
+  unsigned long timeout = millis();
+  bool success = false;
+  
+  while (lineClient.connected() && millis() - timeout < 1000) { // รอ 1 วินาที
+    if (lineClient.available()) {
+      String line = lineClient.readStringUntil('\n');
+      if (line.indexOf("200") >= 0) {
+        success = true;
+        break;
+      }
     }
+    yield(); // ให้ระบบทำงานอื่นได้
+  }
+  
+  lineClient.stop();
+  
+  if (success) {
+    Serial.println("✅ Sent");
+  } else {
+    Serial.println("⚠️ Sent (timeout)");
+  }
+}
+
+// Send LINE Flex Message with Color (World-Class Design)
+void sendLineFlexMessage(String level, String color, int value) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("❌ WiFi not connected");
+    return;
+  }
+  
+  lineClient.setInsecure();
+  lineClient.setTimeout(2000);
+  
+  Serial.println("📱 Sending LINE Flex...");
+  
+  if (!lineClient.connect(lineApiHost, lineApiPort)) {
+    Serial.println("❌ Connection failed");
+    lineClient.stop();
+    return;
+  }
+  
+  // กำหนดข้อความและไอคอนตามระดับ
+  String statusText = "";
+  String actionText = "";
+  String thresholdText = "";
+  
+  if (value >= 300) {
+    statusText = "อันตรายสูงมาก";
+    actionText = "อพยพออกจากพื้นที่ทันที";
+    thresholdText = ">300 ADC";
+  } else if (value >= 151) {
+    statusText = "เกินค่ามาตรฐาน";
+    actionText = "ตรวจสอบและระบายอากาศ";
+    thresholdText = "151-300 ADC";
+  } else if (value >= 70) {
+    statusText = "ค่าสูงกว่าปกติ";
+    actionText = "ติดตามสถานการณ์";
+    thresholdText = "70-150 ADC";
+  } else {
+    statusText = "กลับสู่ระดับปลอดภัย";
+    actionText = "สถานการณ์ปกติ";
+    thresholdText = "<70 ADC";
+  }
+  
+  // สร้าง Flex Message JSON (World-Class Design)
+  StaticJsonDocument<2048> doc;
+  doc["to"] = lineUserId;
+  
+  JsonArray messages = doc.createNestedArray("messages");
+  JsonObject flexMessage = messages.createNestedObject();
+  flexMessage["type"] = "flex";
+  flexMessage["altText"] = level + " - " + sensorLocation;
+  
+  JsonObject contents = flexMessage.createNestedObject("contents");
+  contents["type"] = "bubble";
+  
+  // Header - Clean & Bold
+  JsonObject header = contents.createNestedObject("header");
+  header["type"] = "box";
+  header["layout"] = "vertical";
+  header["backgroundColor"] = color;
+  header["paddingAll"] = "20px";
+  
+  JsonArray headerContents = header.createNestedArray("contents");
+  JsonObject headerText = headerContents.createNestedObject();
+  headerText["type"] = "text";
+  headerText["text"] = level;
+  headerText["color"] = "#FFFFFF";
+  headerText["weight"] = "bold";
+  headerText["size"] = "xl";
+  headerText["align"] = "center";
+  
+  // Body - Information Hierarchy
+  JsonObject body = contents.createNestedObject("body");
+  body["type"] = "box";
+  body["layout"] = "vertical";
+  body["spacing"] = "lg";
+  body["paddingAll"] = "20px";
+  
+  JsonArray bodyContents = body.createNestedArray("contents");
+  
+  // Value Display - Hero Section
+  JsonObject valueSection = bodyContents.createNestedObject();
+  valueSection["type"] = "box";
+  valueSection["layout"] = "vertical";
+  valueSection["spacing"] = "xs";
+  valueSection["paddingAll"] = "16px";
+  valueSection["backgroundColor"] = "#F7F7F7";
+  valueSection["cornerRadius"] = "8px";
+  
+  JsonArray valueSectionContents = valueSection.createNestedArray("contents");
+  
+  JsonObject valueLabel = valueSectionContents.createNestedObject();
+  valueLabel["type"] = "text";
+  valueLabel["text"] = "ค่าที่วัดได้";
+  valueLabel["size"] = "xs";
+  valueLabel["color"] = "#999999";
+  valueLabel["align"] = "center";
+  
+  JsonObject valueDisplay = valueSectionContents.createNestedObject();
+  valueDisplay["type"] = "text";
+  valueDisplay["text"] = String(value) + " ADC";
+  valueDisplay["size"] = "xxl";
+  valueDisplay["weight"] = "bold";
+  valueDisplay["color"] = color;
+  valueDisplay["align"] = "center";
+  
+  // Status
+  JsonObject statusBox = bodyContents.createNestedObject();
+  statusBox["type"] = "box";
+  statusBox["layout"] = "vertical";
+  statusBox["spacing"] = "xs";
+  
+  JsonArray statusContents = statusBox.createNestedArray("contents");
+  
+  JsonObject statusLabelObj = statusContents.createNestedObject();
+  statusLabelObj["type"] = "text";
+  statusLabelObj["text"] = "สถานะ";
+  statusLabelObj["size"] = "xs";
+  statusLabelObj["color"] = "#999999";
+  
+  JsonObject statusValueObj = statusContents.createNestedObject();
+  statusValueObj["type"] = "text";
+  statusValueObj["text"] = statusText;
+  statusValueObj["size"] = "sm";
+  statusValueObj["weight"] = "bold";
+  
+  // Action Required
+  JsonObject actionBox = bodyContents.createNestedObject();
+  actionBox["type"] = "box";
+  actionBox["layout"] = "vertical";
+  actionBox["spacing"] = "xs";
+  
+  JsonArray actionContents = actionBox.createNestedArray("contents");
+  
+  JsonObject actionLabelObj = actionContents.createNestedObject();
+  actionLabelObj["type"] = "text";
+  actionLabelObj["text"] = "คำแนะนำ";
+  actionLabelObj["size"] = "xs";
+  actionLabelObj["color"] = "#999999";
+  
+  JsonObject actionValueObj = actionContents.createNestedObject();
+  actionValueObj["type"] = "text";
+  actionValueObj["text"] = actionText;
+  actionValueObj["size"] = "sm";
+  actionValueObj["wrap"] = true;
+  
+  // Separator
+  JsonObject separator = bodyContents.createNestedObject();
+  separator["type"] = "separator";
+  separator["margin"] = "lg";
+  
+  // Location
+  JsonObject locationBox = bodyContents.createNestedObject();
+  locationBox["type"] = "box";
+  locationBox["layout"] = "vertical";
+  locationBox["spacing"] = "xs";
+  locationBox["margin"] = "lg";
+  
+  JsonArray locationContents = locationBox.createNestedArray("contents");
+  
+  JsonObject locationLabelObj = locationContents.createNestedObject();
+  locationLabelObj["type"] = "text";
+  locationLabelObj["text"] = "สถานที่";
+  locationLabelObj["size"] = "xs";
+  locationLabelObj["color"] = "#999999";
+  
+  JsonObject locationValueObj = locationContents.createNestedObject();
+  locationValueObj["type"] = "text";
+  locationValueObj["text"] = sensorLocation;
+  locationValueObj["size"] = "sm";
+  locationValueObj["wrap"] = true;
+  
+  // Footer - Metadata
+  JsonObject footer = contents.createNestedObject("footer");
+  footer["type"] = "box";
+  footer["layout"] = "vertical";
+  footer["spacing"] = "xs";
+  footer["paddingAll"] = "16px";
+  
+  JsonArray footerContents = footer.createNestedArray("contents");
+  
+  JsonObject timeText = footerContents.createNestedObject();
+  timeText["type"] = "text";
+  timeText["text"] = getTimestamp();
+  timeText["size"] = "xxs";
+  timeText["color"] = "#AAAAAA";
+  
+  JsonObject sensorText = footerContents.createNestedObject();
+  sensorText["type"] = "text";
+  sensorText["text"] = "Sensor ID: " + sensorId;
+  sensorText["size"] = "xxs";
+  sensorText["color"] = "#AAAAAA";
+  
+  String payload;
+  serializeJson(doc, payload);
+  
+  // ส่ง HTTP Request
+  lineClient.println("POST /v2/bot/message/push HTTP/1.1");
+  lineClient.println("Host: " + String(lineApiHost));
+  lineClient.println("Authorization: Bearer " + String(lineChannelToken));
+  lineClient.println("Content-Type: application/json");
+  lineClient.println("Content-Length: " + String(payload.length()));
+  lineClient.println("Connection: close");
+  lineClient.println();
+  lineClient.print(payload);
+  
+  // อ่าน response
+  unsigned long timeout = millis();
+  while (lineClient.connected() && millis() - timeout < 1000) {
+    if (lineClient.available()) {
+      String line = lineClient.readStringUntil('\n');
+      if (line.indexOf("200") >= 0) {
+        Serial.println("✅ Sent Flex");
+        break;
+      }
+    }
+    yield();
+  }
+  
+  lineClient.stop();
+}
+
+// Check and Send Alert
+void checkAndSendAlert(int value) {
+  unsigned long currentTime = millis();
+  static int lastLevel = 0; // เก็บระดับครั้งล่าสุด
+  int currentLevel = 0;
+  
+  // กำหนดระดับปัจจุบัน พร้อม Hysteresis (ช่วงกันกระเด้ง)
+  if (lastLevel == 0) {
+    // จากปกติ -> ต้องเกิน 75 ถึงจะเข้าเฝ้าระวัง
+    if (value < 75) {
+      currentLevel = 0; // ปกติ
+    } else if (value >= 75 && value <= 155) {
+      currentLevel = 1; // เฝ้าระวัง
+    } else if (value > 155 && value <= 305) {
+      currentLevel = 2; // อันตราย
+    } else {
+      currentLevel = 3; // วิกฤต (>305)
+    }
+  } else if (lastLevel == 1) {
+    // จากเฝ้าระวัง -> ต้องต่ำกว่า 65 ถึงจะกลับปกติ, เกิน 155 ถึงจะเข้าอันตราย
+    if (value < 65) {
+      currentLevel = 0; // ปกติ
+    } else if (value >= 65 && value <= 155) {
+      currentLevel = 1; // เฝ้าระวัง
+    } else if (value > 155 && value <= 305) {
+      currentLevel = 2; // อันตราย
+    } else {
+      currentLevel = 3; // วิกฤต
+    }
+  } else if (lastLevel == 2) {
+    // จากอันตราย -> ต้องต่ำกว่า 145 ถึงจะกลับเฝ้าระวัง, เกิน 305 ถึงจะเข้าวิกฤต
+    if (value < 145) {
+      currentLevel = 1; // เฝ้าระวัง
+    } else if (value >= 145 && value <= 305) {
+      currentLevel = 2; // อันตราย
+    } else {
+      currentLevel = 3; // วิกฤต
+    }
+  } else if (lastLevel == 3) {
+    // จากวิกฤต -> ต้องต่ำกว่า 295 ถึงจะกลับอันตราย
+    if (value < 295) {
+      currentLevel = 2; // อันตราย
+    } else {
+      currentLevel = 3; // วิกฤต
+    }
+  }
+  
+  // ส่งทันทีเมื่อ:
+  // 1. ระดับเปลี่ยนแปลง
+  // 2. ยังคงอยู่ในระดับอันตราย/วิกฤต และเวลาผ่านไปตาม interval
+  bool shouldSend = false;
+  
+  if (currentLevel != lastLevel) {
+    // ระดับเปลี่ยน - ส่งทันที
+    shouldSend = true;
+  } else if (currentLevel >= 2) {
+    // ยังคงอันตราย/วิกฤต - ส่งซ้ำตาม interval
+    unsigned long interval = (currentLevel == 3) ? criticalNotifyInterval : lineNotifyInterval;
+    if (currentTime - lastLineNotify >= interval) {
+      shouldSend = true;
+    }
+  }
+  
+  if (!shouldSend) {
+    return;
+  }
+  
+  String alertMessage = "";
+  
+  if (currentLevel == 3) {
+    // วิกฤต
+    alertMessage = "━━━━━━━━━━━━━━━━━━━━\n";
+    alertMessage += "   แจ้งเตือนเร่งด่วน\n";
+    alertMessage += "━━━━━━━━━━━━━━━━━━━━\n\n";
+    alertMessage += "ระดับ: วิกฤต\n";
+    alertMessage += "สถานที่: " + sensorLocation + "\n";
+    alertMessage += "ค่าที่ตรวจวัด: " + String(value) + " ADC\n";
+    alertMessage += "เกณฑ์: >300 ADC\n";
+    alertMessage += "สถานะ: อันตรายสูงมาก\n";
+    alertMessage += "คำแนะนำ: โปรดอพยพออกจากพื้นที่ทันที\n\n";
+    alertMessage += "เวลา: " + getTimestamp() + "\n";
+    alertMessage += "Sensor ID: " + sensorId;
+  }
+  else if (currentLevel == 2) {
+    // อันตราย
+    alertMessage = "━━━━━━━━━━━━━━━━━━━━\n";
+    alertMessage += "  แจ้งเตือนระดับอันตราย\n";
+    alertMessage += "━━━━━━━━━━━━━━━━━━━━\n\n";
+    alertMessage += "ระดับ: อันตราย\n";
+    alertMessage += "สถานที่: " + sensorLocation + "\n";
+    alertMessage += "ค่าที่ตรวจวัด: " + String(value) + " ADC\n";
+    alertMessage += "เกณฑ์: 151-300 ADC\n";
+    alertMessage += "สถานะ: เกินค่ามาตรฐาน\n";
+    alertMessage += "คำแนะนำ: ตรวจสอบพื้นที่และระบายอากาศ\n\n";
+    alertMessage += "เวลา: " + getTimestamp() + "\n";
+    alertMessage += "Sensor ID: " + sensorId;
+  } 
+  else if (currentLevel == 1) {
+    // เฝ้าระวัง
+    alertMessage = "━━━━━━━━━━━━━━━━━━━━\n";
+    alertMessage += "  แจ้งเตือนระดับเฝ้าระวัง\n";
+    alertMessage += "━━━━━━━━━━━━━━━━━━━━\n\n";
+    alertMessage += "ระดับ: เฝ้าระวัง\n";
+    alertMessage += "สถานที่: " + sensorLocation + "\n";
+    alertMessage += "ค่าที่ตรวจวัด: " + String(value) + " ADC\n";
+    alertMessage += "เกณฑ์: 70-150 ADC\n";
+    alertMessage += "สถานะ: ค่าสูงกว่าปกติ\n";
+    alertMessage += "คำแนะนำ: ติดตามสถานการณ์\n\n";
+    alertMessage += "เวลา: " + getTimestamp() + "\n";
+    alertMessage += "Sensor ID: " + sensorId;
+  }
+  else if (currentLevel == 0 && lastLevel > 0) {
+    // กลับสู่ปกติ
+    alertMessage = "━━━━━━━━━━━━━━━━━━━━\n";
+    alertMessage += "   แจ้งเตือนสถานะปกติ\n";
+    alertMessage += "━━━━━━━━━━━━━━━━━━━━\n\n";
+    alertMessage += "ระดับ: ปกติ\n";
+    alertMessage += "สถานที่: " + sensorLocation + "\n";
+    alertMessage += "ค่าที่ตรวจวัด: " + String(value) + " ADC\n";
+    alertMessage += "เกณฑ์: <70 ADC\n";
+    alertMessage += "สถานะ: กลับสู่ระดับปลอดภัย\n\n";
+    alertMessage += "เวลา: " + getTimestamp() + "\n";
+    alertMessage += "Sensor ID: " + sensorId;
+  }
+  
+  if (alertMessage != "") {
+    // ส่งแบบ Flex Message (มีสี)
+    String levelText = "";
+    String colorCode = "";
+    
+    if (currentLevel == 3) {
+      levelText = "แจ้งเตือนเร่งด่วน";
+      colorCode = "#FF0000"; // แดง
+    } else if (currentLevel == 2) {
+      levelText = "แจ้งเตือนระดับอันตราย";
+      colorCode = "#FF6600"; // ส้ม
+    } else if (currentLevel == 1) {
+      levelText = "แจ้งเตือนระดับเฝ้าระวัง";
+      colorCode = "#FFB800"; // เหลือง
+    } else if (currentLevel == 0) {
+      levelText = "สถานะปกติ";
+      colorCode = "#00C851"; // เขียว
+    }
+    
+    sendLineFlexMessage(levelText, colorCode, value);
+    lastLineNotify = currentTime;
+    lastLevel = currentLevel;
   }
 }
 
@@ -325,6 +777,7 @@ void setup() {
   delay(200);
   
   pinMode(RESET_WIFI_PIN, INPUT_PULLUP);
+  pinMode(POWER_SWITCH_PIN, INPUT_PULLUP); // ตั้งค่า switch pin
   
   // ตั้งค่า RGB pins เป็น OUTPUT
   pinMode(RED_PIN, OUTPUT);
@@ -359,6 +812,7 @@ void setup() {
   mqtt.setServer(mqtt_server, mqtt_port);
   mqtt.setKeepAlive(60);
   mqtt.setSocketTimeout(30);
+  mqtt.setBufferSize(512); // เพิ่ม buffer size
   
   Serial.println("MQTT Configuration:");
   Serial.print("Server: ");
@@ -368,6 +822,29 @@ void setup() {
   
   // เชื่อมต่อ MQTT
   reconnectMQTT();
+  
+  // เริ่มต้น Moving Average Filter
+  for (int i = 0; i < numReadings; i++) {
+    readings[i] = 0;
+  }
+  
+  // Calibrate baseline (อ่านค่า 30 ครั้งเพื่อหาค่าเฉลี่ย)
+  Serial.println("Calibrating sensor...");
+  digitalWrite(BLUE_PIN, HIGH); // สีน้ำเงินระหว่าง calibrate
+  
+  long sum = 0;
+  for (int i = 0; i < 30; i++) {
+    sum += analogRead(MQ2_PIN);
+    delay(100);
+  }
+  baselineValue = sum / 30;
+  isCalibrated = true;
+  
+  Serial.print("Baseline calibrated: ");
+  Serial.print(baselineValue);
+  Serial.println(" ADC");
+  
+  digitalWrite(BLUE_PIN, LOW);
   
   // แสดงสถานะเชื่อมต่อสำเร็จ (สีเขียวกระพริบ)
   for (int i = 0; i < 3; i++) {
@@ -383,12 +860,26 @@ void setup() {
 }
 
 void loop() {
+  // ตรวจสอบ Power Switch
+  if (digitalRead(POWER_SWITCH_PIN) == HIGH) {
+    // Switch ปิด (OFF) - หยุดทำงาน แสดงไฟแดงกระพริบ
+    digitalWrite(RED_PIN, HIGH);
+    digitalWrite(GREEN_PIN, LOW);
+    digitalWrite(BLUE_PIN, LOW);
+    delay(500);
+    digitalWrite(RED_PIN, LOW);
+    delay(500);
+    return; // ออกจาก loop ไม่ทำงานต่อ
+  }
+  
   // Handle Web Server
   configServer.handleClient();
   
-  // รักษาการเชื่อมต่อ MQTT
-  if (!mqtt.connected()) {
+  // รักษาการเชื่อมต่อ MQTT (ลองทุก 5 วินาที)
+  static unsigned long lastMqttCheck = 0;
+  if (!mqtt.connected() && millis() - lastMqttCheck > 5000) {
     reconnectMQTT();
+    lastMqttCheck = millis();
   }
   mqtt.loop();
   
@@ -404,14 +895,68 @@ void loop() {
     lastWiFiCheck = millis();
   }
   
-  // อ่านค่า Sensor
-  int val = analogRead(MQ2_PIN);
+  // อ่านค่า Sensor พร้อม Moving Average Filter
+  int rawVal = analogRead(MQ2_PIN);
+  
+  // ลบ baseline ที่ calibrate ไว้
+  int instantVal = rawVal - baselineValue;
+  if (instantVal < 0) instantVal = 0;
+  
+  // Moving Average Filter
+  total = total - readings[readIndex];
+  readings[readIndex] = instantVal;
+  total = total + readings[readIndex];
+  readIndex = (readIndex + 1) % numReadings;
+  average = total / numReadings;
+  
+  int val = average; // ใช้ค่าเฉลี่ยแทนค่าทันที
   lastGasValue = val;
   
-  // แสดงค่าใน Serial Monitor เพื่อดู baseline
-//   Serial.print("MQ-2 Value: ");
-//   Serial.print(val);
-//   Serial.print(" | LED should be: ");
+  // บันทึกสถิติ
+  dailyReadings++;
+  dailySum += val;
+  if (val > dailyMax) {
+    dailyMax = val;
+  }
+  if (val >= 70) {
+    exceedCount++;
+  }
+  
+  // ส่งสรุปรายวันอัตโนมัติ (ทุกวันเวลา 08:00 น.)
+  struct tm timeinfo;
+  if (getLocalTime(&timeinfo)) {
+    // ถ้าเป็น 08:00 น. และยังไม่ได้ส่งวันนี้
+    if (timeinfo.tm_hour == 8 && timeinfo.tm_min == 0 && 
+        millis() - lastDailySummary > 3600000) { // ห่างกัน 1 ชม.
+      
+      int avgValue = (dailyReadings > 0) ? (dailySum / dailyReadings) : 0;
+      
+      String summary = "━━━━━━━━━━━━━━━━━━━━\n";
+      summary += "   สรุปรายงานประจำวัน\n";
+      summary += "━━━━━━━━━━━━━━━━━━━━\n\n";
+      summary += "สถานที่: " + sensorLocation + "\n";
+      summary += "ค่าเฉลี่ย: " + String(avgValue) + " ADC\n";
+      summary += "ค่าสูงสุด: " + String(dailyMax) + " ADC\n";
+      summary += "เกินเกณฑ์: " + String(exceedCount) + " ครั้ง\n";
+      summary += "จำนวนการวัด: " + String(dailyReadings) + " ครั้ง\n";
+      summary += "วันที่: " + getTimestamp() + "\n";
+      summary += "Sensor ID: " + sensorId;
+      
+      sendLineMessage(summary);
+      
+      // รีเซ็ตสถิติ
+      dailyReadings = 0;
+      dailySum = 0;
+      dailyMax = 0;
+      exceedCount = 0;
+      lastDailySummary = millis();
+    }
+  }
+  
+  // แสดงค่าใน Serial Monitor
+  Serial.print("MQ-2 Value: ");
+  Serial.print(val);
+  Serial.print(" ADC | LED: ");
   
   // Debug: แสดงว่าควรเป็นสีอะไร
   if (val < 70) {
@@ -427,6 +972,9 @@ void loop() {
     publishSensorData(val);
     lastMqttPublish = millis();
   }
+  
+  // ตรวจสอบและส่งการแจ้งเตือน LINE
+  checkAndSendAlert(val);
   
   // ตรวจสอบค่าและแสดงสีตามเงื่อนไข
   // Threshold ที่ปรับตามค่าจริงของ MQ-2

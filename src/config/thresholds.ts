@@ -5,8 +5,8 @@ export interface ThresholdConfig {
 }
 
 export const THRESHOLDS: ThresholdConfig = {
-  warning: Number(import.meta.env.VITE_THRESHOLD_WARNING) || 50,
-  danger: Number(import.meta.env.VITE_THRESHOLD_DANGER) || 200,
+  warning: Number(import.meta.env.VITE_THRESHOLD_WARNING) || 70,
+  danger: Number(import.meta.env.VITE_THRESHOLD_DANGER) || 150,
 };
 
 export const API_CONFIG = {
