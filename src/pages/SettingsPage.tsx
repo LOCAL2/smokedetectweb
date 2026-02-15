@@ -920,6 +920,66 @@ export const SettingsPage = () => {
         </Card>
 
         {}
+        <Card delay={0.26} highlight={settings.mqtt.enabled}>
+          <SettingRow icon={Activity} title="MQTT Real-time" subtitle="เชื่อมต่อ MQTT Broker สำหรับข้อมูล Real-time" color="#10B981">
+            <Toggle 
+              enabled={settings.mqtt.enabled} 
+              onChange={() => updateSettings({ mqtt: { ...settings.mqtt, enabled: !settings.mqtt.enabled } })} 
+              color="#10B981" 
+            />
+          </SettingRow>
+          
+          {settings.mqtt.enabled && (
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${borderColor}` }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', color: textSecondary, fontSize: '12px', marginBottom: '6px' }}>
+                  MQTT Broker URL
+                </label>
+                <input
+                  type="text"
+                  value={settings.mqtt.broker}
+                  onChange={(e) => updateSettings({ mqtt: { ...settings.mqtt, broker: e.target.value } })}
+                  placeholder="wss://broker.hivemq.com:8884/mqtt"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: '8px',
+                    color: textColor,
+                    fontSize: '13px',
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', color: textSecondary, fontSize: '12px', marginBottom: '6px' }}>
+                  MQTT Topics (คั่นด้วยเครื่องหมายจุลภาค)
+                </label>
+                <input
+                  type="text"
+                  value={settings.mqtt.topics.join(', ')}
+                  onChange={(e) => {
+                    const topics = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                    updateSettings({ mqtt: { ...settings.mqtt, topics } });
+                  }}
+                  placeholder="mq2/sensor001/data, mq2/sensor002/data"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: '8px',
+                    color: textColor,
+                    fontSize: '13px',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {}
         <Card delay={0.28}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>

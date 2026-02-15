@@ -15,6 +15,12 @@ export interface SensorCoordinates {
   address?: string;
 }
 
+export interface MqttSettings {
+  enabled: boolean;
+  broker: string;
+  topics: string[];
+}
+
 export interface LineNotifySettings {
   enabled: boolean;
   channelAccessToken: string;
@@ -45,6 +51,7 @@ export interface SettingsConfig {
   enableSoundAlert: boolean;
   enableNotification: boolean;
   apiEndpoints: ApiEndpoint[];
+  mqtt: MqttSettings;
   pinnedSensors: string[];
   sensorCoordinates: SensorCoordinates[];
   lineNotify: LineNotifySettings;
@@ -77,8 +84,13 @@ const getDefaultSettings = (): SettingsConfig => ({
     name: 'สถานที่หลัก',
     url: import.meta.env.VITE_API_BASE_URL || '',
     apiKey: import.meta.env.VITE_API_KEY || '',
-    enabled: true,
+    enabled: false,
   }],
+  mqtt: {
+    enabled: true,
+    broker: 'wss://broker.hivemq.com:8884/mqtt',
+    topics: ['mq2/sensor001/data'],
+  },
   pinnedSensors: [],
   sensorCoordinates: [],
   lineNotify: {

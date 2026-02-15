@@ -1,0 +1,460 @@
+// RGB LED Pins
+#define RED_PIN 26    // GPIO26 -> R
+#define GREEN_PIN 27  // GPIO27 -> G
+#define BLUE_PIN 14   // GPIO14 -> B
+// GND -> -
+
+#include <WiFi.h>
+#include <WiFiManager.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
+#include <time.h>
+#include <Preferences.h>  // เพิ่มสำหรับบันทึกค่า
+
+// Preferences สำหรับบันทึกข้อมูล
+Preferences preferences;
+
+// MQTT Configuration (HiveMQ Public Broker - Free)
+const char* mqtt_server = "broker.hivemq.com";
+const int mqtt_port = 1883;
+const char* mqtt_topic = "mq2/sensor001/data";
+
+// MQTT Client
+WiFiClient espClient;
+PubSubClient mqtt(espClient);
+WiFiManager wifiManager;
+
+// Web Server สำหรับตั้งค่า
+#include <WebServer.h>
+WebServer configServer(80);
+
+// Pin Configuration
+#define RESET_WIFI_PIN 0  // ปุ่ม BOOT สำหรับรีเซ็ต WiFi
+#define MQ2_PIN 35        // GPIO 35 สำหรับ MQ-2 Sensor (เปลี่ยนจาก 34)
+
+// Sensor info (จะถูกตั้งค่าผ่าน Web Config)
+String sensorId = "";  // จะสร้างจาก MAC Address
+String sensorName = "MQ2 Sensor";
+String sensorLocation = "Room A";
+
+// Global Variables
+uint16_t lastGasValue = 0;
+unsigned long lastMqttPublish = 0;
+const unsigned long mqttPublishInterval = 200; // Publish ทุก 200ms
+
+// Load/Save Config
+void loadConfig() {
+  preferences.begin("sensor", false);
+  sensorName = preferences.getString("name", "MQ2 Sensor");
+  sensorLocation = preferences.getString("location", "Room A");
+  preferences.end();
+}
+
+void saveConfig() {
+  preferences.begin("sensor", false);
+  preferences.putString("name", sensorName);
+  preferences.putString("location", sensorLocation);
+  preferences.end();
+  Serial.println("✅ Config saved!");
+}
+
+// Web Config Handlers
+void handleRoot() {
+  String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+  html += "<meta name='viewport' content='width=device-width,initial-scale=1'>";
+  html += "<title>MQ-2 Configuration</title>";
+  html += "<style>";
+  html += "*{margin:0;padding:0;box-sizing:border-box}";
+  html += "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}";
+  html += ".container{max-width:480px;width:100%}";
+  html += ".header{text-align:center;margin-bottom:48px}";
+  html += ".header h1{font-size:24px;font-weight:600;letter-spacing:-0.5px;margin-bottom:8px}";
+  html += ".header p{color:#666;font-size:14px}";
+  html += ".card{background:#111;border:1px solid #222;border-radius:16px;padding:32px;margin-bottom:24px}";
+  html += ".info-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid #222}";
+  html += ".info-row:last-child{border-bottom:none}";
+  html += ".info-label{color:#666;font-size:14px}";
+  html += ".info-value{color:#fff;font-weight:500;font-family:monospace}";
+  html += ".form-group{margin-bottom:24px}";
+  html += ".form-group:last-child{margin-bottom:0}";
+  html += "label{display:block;color:#999;font-size:13px;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}";
+  html += "input{width:100%;background:#000;border:1px solid #333;border-radius:8px;padding:14px 16px;color:#fff;font-size:16px;transition:all 0.2s}";
+  html += "input:focus{outline:none;border-color:#fff;background:#111}";
+  html += "input::placeholder{color:#444}";
+  html += ".btn{width:100%;background:#fff;color:#000;border:none;border-radius:8px;padding:16px;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:8px}";
+  html += ".btn:hover{background:#f0f0f0;transform:translateY(-1px)}";
+  html += ".btn:active{transform:translateY(0)}";
+  html += ".status{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;background:#0a0a0a;border:1px solid #1a1a1a;border-radius:12px;margin-top:24px}";
+  html += ".status-dot{width:8px;height:8px;background:#0f0;border-radius:50%;animation:pulse 2s infinite}";
+  html += ".status-text{color:#666;font-size:14px}";
+  html += ".status-value{color:#fff;font-weight:600;font-family:monospace}";
+  html += "@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}";
+  html += "@media(max-width:480px){.card{padding:24px}}";
+  html += "</style></head><body>";
+  html += "<div class='container'>";
+  html += "<div class='header'>";
+  html += "<h1>MQ-2 Sensor Configuration</h1>";
+  html += "<p>Configure your gas sensor settings</p>";
+  html += "</div>";
+  
+  html += "<div class='card'>";
+  html += "<div class='info-row'>";
+  html += "<span class='info-label'>Sensor ID</span>";
+  html += "<span class='info-value'>" + sensorId + "</span>";
+  html += "</div>";
+  html += "<div class='info-row'>";
+  html += "<span class='info-label'>IP Address</span>";
+  html += "<span class='info-value'>" + WiFi.localIP().toString() + "</span>";
+  html += "</div>";
+  html += "<div class='info-row'>";
+  html += "<span class='info-label'>Signal</span>";
+  html += "<span class='info-value'>" + String(WiFi.RSSI()) + " dBm</span>";
+  html += "</div>";
+  html += "</div>";
+  
+  html += "<div class='card'>";
+  html += "<form action='/save' method='POST'>";
+  html += "<div class='form-group'>";
+  html += "<label>ชื่อเซ็นเซอร์</label>";
+  html += "<input name='name' value='" + sensorName + "' placeholder='เช่น เซ็นเซอร์ห้องนอน' required>";
+  html += "</div>";
+  html += "<div class='form-group'>";
+  html += "<label>สถานที่ติดตั้ง</label>";
+  html += "<input name='location' value='" + sensorLocation + "' placeholder='เช่น ห้องนอนชั้น 2' required>";
+  html += "</div>";
+  html += "<button type='submit' class='btn'>บันทึกการตั้งค่า</button>";
+  html += "</form>";
+  html += "</div>";
+  
+  html += "<div class='status'>";
+  html += "<div class='status-dot'></div>";
+  html += "<span class='status-text'>Current Value:</span>";
+  html += "<span class='status-value'>" + String(lastGasValue) + " ADC</span>";
+  html += "</div>";
+  
+  html += "</div>";
+  html += "</body></html>";
+  configServer.send(200, "text/html; charset=UTF-8", html);
+}
+
+void handleSave() {
+  if (configServer.hasArg("name") && configServer.hasArg("location")) {
+    sensorName = configServer.arg("name");
+    sensorLocation = configServer.arg("location");
+    saveConfig();
+    
+    String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>";
+    html += "<meta name='viewport' content='width=device-width,initial-scale=1'>";
+    html += "<meta http-equiv='refresh' content='2;url=/'>";
+    html += "<style>";
+    html += "*{margin:0;padding:0;box-sizing:border-box}";
+    html += "body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#000;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}";
+    html += ".success{text-align:center}";
+    html += ".checkmark{width:80px;height:80px;border-radius:50%;background:#0f0;margin:0 auto 24px;display:flex;align-items:center;justify-content:center;font-size:48px;animation:scaleIn 0.3s ease-out}";
+    html += "h2{font-size:24px;font-weight:600;margin-bottom:8px}";
+    html += "p{color:#666;font-size:14px}";
+    html += "@keyframes scaleIn{from{transform:scale(0)}to{transform:scale(1)}}";
+    html += "</style></head><body>";
+    html += "<div class='success'>";
+    html += "<div class='checkmark'>✓</div>";
+    html += "<h2>บันทึกสำเร็จ</h2>";
+    html += "<p>กำลังกลับหน้าหลัก...</p>";
+    html += "</div>";
+    html += "</body></html>";
+    configServer.send(200, "text/html; charset=UTF-8", html);
+  } else {
+    configServer.send(400, "text/plain", "Missing parameters");
+  }
+}
+
+// Get Timestamp
+String getTimestamp() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    return "2026-02-14 00:00:00";
+  }
+  char timeString[20];
+  strftime(timeString, sizeof(timeString), "%Y-%m-%d %H:%M:%S", &timeinfo);
+  return String(timeString);
+}
+
+// MQTT Reconnect
+void reconnectMQTT() {
+  while (!mqtt.connected()) {
+    Serial.print("Connecting to MQTT...");
+    
+    // สร้าง client ID แบบ unique
+    String clientId = "ESP32_MQ2_";
+    clientId += String(random(0xffff), HEX);
+    
+    if (mqtt.connect(clientId.c_str())) {
+      Serial.println(" Connected!");
+      
+      // กระพริบสีเขียว 2 ครั้ง
+      for (int i = 0; i < 2; i++) {
+        digitalWrite(GREEN_PIN, HIGH);
+        delay(100);
+        digitalWrite(GREEN_PIN, LOW);
+        delay(100);
+      }
+    } else {
+      Serial.print(" Failed, rc=");
+      Serial.print(mqtt.state());
+      Serial.println(" Retrying in 5s...");
+      
+      // กระพริบสีแดง
+      digitalWrite(RED_PIN, HIGH);
+      delay(5000);
+      digitalWrite(RED_PIN, LOW);
+    }
+  }
+}
+
+// Publish Sensor Data to MQTT
+void publishSensorData(int value) {
+  // ตรวจสอบการเชื่อมต่อก่อน publish
+  if (!mqtt.connected()) {
+    Serial.println("MQTT disconnected, reconnecting...");
+    reconnectMQTT();
+    return;
+  }
+  
+  StaticJsonDocument<256> doc;
+  doc["id"] = sensorId.c_str();
+  doc["name"] = sensorName.c_str();
+  doc["location"] = sensorLocation.c_str();
+  doc["value"] = value;
+  doc["unit"] = "ADC";
+  doc["timestamp"] = getTimestamp();
+  doc["isOnline"] = true;
+  
+  String json;
+  serializeJson(doc, json);
+  
+  // ลองส่ง 2 ครั้ง ถ้าไม่สำเร็จ
+  if (!mqtt.publish(mqtt_topic, json.c_str(), false)) {
+    delay(50);
+    if (!mqtt.publish(mqtt_topic, json.c_str(), false)) {
+      Serial.println("✗ Publish failed!");
+    }
+  }
+}
+
+
+// Check Reset Button
+void checkResetButton() {
+  static unsigned long pressStart = 0;
+  static bool wasPressed = false;
+  
+  if (digitalRead(RESET_WIFI_PIN) == LOW) {
+    if (!wasPressed) {
+      pressStart = millis();
+      wasPressed = true;
+    } else if (millis() - pressStart > 3000) {
+      Serial.println("Reset WiFi settings...");
+      wifiManager.resetSettings();
+      Serial.println("WiFi settings cleared! Restarting...");
+      delay(1000);
+      ESP.restart();
+    }
+  } else {
+    wasPressed = false;
+  }
+}
+
+// Connect WiFi
+void connectWiFi() {
+  Serial.println("=== WiFiManager Setup ===");
+  
+  // สร้าง Sensor ID จาก MAC Address (unique ทุกตัว)
+  if (sensorId == "") {
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    sensorId = "MQ2-" + String(mac[3], HEX) + String(mac[4], HEX) + String(mac[5], HEX);
+    sensorId.toUpperCase();
+  }
+  
+  // ตรวจสอบว่ามี WiFi credentials บันทึกไว้หรือไม่
+  if (WiFi.SSID() != "") {
+    Serial.print("พบ WiFi ที่บันทึกไว้: ");
+    Serial.println(WiFi.SSID());
+    Serial.println("กำลังพยายามเชื่อมต่อ...");
+  } else {
+    Serial.println("ไม่พบ WiFi ที่บันทึกไว้");
+  }
+  
+  // ตั้งค่า timeout
+  wifiManager.setConfigPortalTimeout(300);
+  wifiManager.setConnectTimeout(30);
+  wifiManager.setDebugOutput(true);
+  
+  Serial.println("ถ้าเชื่อมต่อไม่ได้ จะเปิด Access Point: MQ2-Sensor-Setup");
+  Serial.println("หมายเหตุ: กดปุ่ม BOOT ค้าง 3 วินาที เพื่อลบ WiFi settings");
+  
+  if (!wifiManager.autoConnect("MQ2-Sensor-Setup")) {
+    Serial.println("❌ ไม่สามารถเชื่อมต่อ WiFi ได้");
+    Serial.println("กำลัง restart...");
+    delay(3000);
+    ESP.restart();
+  }
+  
+  Serial.println("========================================");
+  Serial.println("✅ WiFi Connected!");
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("Signal Strength: ");
+  Serial.print(WiFi.RSSI());
+  Serial.println(" dBm");
+  Serial.println("========================================");
+  Serial.println("📍 Sensor Configuration:");
+  Serial.print("ID (Auto): ");
+  Serial.println(sensorId);
+  Serial.print("Name: ");
+  Serial.println(sensorName);
+  Serial.print("Location: ");
+  Serial.println(sensorLocation);
+  Serial.println("========================================");
+  Serial.println("🌐 Config URL: http://" + WiFi.localIP().toString());
+  Serial.println("========================================");
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+  
+  pinMode(RESET_WIFI_PIN, INPUT_PULLUP);
+  
+  // ตั้งค่า RGB pins เป็น OUTPUT
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
+  
+  // แสดงสถานะกำลังเชื่อมต่อ (สีน้ำเงิน)
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
+  digitalWrite(BLUE_PIN, HIGH);
+  
+  Serial.println("=== MQ-2 Sensor System with MQTT ===");
+  
+  // โหลดการตั้งค่า
+  loadConfig();
+  
+  // เชื่อมต่อ WiFi
+  connectWiFi();
+  
+  // ตั้งค่าเวลา
+  if (WiFi.status() == WL_CONNECTED) {
+    configTime(7 * 3600, 0, "pool.ntp.org");
+  }
+  
+  // ตั้งค่า Web Server สำหรับ Config
+  configServer.on("/", handleRoot);
+  configServer.on("/save", HTTP_POST, handleSave);
+  configServer.begin();
+  Serial.println("✅ Config Server started!");
+  
+  // ตั้งค่า MQTT
+  mqtt.setServer(mqtt_server, mqtt_port);
+  mqtt.setKeepAlive(60);
+  mqtt.setSocketTimeout(30);
+  
+  Serial.println("MQTT Configuration:");
+  Serial.print("Server: ");
+  Serial.println(mqtt_server);
+  Serial.print("Topic: ");
+  Serial.println(mqtt_topic);
+  
+  // เชื่อมต่อ MQTT
+  reconnectMQTT();
+  
+  // แสดงสถานะเชื่อมต่อสำเร็จ (สีเขียวกระพริบ)
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(RED_PIN, LOW);
+    digitalWrite(GREEN_PIN, HIGH);
+    digitalWrite(BLUE_PIN, LOW);
+    delay(200);
+    digitalWrite(GREEN_PIN, LOW);
+    delay(200);
+  }
+  
+  Serial.println("System Ready!");
+}
+
+void loop() {
+  // Handle Web Server
+  configServer.handleClient();
+  
+  // รักษาการเชื่อมต่อ MQTT
+  if (!mqtt.connected()) {
+    reconnectMQTT();
+  }
+  mqtt.loop();
+  
+  checkResetButton();
+  
+  // ตรวจสอบ WiFi
+  static unsigned long lastWiFiCheck = 0;
+  if (millis() - lastWiFiCheck > 30000) {
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("WiFi disconnected! Reconnecting...");
+      WiFi.reconnect();
+    }
+    lastWiFiCheck = millis();
+  }
+  
+  // อ่านค่า Sensor
+  int val = analogRead(MQ2_PIN);
+  lastGasValue = val;
+  
+  // แสดงค่าใน Serial Monitor เพื่อดู baseline
+//   Serial.print("MQ-2 Value: ");
+//   Serial.print(val);
+//   Serial.print(" | LED should be: ");
+  
+  // Debug: แสดงว่าควรเป็นสีอะไร
+  if (val < 70) {
+    Serial.println("GREEN");
+  } else if (val <= 150) {
+    Serial.println("YELLOW");
+  } else {
+    Serial.println("RED");
+  }
+  
+  // Publish ไปยัง MQTT ทุก 200ms
+  if (millis() - lastMqttPublish >= mqttPublishInterval) {
+    publishSensorData(val);
+    lastMqttPublish = millis();
+  }
+  
+  // ตรวจสอบค่าและแสดงสีตามเงื่อนไข
+  // Threshold ที่ปรับตามค่าจริงของ MQ-2
+  // < 70 = ปกติ, 70-150 = เฝ้าระวัง, > 150 = อันตราย
+  
+  // ปิดไฟทั้งหมดก่อน
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
+  digitalWrite(BLUE_PIN, LOW);
+  
+  if (val < 70) {
+    // สีเขียว - ปกติ
+    digitalWrite(GREEN_PIN, HIGH);
+  } 
+  else if (val >= 70 && val <= 150) {
+    // สีเหลือง - เฝ้าระวัง
+    digitalWrite(RED_PIN, HIGH);
+    digitalWrite(GREEN_PIN, HIGH);
+  } 
+  else {
+    // สีแดง - อันตราย
+    digitalWrite(RED_PIN, HIGH);
+  }
+  
+  delay(50); // ลด delay เพื่อให้ MQTT loop ทำงานได้บ่อยขึ้น
+}
+
+// หมายเหตุ:
+// - MQ-2 ต้องอุ่นเครื่อง 20-180 วินาที ค่าจึงจะเสถียร
+// - ค่าที่อ่านได้จะอัปเดตทุก 50ms
+// - MQTT publish ทุก 200ms เพื่อลดโหลด network

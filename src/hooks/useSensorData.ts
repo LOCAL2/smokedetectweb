@@ -4,6 +4,7 @@ import type { SensorData, SensorHistory, DashboardStats, SensorMaxValue } from '
 import type { SettingsConfig } from './useSettings';
 import { getSensorStatusWithSettings } from './useSettings';
 import { generateMockSensorData, resetMockData } from '../utils/mockData';
+import { useMqtt } from './useMqtt';
 
 const HISTORY_STORAGE_KEY = 'smoke-sensor-history';
 const SENSOR_MAX_STORAGE_KEY = 'smoke-sensor-max-values';
@@ -223,6 +224,13 @@ export const useSensorData = (settings: SettingsConfig) => {
   const sensorsRef = useRef<Map<string, SensorData>>(new Map());
   const lastAlertTimeRef = useRef<number>(0);
   const wasInDangerRef = useRef<boolean>(false);
+
+  // MQTT Hook
+  const { sensors: mqttSensors, connected: mqttConnected, error: mqttError } = useMqtt({
+    broker: settings.mqtt.broker,
+    topics: settings.mqtt.topics,
+    enabled: settings.mqtt.enabled && !settings.demoMode,
+  });
 
   
   const processSensorData = useCallback((rawData: SensorData[], fromBroadcast = false) => {
@@ -522,6 +530,22 @@ export const useSensorData = (settings: SettingsConfig) => {
     intervalRef.current = window.setInterval(updateMockData, settings.pollingInterval);
   }, [processSensorData, settings.pollingInterval]);
 
+  // Handle MQTT sensor updates
+  useEffect(() => {
+    if (!settings.mqtt.enabled || settings.demoMode || mqttSensors.size === 0) return;
+
+    const mqttSensorArray = Array.from(mqttSensors.values());
+    processSensorData(mqttSensorArray);
+    
+    if (mqttConnected) {
+      setConnectionStatus('connected');
+      setError(null);
+    } else if (mqttError) {
+      setConnectionStatus('disconnected');
+      setError(mqttError);
+    }
+  }, [mqttSensors, mqttConnected, mqttError, settings.mqtt.enabled, settings.demoMode, processSensorData]);
+
   
   useEffect(() => {
     
@@ -563,6 +587,10 @@ export const useSensorData = (settings: SettingsConfig) => {
       if (settings.demoMode) {
         sensorsRef.current.clear();
         startDemoMode();
+      } else if (settings.mqtt.enabled) {
+        // MQTT mode - data will come from useMqtt hook
+        setIsLoading(false);
+        setConnectionStatus(mqttConnected ? 'connected' : 'connecting');
       } else {
         if (!hasEnabledEndpoints) {
           
@@ -589,7 +617,7 @@ export const useSensorData = (settings: SettingsConfig) => {
         broadcastChannel.removeEventListener('message', handleBroadcastMessage);
       }
     };
-  }, [settings.apiEndpoints, settings.pollingInterval, settings.demoMode, startHttpPolling, startDemoMode, processSensorData]);
+  }, [settings.apiEndpoints, settings.pollingInterval, settings.demoMode, settings.mqtt.enabled, mqttConnected, startHttpPolling, startDemoMode, processSensorData]);
 
   return {
     sensors,

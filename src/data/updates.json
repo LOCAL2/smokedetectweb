@@ -1,6 +1,21 @@
 {
   "updates": [
     {
+      "version": "2.21.0",
+      "date": "2026-02-15",
+      "title": "เปลี่ยนจาก HTTP API เป็น MQTT Real-time",
+      "type": "feature",
+      "changes": [
+        "เปลี่ยนระบบการรับข้อมูลจาก HTTP API เป็น MQTT แบบ Real-time",
+        "เชื่อมต่อกับ HiveMQ Public Broker (wss://broker.hivemq.com:8884/mqtt)",
+        "รับข้อมูลจาก ESP32 แบบ Real-time ทุก 200ms",
+        "รองรับการเชื่อมต่อแบบ WebSocket Secure (WSS) สำหรับ HTTPS",
+        "ตั้งค่า MQTT Topics ได้ในหน้า Settings",
+        "แก้ไขปัญหา Mixed Content Error บน Production",
+        "ยังคงรองรับ HTTP API และ Demo Mode เหมือนเดิม"
+      ]
+    },
+    {
       "version": "2.20.2",
       "date": "2026-02-11",
       "title": "แก้ไข Marker บนแผนที่ไม่แสดง",
