@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, Bot, User, Loader, RotateCcw, ChevronDown,
   X, Activity, Copy, Check, RefreshCw, ThumbsUp, ThumbsDown, Square, Mic, MicOff,
-  ArrowLeft, Download, Smartphone, Monitor, BarChart3
+  ArrowLeft, Download, Monitor, BarChart3
 } from 'lucide-react';
 import { streamMessageFromGroq, type ChatMessage } from '../services/groqService';
 import { useSensorDataContext } from '../context/SensorDataContext';
@@ -39,8 +39,6 @@ const NAVIGATION_MAP: Record<string, { path: string; name: string }> = {
   'ดาวน์โหลด': { path: '/download', name: 'หน้าดาวน์โหลด' },
   'download': { path: '/download', name: 'หน้าดาวน์โหลด' },
   'แอป': { path: '/download', name: 'หน้าดาวน์โหลด' },
-  'apk': { path: '/download', name: 'หน้าดาวน์โหลด' },
-  'android': { path: '/download', name: 'หน้าดาวน์โหลด' },
   'หน้าหลัก': { path: '/', name: 'หน้าหลัก' },
   'dashboard': { path: '/', name: 'หน้าหลัก' },
   'เซ็นเซอร์': { path: '/sensors', name: 'หน้าเซ็นเซอร์' },
@@ -50,7 +48,8 @@ const NAVIGATION_MAP: Record<string, { path: string; name: string }> = {
   'demo mode': { path: '/settings', name: 'หน้าตั้งค่า' },
   'รีเฟรช': { path: '/settings', name: 'หน้าตั้งค่า' },
   'แจ้งเตือน': { path: '/settings', name: 'หน้าตั้งค่า' },
-  'api endpoint': { path: '/settings', name: 'หน้าตั้งค่า' },
+  'mqtt': { path: '/settings', name: 'หน้าตั้งค่า' },
+  'broker': { path: '/settings', name: 'หน้าตั้งค่า' },
   'gps': { path: '/settings', name: 'หน้าตั้งค่า' },
   'พิกัด': { path: '/settings', name: 'หน้าตั้งค่า' },
   'กราฟ': { path: '/', name: 'หน้าหลัก' },
@@ -83,26 +82,23 @@ const checkRelatedPage = (input: string): { path: string; name: string } | null 
 };
 
 
-type DownloadPlatform = 'android' | 'windows' | null;
+type DownloadPlatform = 'windows' | null;
 
 const checkDownloadRequest = (input: string): DownloadPlatform => {
   const lower = input.toLowerCase();
 
   
-  const downloadKeywords = ['ดาวน์โหลด', 'download', 'โหลด', 'ติดตั้ง', 'ขอไฟล์', 'ขอ apk', 'ขอ exe'];
+  const downloadKeywords = ['ดาวน์โหลด', 'download', 'โหลด', 'ติดตั้ง', 'ขอไฟล์', 'ขอ exe'];
   const hasDownloadIntent = downloadKeywords.some(k => lower.includes(k));
 
   if (!hasDownloadIntent) return null;
 
   
-  const androidKeywords = ['android', 'apk', 'มือถือ', 'โทรศัพท์', 'แอนดรอยด์'];
   const windowsKeywords = ['windows', 'exe', 'คอม', 'computer', 'pc', 'วินโดว์', 'desktop'];
 
-  const isAndroid = androidKeywords.some(k => lower.includes(k));
   const isWindows = windowsKeywords.some(k => lower.includes(k));
 
-  if (isAndroid && !isWindows) return 'android';
-  if (isWindows && !isAndroid) return 'windows';
+  if (isWindows) return 'windows';
 
   return null;
 };
@@ -413,7 +409,7 @@ const getThinkingSteps = (input: string): string[] => {
   const lower = input.toLowerCase();
 
   
-  if (lower.includes('ดาวน์โหลด') || lower.includes('download') || lower.includes('apk') || lower.includes('exe') || lower.includes('แอป') || lower.includes('application') || lower.includes('ติดตั้ง')) {
+  if (lower.includes('ดาวน์โหลด') || lower.includes('download') || lower.includes('exe') || lower.includes('แอป') || lower.includes('application') || lower.includes('ติดตั้ง')) {
     return ['ค้นหาไฟล์', 'ตรวจสอบเวอร์ชัน', 'เตรียมลิงก์'];
   }
 
@@ -496,7 +492,7 @@ const ALL_QUICK_ACTIONS = [
   { label: 'เปิด Demo Mode ยังไง', query: 'วิธีเปิด Demo Mode' },
   { label: 'ปรับความถี่รีเฟรชยังไง', query: 'วิธีปรับความถี่รีเฟรชข้อมูล' },
   { label: 'เปิดเสียงแจ้งเตือนยังไง', query: 'วิธีเปิดเสียงแจ้งเตือน' },
-  { label: 'เพิ่ม API Endpoint ยังไง', query: 'วิธีเพิ่ม API Endpoint ใหม่' },
+  { label: 'เชื่อมต่อ MQTT ยังไง', query: 'วิธีเชื่อมต่อ MQTT Broker' },
   { label: 'ตั้งค่าพิกัด GPS ยังไง', query: 'วิธีตั้งค่าพิกัด GPS เซ็นเซอร์' },
   { label: 'ล้างประวัติข้อมูลยังไง', query: 'วิธีล้างประวัติข้อมูล Sensor' },
 
@@ -505,7 +501,7 @@ const ALL_QUICK_ACTIONS = [
   { label: 'ปักหมุด Sensor ยังไง', query: 'วิธีปักหมุด Sensor ที่สนใจ' },
   { label: 'ดูแผนที่ Sensor ยังไง', query: 'วิธีดูแผนที่ตำแหน่ง Sensor' },
   { label: 'ดูอันดับค่าควันยังไง', query: 'วิธีดูอันดับค่าควันสูงสุด' },
-  { label: 'ดาวน์โหลดแอปยังไง', query: 'วิธีดาวน์โหลดแอป Android' },
+  { label: 'ดาวน์โหลดแอปยังไง', query: 'วิธีดาวน์โหลดแอป Windows' },
 
   
   { label: 'ไปหน้าตั้งค่า', query: 'ไปหน้าตั้งค่า' },
@@ -556,8 +552,8 @@ export const ChatBotPage = () => {
   const [isListening, setIsListening] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [quickActions, setQuickActions] = useState(() => getRandomQuickActions(4));
-  const [suggestedNav, setSuggestedNav] = useState<{ path: string; name: string } | null>(null);
-  const [downloadModal, setDownloadModal] = useState<{ show: boolean; platform: 'android' | 'windows' | null }>({ show: false, platform: null });
+  const [, setSuggestedNav] = useState<{ path: string; name: string } | null>(null);
+  const [downloadModal, setDownloadModal] = useState<{ show: boolean; platform: 'windows' | null }>({ show: false, platform: null });
   const [initialQueryProcessed, setInitialQueryProcessed] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -568,13 +564,8 @@ export const ChatBotPage = () => {
     if (!downloadModal.platform) return;
 
     const link = document.createElement('a');
-    if (downloadModal.platform === 'android') {
-      link.href = '/APK/SmokeDetect.apk';
-      link.download = 'SmokeDetect.apk';
-    } else {
-      link.href = '/EXE/SmokeDetection_Setup_v1.0.0.exe';
-      link.download = 'SmokeDetection_Setup_v1.0.0.exe';
-    }
+    link.href = '/EXE/SmokeDetection_Setup_v1.0.0.exe';
+    link.download = 'SmokeDetection_Setup_v1.0.0.exe';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -585,7 +576,7 @@ export const ChatBotPage = () => {
     setMessages(prev => [...prev, {
       id: `msg-${Date.now()}`,
       role: 'assistant',
-      content: `เริ่มดาวน์โหลดไฟล์สำหรับ ${downloadModal.platform === 'android' ? 'Android (APK)' : 'Windows (EXE)'} แล้วครับ`,
+      content: `เริ่มดาวน์โหลดไฟล์สำหรับ Windows (EXE) แล้วครับ`,
       timestamp: Date.now()
     }]);
   };
@@ -598,10 +589,10 @@ export const ChatBotPage = () => {
 
 สาเหตุที่เป็นไปได้:
 1. ยังไม่ได้เชื่อมต่อ Hardware (ESP32 + MQ-2)
-2. API Endpoint ยังไม่ได้ตั้งค่า
+2. MQTT Broker ยังไม่ได้เชื่อมต่อ
 3. Demo Mode ปิดอยู่
 
-แนะนำ: ไปที่หน้า "ตั้งค่า" เพื่อเปิด Demo Mode ทดสอบระบบ หรือตั้งค่า API Endpoint เพื่อเชื่อมต่อ Sensor จริง`;
+แนะนำ: ไปที่หน้า "ตั้งค่า" เพื่อเปิด Demo Mode ทดสอบระบบ หรือตั้งค่า MQTT Broker เพื่อเชื่อมต่อ Sensor จริง`;
     }
     const sorted = [...sensors].sort((a, b) => b.value - a.value);
     const highest = sorted[0];
@@ -766,7 +757,7 @@ export const ChatBotPage = () => {
       await new Promise(r => setTimeout(r, 300));
       setIsThinking(false);
 
-      const platformName = downloadPlatform === 'android' ? 'Android (APK)' : 'Windows (EXE)';
+      const platformName = 'Windows (EXE)';
       setMessages(prev => [...prev, {
         id: `msg-${Date.now()}`,
         role: 'assistant',
@@ -1148,7 +1139,7 @@ export const ChatBotPage = () => {
               <h1 style={{ color: isDark ? '#F8FAFC' : '#1E293B', fontSize: 'clamp(20px,5vw,28px)', fontWeight: 700, margin: '0 0 8px', textAlign: 'center' }}>สวัสดีครับ ผม Barron AI</h1>
               <p style={{ color: isDark ? '#64748B' : '#94A3B8', fontSize: 'clamp(13px,3vw,15px)', margin: '0 0 32px', textAlign: 'center' }}>ถามเกี่ยวกับระบบ Smoke Detect ได้เลยครับ</p>
 
-              {}
+              {/* Quick Actions */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, maxWidth: 500, width: '100%' }}>
                 <AnimatePresence mode="wait">
                   {quickActions.map((action, i) => (
@@ -1168,7 +1159,7 @@ export const ChatBotPage = () => {
                 </AnimatePresence>
               </div>
 
-              {}
+              {/* Refresh Button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -1341,37 +1332,6 @@ export const ChatBotPage = () => {
                 </motion.div>
               )}
 
-              {}
-              {suggestedNav && !isLoading && !streamingText && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{ marginTop: 16, marginBottom: 8 }}
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => { navigate(suggestedNav.path); setSuggestedNav(null); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '12px 20px',
-                      background: isDark ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2))' : 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))',
-                      border: isDark ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid rgba(99, 102, 241, 0.3)',
-                      borderRadius: 12,
-                      color: isDark ? '#A5B4FC' : '#4F46E5',
-                      fontSize: 14,
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <ArrowLeft size={16} style={{ transform: 'rotate(180deg)' }} />
-                    ไปที่{suggestedNav.name}
-                  </motion.button>
-                </motion.div>
-              )}
-
               <div ref={messagesEndRef} />
             </div>
           )}
@@ -1380,29 +1340,6 @@ export const ChatBotPage = () => {
         {}
         <div style={{ padding: 'clamp(12px,3vw,16px) clamp(16px,4vw,24px) clamp(16px,4vw,24px)', borderTop: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid #E2E8F0', background: isDark ? 'linear-gradient(to top, #0F172A, rgba(15,23,42,0.95))' : '#FFFFFF' }}>
           <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            {}
-            {hasMessages && (
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12, overflowX: 'auto', paddingBottom: 4 }}>
-                {quickActions.slice(0, 3).map((action, i) => (
-                  <button key={i} onClick={() => handleSend(action.query)} disabled={isLoading}
-                    style={{
-                      padding: '8px 16px',
-                      background: isDark ? 'rgba(59, 130, 246, 0.15)' : '#EFF6FF',
-                      border: isDark ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid #BFDBFE',
-                      borderRadius: 20,
-                      color: isDark ? '#60A5FA' : '#2563EB',
-                      cursor: 'pointer',
-                      fontSize: 13,
-                      fontWeight: 500,
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0
-                    }}>
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
             <div style={{ display: 'flex', gap: 'clamp(8px,2vw,12px)', background: isDark ? 'rgba(30,41,59,0.8)' : '#F1F5F9', border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0', borderRadius: 16, padding: 6 }}>
               {}
               {recognitionRef.current && (
@@ -1413,7 +1350,7 @@ export const ChatBotPage = () => {
               )}
 
               <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && !isLoading && (e.preventDefault(), handleSend())}
-                placeholder={isListening ? 'กำลังฟัง...' : isLoading ? 'พิมพ์คำถามถัดไปรอไว้ได้...' : 'ถามเกี่ยวกับระบบ Smoke Detect...'}
+                placeholder={isListening ? 'กำลังฟัง...' : isLoading ? 'พิมพ์คำถามถัดไปรอไว้ได้...' : 'พิมพ์คำถามของคุณที่นี่...'}
                 style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 'clamp(14px,3vw,15px)', outline: 'none', minWidth: 0 }} />
 
               {}
@@ -1485,7 +1422,7 @@ export const ChatBotPage = () => {
                 padding: '32px',
                 maxWidth: '400px',
                 width: '100%',
-                border: `1px solid ${downloadModal.platform === 'android' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+                border: '1px solid rgba(59, 130, 246, 0.3)',
                 textAlign: 'center',
               }}
             >
@@ -1494,18 +1431,14 @@ export const ChatBotPage = () => {
                 width: '80px',
                 height: '80px',
                 borderRadius: '20px',
-                background: downloadModal.platform === 'android'
-                  ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                  : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 24px',
-                boxShadow: downloadModal.platform === 'android'
-                  ? '0 12px 40px rgba(16, 185, 129, 0.4)'
-                  : '0 12px 40px rgba(59, 130, 246, 0.4)',
+                boxShadow: '0 12px 40px rgba(59, 130, 246, 0.4)',
               }}>
-                {downloadModal.platform === 'android' ? <Smartphone size={40} color="#FFF" /> : <Monitor size={40} color="#FFF" />}
+                <Monitor size={40} color="#FFF" />
               </div>
 
               {}
@@ -1524,25 +1457,25 @@ export const ChatBotPage = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ color: '#64748B', fontSize: '13px' }}>แพลตฟอร์ม</span>
                   <span style={{ color: '#F8FAFC', fontSize: '13px', fontWeight: 600 }}>
-                    {downloadModal.platform === 'android' ? 'Android' : 'Windows'}
+                    Windows
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ color: '#64748B', fontSize: '13px' }}>ประเภทไฟล์</span>
                   <span style={{ color: '#F8FAFC', fontSize: '13px', fontWeight: 600 }}>
-                    {downloadModal.platform === 'android' ? 'APK' : 'EXE Installer'}
+                    EXE Installer
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
                   <span style={{ color: '#64748B', fontSize: '13px' }}>ชื่อไฟล์</span>
                   <span style={{ color: '#F8FAFC', fontSize: '13px', fontWeight: 600 }}>
-                    {downloadModal.platform === 'android' ? 'SmokeDetect.apk' : 'SmokeDetection_Setup.exe'}
+                    SmokeDetection_Setup.exe
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: '#64748B', fontSize: '13px' }}>ขนาดไฟล์</span>
                   <span style={{ color: '#F8FAFC', fontSize: '13px', fontWeight: 600 }}>
-                    {downloadModal.platform === 'android' ? '~50 MB' : '~159 KB'}
+                    ~159 KB
                   </span>
                 </div>
               </div>
@@ -1574,9 +1507,7 @@ export const ChatBotPage = () => {
                   style={{
                     flex: 1,
                     padding: '14px 20px',
-                    background: downloadModal.platform === 'android'
-                      ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                      : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                    background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                     border: 'none',
                     borderRadius: '12px',
                     color: '#FFF',

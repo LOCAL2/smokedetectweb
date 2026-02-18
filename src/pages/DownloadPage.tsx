@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Download, 
-  Smartphone, 
   Shield,
   Monitor,
   Cpu,
@@ -14,12 +13,12 @@ import {
 import { LampContainer } from '../components/ui/Lamp';
 import { useTheme } from '../context/ThemeContext';
 
-type Platform = 'android' | 'windows';
+type Platform = 'windows';
 
 export const DownloadPage = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const [activePlatform, setActivePlatform] = useState<Platform>('android');
+  const [activePlatform] = useState<Platform>('windows');
 
   
   const cardBg = isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.9)';
@@ -32,25 +31,11 @@ export const DownloadPage = () => {
 
   const handleDownload = () => {
     const link = document.createElement('a');
-    if (activePlatform === 'android') {
-      link.href = 'https://github.com/LOCAL2/smokedetectweb/releases/download/v1.0.0/SmokeDetect.apk';
-    } else {
-      link.href = 'https://github.com/LOCAL2/smokedetectweb/releases/download/v1.0.0/SmokeDetection_Setup_v1.0.0.exe';
-    }
+    link.href = 'https://github.com/LOCAL2/smokedetectweb/releases/download/v1.0.0/SmokeDetection_Setup_v1.0.0.exe';
     link.click();
   };
 
   const platformData = {
-    android: {
-      name: 'Android',
-      icon: Smartphone,
-      color: '#10B981',
-      gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-      version: '1.0.0',
-      size: '50 MB',
-      requirements: 'Android 7.0+',
-      buttonText: 'ดาวน์โหลด APK',
-    },
     windows: {
       name: 'Windows',
       icon: Monitor,
@@ -131,56 +116,6 @@ export const DownloadPage = () => {
         margin: '0 auto', 
         padding: '48px clamp(16px, 4vw, 32px) clamp(32px, 6vw, 64px)',
       }}>
-        {}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px',
-            marginBottom: '32px',
-          }}
-        >
-          {(['android', 'windows'] as Platform[]).map((platform) => {
-            const data = platformData[platform];
-            const Icon = data.icon;
-            const isActive = activePlatform === platform;
-            return (
-              <motion.button
-                key={platform}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setActivePlatform(platform)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  padding: '20px 24px',
-                  background: isActive 
-                    ? data.gradient 
-                    : cardBg,
-                  border: isActive 
-                    ? 'none' 
-                    : cardBorder,
-                  borderRadius: '16px',
-                  color: isActive ? '#FFF' : textSecondary,
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  boxShadow: isActive ? `0 8px 32px ${data.color}40` : (isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)'),
-                }}
-              >
-                <Icon size={24} />
-                {data.name}
-              </motion.button>
-            );
-          })}
-        </motion.div>
-
         {}
         <AnimatePresence mode="wait">
           <motion.div

@@ -1,6 +1,82 @@
 {
   "updates": [
     {
+      "version": "2.22.11",
+      "date": "2026-02-18",
+      "title": "แก้ไขข้อมูล Demo ไม่หายเมื่อปิด Demo Mode",
+      "type": "fix",
+      "changes": [
+        "แก้ไขปัญหาข้อมูล Demo ยังแสดงอยู่หลังปิด Demo Mode",
+        "เพิ่ม Migration Code ล้างข้อมูล Demo เก่าอัตโนมัติ",
+        "ป้องกันการบันทึกข้อมูล Demo ลง localStorage",
+        "ผู้ใช้ไม่ต้องล้าง Cache เอง ระบบจัดการให้อัตโนมัติ"
+      ]
+    },
+    {
+      "version": "2.22.10",
+      "date": "2026-02-18",
+      "title": "แก้ไข Touch Drag & Drop บนมือถือ",
+      "type": "fix",
+      "changes": [
+        "แก้ไขการลากสลับตำแหน่ง Component ในหน้า Settings ให้ทำงานบนมือถือได้",
+        "เพิ่ม Visual Feedback เมื่อลาก Component (โปร่งใส + เปลี่ยนสีเป้าหมาย)",
+        "เพิ่ม touchAction: none เพื่อป้องกันการ scroll ขณะลาก",
+        "ลบ Console Error จาก Passive Event Listener",
+        "ปรับปรุง UX ให้ลื่นไหลและใช้งานง่ายขึ้นบนทุกอุปกรณ์"
+      ]
+    },
+    {
+      "version": "2.22.9",
+      "date": "2026-02-18",
+      "title": "อัพเดทข้อความจาก REST API เป็น MQTT",
+      "type": "improvement",
+      "changes": [
+        "เปลี่ยนข้อความ 'REST API' เป็น 'MQTT Protocol' ในหน้า About",
+        "เปลี่ยน 'API Endpoints' เป็น 'HTTP Endpoints (สำรอง)' ในหน้า Settings",
+        "เปลี่ยน 'API Endpoints' เป็น 'MQTT Broker' ในหน้า Guide",
+        "อัพเดทข้อความ error ให้ระบุว่าใช้ MQTT แทน HTTP",
+        "ปรับคำอธิบายในหน้า About ให้สอดคล้องกับการใช้ MQTT"
+      ]
+    },
+    {
+      "version": "2.22.8",
+      "date": "2026-02-18",
+      "title": "ลบ Android App ออกจาก ChatBot",
+      "type": "improvement",
+      "changes": [
+        "ลบการรองรับ Android/APK ออกจาก ChatBot และ ChatBotPage",
+        "ลบคำสั่งดาวน์โหลด Android ออกจาก AI",
+        "ลบ Navigation keywords สำหรับ Android",
+        "เหลือเฉพาะ Windows Desktop App",
+        "ปรับ Download Modal ให้แสดงเฉพาะ Windows"
+      ]
+    },
+    {
+      "version": "2.22.7",
+      "date": "2026-02-18",
+      "title": "ลบ Android App ออกจากหน้าดาวน์โหลด",
+      "type": "improvement",
+      "changes": [
+        "ลบตัวเลือก Android App ออกจากหน้าดาวน์โหลด",
+        "เหลือเฉพาะ Windows Desktop App",
+        "ลบปุ่มสลับ Platform",
+        "ปรับ UI ให้เรียบง่ายขึ้น"
+      ]
+    },
+    {
+      "version": "2.22.6",
+      "date": "2026-02-18",
+      "title": "ปรับปรุงหน้า Export ให้ Responsive",
+      "type": "improvement",
+      "changes": [
+        "แก้ไขการ์ดสถิติด้านบนให้แสดง 2x2 บนมือถือ และ 4 คอลัมน์บนเดสก์ท็อป",
+        "ปรับขนาดฟอนต์และ padding ให้ responsive ด้วย clamp()",
+        "ปรับขนาด icon ให้เหมาะกับหน้าจอขนาดต่างๆ",
+        "แก้ไขปัญหาปุ่มและการ์ดกระจายไม่เป็นระเบียบ",
+        "เพิ่ม flexShrink และ minWidth เพื่อป้องกันการล้นของข้อความ"
+      ]
+    },
+    {
       "version": "2.22.5",
       "date": "2026-02-15",
       "title": "ปรับค่าเริ่มต้น Threshold ใหม่",

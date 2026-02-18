@@ -250,7 +250,7 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(7, 1fr)',
-                  gap: '8px',
+                  gap: 'clamp(4px, 1vw, 8px)',
                 }}
               >
                 {week.map((day, dayIndex) => {
@@ -312,15 +312,15 @@ export const HeatMapCalendar = ({ data, warningThreshold, dangerThreshold }: Hea
                         <>
                           <span style={{ 
                             color: isToday ? '#3B82F6' : isFutureDay ? colors.noDataText : hasData ? colors.textPrimary : colors.noDataText,
-                            fontSize: '13px',
+                            fontSize: 'clamp(11px, 2.5vw, 13px)',
                             fontWeight: isToday ? 700 : 500,
                           }}>
                             {dayNum}
                           </span>
                           {hasData && !isFutureDay && (
                             <div style={{
-                              width: '6px',
-                              height: '6px',
+                              width: 'clamp(4px, 1vw, 6px)',
+                              height: 'clamp(4px, 1vw, 6px)',
                               borderRadius: '50%',
                               background: getColor(day?.maxValue ?? null),
                               marginTop: '2px',

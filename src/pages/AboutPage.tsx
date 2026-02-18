@@ -37,7 +37,7 @@ export const AboutPage = () => {
     ],
     backend: [
       { name: 'Node.js', url: 'https://nodejs.org' },
-      { name: 'REST API', url: 'https://restfulapi.net' },
+      { name: 'MQTT Protocol', url: 'https://mqtt.org' },
       { name: 'WebSocket', url: 'https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API' },
     ],
     hardware: [
@@ -60,7 +60,7 @@ export const AboutPage = () => {
     { label: 'จำนวนเซ็นเซอร์', value: '1' },
     { label: 'ประวัติข้อมูล', value: '24 ชั่วโมง' },
     { label: 'การแจ้งเตือน', value: 'LINE Messaging API' },
-    { label: 'แพลตฟอร์ม', value: 'Web, Android, Windows' },
+    { label: 'แพลตฟอร์ม', value: 'Web, Windows' },
   ];
 
   const projectGoals = [
@@ -68,7 +68,7 @@ export const AboutPage = () => {
     'สร้าง Dashboard แสดงผลข้อมูลแบบ Real-time',
     'เชื่อมต่อการแจ้งเตือนผ่าน LINE Messaging API',
     'รองรับการใช้งานหลายเซ็นเซอร์พร้อมกัน',
-    'พัฒนาแอปพลิเคชันสำหรับ Android และ Windows',
+    'พัฒนาแอปพลิเคชันสำหรับ Windows',
   ];
 
   return (
@@ -119,7 +119,7 @@ export const AboutPage = () => {
           <div style={{ background: cardBg, borderRadius: '20px', padding: 'clamp(24px, 4vw, 32px)', border: cardBorder, boxShadow: isDark ? 'none' : '0 4px 15px rgba(0, 0, 0, 0.05)' }}>
             <h2 style={{ color: textColor, fontSize: '20px', fontWeight: 600, margin: '0 0 16px' }}>เกี่ยวกับโปรเจค</h2>
             <p style={{ color: textSecondary, fontSize: '15px', lineHeight: 1.8, margin: '0 0 16px' }}>
-              ระบบตรวจจับควันอัจฉริยะ เป็นโปรเจคสำหรับการศึกษาระดับ ปวช.3 พัฒนาขึ้นเพื่อช่วยตรวจจับและแจ้งเตือนเมื่อมีควันในปริมาณที่เป็นอันตราย โดยใช้เซ็นเซอร์ MQ-2 ร่วมกับ ESP32 ในการวัดค่าและส่งข้อมูลมายัง Dashboard แบบ Real-time ผ่าน REST API
+              ระบบตรวจจับควันอัจฉริยะ เป็นโปรเจคสำหรับการศึกษาระดับ ปวช.3 พัฒนาขึ้นเพื่อช่วยตรวจจับและแจ้งเตือนเมื่อมีควันในปริมาณที่เป็นอันตราย โดยใช้เซ็นเซอร์ MQ-2 ร่วมกับ ESP32 ในการวัดค่าและส่งข้อมูลมายัง Dashboard แบบ Real-time ผ่าน MQTT Protocol
             </p>
             <p style={{ color: textSecondary, fontSize: '15px', lineHeight: 1.8, margin: 0 }}>
               ระบบสามารถตั้งค่าระดับการแจ้งเตือนได้ แบ่งเป็นระดับเฝ้าระวังและระดับอันตราย พร้อมแสดงกราฟประวัติค่าควันย้อนหลัง 24 ชั่วโมง รองรับการเชื่อมต่อหลายเซ็นเซอร์พร้อมกัน และสามารถแจ้งเตือนผ่าน LINE Messaging API ได้ทันที

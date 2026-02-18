@@ -159,8 +159,8 @@ export const ExportPage = () => {
           transition={{ delay: 0.1 }}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: '16px',
+            gridTemplateColumns: window.innerWidth < 640 ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+            gap: 'clamp(12px, 2vw, 16px)',
             marginBottom: '32px',
           }}
         >
@@ -174,26 +174,27 @@ export const ExportPage = () => {
               key={index}
               style={{
                 background: 'rgba(30, 41, 59, 0.6)',
-                borderRadius: '14px',
-                padding: '16px',
+                borderRadius: 'clamp(12px, 2vw, 14px)',
+                padding: 'clamp(12px, 2.5vw, 16px)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
+                gap: 'clamp(8px, 2vw, 12px)',
               }}
             >
               <div
                 style={{
                   background: `${item.color}20`,
-                  borderRadius: '10px',
-                  padding: '10px',
+                  borderRadius: 'clamp(8px, 1.5vw, 10px)',
+                  padding: 'clamp(8px, 1.5vw, 10px)',
+                  flexShrink: 0,
                 }}
               >
-                <item.icon size={18} color={item.color} />
+                <item.icon size={window.innerWidth < 640 ? 16 : 18} color={item.color} />
               </div>
-              <div>
-                <p style={{ color: '#64748B', fontSize: '12px', margin: 0 }}>{item.label}</p>
-                <p style={{ color: '#F8FAFC', fontSize: '20px', fontWeight: 700, margin: 0 }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ color: '#64748B', fontSize: 'clamp(11px, 2vw, 12px)', margin: 0 }}>{item.label}</p>
+                <p style={{ color: '#F8FAFC', fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, margin: 0 }}>
                   {item.value}
                 </p>
               </div>
@@ -206,7 +207,7 @@ export const ExportPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(12px, 2vw, 16px)' }}
         >
           {exportOptions.map((option, index) => (
             <motion.div
@@ -216,31 +217,32 @@ export const ExportPage = () => {
               transition={{ delay: 0.25 + index * 0.05 }}
               style={{
                 background: 'rgba(30, 41, 59, 0.6)',
-                borderRadius: '16px',
-                padding: '20px 24px',
+                borderRadius: 'clamp(14px, 2vw, 16px)',
+                padding: window.innerWidth < 640 ? '16px' : '20px 24px',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '16px',
+                gap: 'clamp(12px, 2vw, 16px)',
                 flexWrap: 'wrap',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 16px)', flex: 1, minWidth: 0 }}>
                 <div
                   style={{
                     background: `${option.color}20`,
-                    borderRadius: '12px',
-                    padding: '12px',
+                    borderRadius: 'clamp(10px, 1.5vw, 12px)',
+                    padding: 'clamp(10px, 1.5vw, 12px)',
+                    flexShrink: 0,
                   }}
                 >
-                  <option.icon size={22} color={option.color} />
+                  <option.icon size={window.innerWidth < 640 ? 20 : 22} color={option.color} />
                 </div>
-                <div>
-                  <h3 style={{ color: '#F8FAFC', fontSize: '16px', fontWeight: 600, margin: 0 }}>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ color: '#F8FAFC', fontSize: 'clamp(14px, 2.5vw, 16px)', fontWeight: 600, margin: 0 }}>
                     {option.title}
                   </h3>
-                  <p style={{ color: '#64748B', fontSize: '13px', margin: '4px 0 0' }}>
+                  <p style={{ color: '#64748B', fontSize: 'clamp(12px, 2vw, 13px)', margin: '4px 0 0' }}>
                     {option.description}
                   </p>
                 </div>
@@ -253,17 +255,18 @@ export const ExportPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  padding: '12px 24px',
+                  padding: window.innerWidth < 640 ? '10px 20px' : '12px 24px',
                   background: `${option.color}20`,
                   border: `1px solid ${option.color}40`,
-                  borderRadius: '10px',
+                  borderRadius: 'clamp(8px, 1.5vw, 10px)',
                   color: option.color,
-                  fontSize: '14px',
+                  fontSize: 'clamp(13px, 2vw, 14px)',
                   fontWeight: 600,
                   cursor: 'pointer',
+                  flexShrink: 0,
                 }}
               >
-                <Download size={16} />
+                <Download size={window.innerWidth < 640 ? 14 : 16} />
                 {option.format}
               </motion.button>
             </motion.div>
@@ -277,21 +280,21 @@ export const ExportPage = () => {
           transition={{ delay: 0.5 }}
           style={{
             background: 'rgba(59, 130, 246, 0.1)',
-            borderRadius: '14px',
-            padding: '16px 20px',
+            borderRadius: 'clamp(12px, 2vw, 14px)',
+            padding: 'clamp(14px, 2.5vw, 16px) clamp(16px, 3vw, 20px)',
             border: '1px solid rgba(59, 130, 246, 0.2)',
-            marginTop: '24px',
+            marginTop: 'clamp(20px, 3vw, 24px)',
             display: 'flex',
             alignItems: 'flex-start',
-            gap: '12px',
+            gap: 'clamp(10px, 2vw, 12px)',
           }}
         >
-          <Calendar size={18} color="#3B82F6" style={{ marginTop: '2px', flexShrink: 0 }} />
+          <Calendar size={window.innerWidth < 640 ? 16 : 18} color="#3B82F6" style={{ marginTop: '2px', flexShrink: 0 }} />
           <div>
-            <p style={{ color: '#93C5FD', fontSize: '14px', fontWeight: 500, margin: '0 0 4px' }}>
+            <p style={{ color: '#93C5FD', fontSize: 'clamp(13px, 2vw, 14px)', fontWeight: 500, margin: '0 0 4px' }}>
               หมายเหตุ
             </p>
-            <p style={{ color: '#93C5FD', fontSize: '13px', margin: 0, opacity: 0.8 }}>
+            <p style={{ color: '#93C5FD', fontSize: 'clamp(12px, 2vw, 13px)', margin: 0, opacity: 0.8 }}>
               ไฟล์ CSV สามารถเปิดด้วย Microsoft Excel, Google Sheets หรือโปรแกรมตารางคำนวณอื่นๆ
               รายงาน PDF จะเปิดหน้าต่างพิมพ์เพื่อบันทึกเป็นไฟล์ PDF
             </p>

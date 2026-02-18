@@ -72,7 +72,7 @@ export const GuidePage = () => {
       items: [
         { title: 'Threshold', desc: 'ปรับระดับ Warning (50 PPM) และ Danger (200 PPM)', icon: Sliders },
         { title: 'ความถี่อัพเดท', desc: 'ตั้งค่า 1-30 วินาที แนะนำ 3-5 วินาที', icon: Clock },
-        { title: 'API Endpoints', desc: 'เพิ่ม/ลบ แหล่งข้อมูลเซ็นเซอร์', icon: Server },
+        { title: 'MQTT Broker', desc: 'ตั้งค่า MQTT Broker และ Topics', icon: Server },
       ]
     },
     {

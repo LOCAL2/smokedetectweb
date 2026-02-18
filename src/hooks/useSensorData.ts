@@ -259,11 +259,15 @@ export const useSensorData = (settings: SettingsConfig) => {
     setSensors(allData);
 
     
-    if (!fromBroadcast) {
+    // ⚠️ ไม่บันทึกข้อมูล Demo ลง localStorage
+    if (!fromBroadcast && !settings.demoMode) {
+      console.log('💾 Saving sensor data to localStorage');
       saveSensorDataToStorage(allData);
       if (broadcastChannel) {
         broadcastChannel.postMessage({ type: 'sensor-update', sensors: allData });
       }
+    } else if (settings.demoMode) {
+      console.log('🎮 Demo Mode - NOT saving to localStorage');
     }
 
     const now = Date.now();
@@ -425,7 +429,7 @@ export const useSensorData = (settings: SettingsConfig) => {
       const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
 
       if (enabledEndpoints.length === 0) {
-        setError('ไม่มี API endpoint ที่เปิดใช้งาน');
+        setError('ไม่มี HTTP endpoint ที่เปิดใช้งาน (ใช้ MQTT แทน)');
         setIsLoading(false);
         return;
       }
@@ -561,47 +565,87 @@ export const useSensorData = (settings: SettingsConfig) => {
       broadcastChannel.addEventListener('message', handleBroadcastMessage);
     }
 
+    console.log('🔄 useSensorData useEffect triggered');
+    console.log('📊 Demo Mode:', settings.demoMode);
+    console.log('📡 MQTT Enabled:', settings.mqtt.enabled);
+    console.log('🌐 API Endpoints:', settings.apiEndpoints.filter(ep => ep.enabled).length);
+    
+    // 🧹 Migration: ล้างข้อมูล Demo เก่าที่อาจค้างอยู่ใน localStorage
+    const migrateOldDemoData = () => {
+      const existingData = loadSensorDataFromStorage();
+      if (existingData && existingData.sensors.length > 0) {
+        // ตรวจสอบว่าเป็นข้อมูล Demo หรือไม่ (ข้อมูล Demo จะมี id ที่ขึ้นต้นด้วย 'demo-')
+        const isDemoData = existingData.sensors.some(s => s.id.startsWith('demo-'));
+        if (isDemoData && !settings.demoMode) {
+          console.log('🧹 Migration: Clearing old demo data from localStorage');
+          localStorage.removeItem(SENSOR_DATA_KEY);
+        }
+      }
+    };
+    
+    migrateOldDemoData();
     
     sensorsRef.current.clear();
-    setSensors([]);
     
     
     const enabledEndpoints = settings.apiEndpoints.filter(ep => ep.enabled);
     const hasEnabledEndpoints = enabledEndpoints.length > 0;
     
-    // โหลดข้อมูลเก่าจาก localStorage ทันที (สำหรับทุกโหมด)
-    if (settings.demoMode || hasEnabledEndpoints || settings.mqtt.enabled) {
+    // ถ้าปิด Demo Mode และไม่มี endpoint/MQTT ให้ล้างข้อมูลทั้งหมดทันที
+    if (!settings.demoMode && !hasEnabledEndpoints && !settings.mqtt.enabled) {
+      console.log('🧹 Clearing all data - No data source');
+      setSensors([]);
+      localStorage.removeItem(SENSOR_DATA_KEY);
+      setIsLoading(false);
+      setError('ไม่มี HTTP endpoint ที่เปิดใช้งาน (ใช้ MQTT แทน)');
+      return;
+    }
+    
+    // ถ้าเปิด Demo Mode ให้ล้างข้อมูลจริงออกก่อน
+    if (settings.demoMode) {
+      console.log('🎮 Demo Mode ON - Clearing real data');
+      setSensors([]);
+      localStorage.removeItem(SENSOR_DATA_KEY);
+    }
+    
+    // โหลดข้อมูลเก่าจาก localStorage ทันที (เฉพาะเมื่อไม่ใช่ Demo Mode และมี endpoint หรือ MQTT เปิดอยู่)
+    if (!settings.demoMode && (hasEnabledEndpoints || settings.mqtt.enabled)) {
+      console.log('💾 Loading cached data from localStorage');
       const existingData = loadSensorDataFromStorage();
       if (existingData && existingData.sensors.length > 0) {
+        console.log('✅ Found cached data:', existingData.sensors.length, 'sensors');
         // แสดงข้อมูลเก่าทันที
         processSensorData(existingData.sensors, true);
         setConnectionStatus('connected');
         setIsLoading(false);
+      } else {
+        console.log('❌ No cached data found');
       }
     } else {
-      
-      localStorage.removeItem(SENSOR_DATA_KEY);
-      setIsLoading(false);
+      console.log('⏭️ Skipping cache load');
     }
 
     
     const startFetching = () => {
       if (settings.demoMode) {
+        console.log('🎮 Starting Demo Mode');
         sensorsRef.current.clear();
         startDemoMode();
       } else if (settings.mqtt.enabled) {
+        console.log('📡 MQTT Mode - waiting for data');
         // MQTT mode - data will come from useMqtt hook
         setIsLoading(false);
         setConnectionStatus(mqttConnected ? 'connected' : 'connecting');
       } else {
         if (!hasEnabledEndpoints) {
-          
+          console.log('❌ No endpoints - clearing data');
           sensorsRef.current.clear();
           setSensors([]);
           localStorage.removeItem(SENSOR_DATA_KEY);
-          setError('ไม่มี API endpoint ที่เปิดใช้งาน');
+          setError('ไม่มี HTTP endpoint ที่เปิดใช้งาน (ใช้ MQTT แทน)');
           setIsLoading(false);
         } else {
+          console.log('🌐 Starting HTTP polling');
           startHttpPolling();
         }
       }

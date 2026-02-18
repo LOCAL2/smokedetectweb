@@ -107,7 +107,7 @@ const checkNeedsFullPage = (input: string): { type: 'map' | 'chart' | 'download'
   
   
   const downloadKeywords = ['ดาวน์โหลด', 'download', 'โหลด'];
-  const platformKeywords = ['android', 'apk', 'windows', 'exe', 'มือถือ', 'คอม'];
+  const platformKeywords = ['windows', 'exe', 'คอม'];
   if (downloadKeywords.some(k => lower.includes(k)) && platformKeywords.some(k => lower.includes(k))) {
     return { type: 'download', query: input };
   }
@@ -234,7 +234,7 @@ const getThinkingSteps = (input: string): string[] => {
   const lower = input.toLowerCase();
   
   
-  if (['ดาวน์โหลด', 'download', 'โหลด', 'apk', 'exe', 'ติดตั้ง'].some(k => lower.includes(k))) {
+  if (['ดาวน์โหลด', 'download', 'โหลด', 'exe', 'ติดตั้ง'].some(k => lower.includes(k))) {
     return ['ตรวจสอบแพลตฟอร์ม', 'เตรียมลิงก์', 'แสดงผล'];
   }
   
@@ -331,9 +331,9 @@ export const ChatBot = () => {
 
 สาเหตุที่เป็นไปได้:
 1. ยังไม่ได้เปิด Demo Mode - ไปที่หน้าตั้งค่าเพื่อเปิด Demo Mode
-2. ยังไม่ได้ตั้งค่า API Endpoint - ไปที่หน้าตั้งค่าเพื่อเพิ่ม API Endpoint
+2. ยังไม่ได้เชื่อมต่อ MQTT Broker - ไปที่หน้าตั้งค่าเพื่อตั้งค่า MQTT
 
-แนะนำให้ผู้ใช้ไปหน้าตั้งค่าเพื่อเปิด Demo Mode หรือเพิ่ม API Endpoint`;
+แนะนำให้ผู้ใช้ไปหน้าตั้งค่าเพื่อเปิด Demo Mode หรือเชื่อมต่อ MQTT Broker`;
     }
     
     const sorted = [...sensors].sort((a, b) => b.value - a.value);
@@ -818,7 +818,7 @@ export const ChatBot = () => {
                   </button>
                 )}
                 <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                  placeholder={isListening ? 'กำลังฟัง...' : 'ถามเกี่ยวกับระบบ...'}
+                  placeholder={isListening ? 'กำลังฟัง...' : 'พิมพ์คำถามของคุณที่นี่...'}
                   disabled={isLoading && !abortController}
                   style={{ flex: 1, padding: '10px 12px', background: 'transparent', border: 'none', color: textColor, fontSize: 13, outline: 'none', minWidth: 0 }} />
                 {isLoading ? (

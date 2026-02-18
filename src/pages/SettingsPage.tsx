@@ -159,14 +159,11 @@ const ZoneDropdown = ({
 };
 
 
-const dashboardComponents: Record<DashboardComponent, { name: string; icon: React.ElementType; color: string }> = {
+const dashboardComponents: Partial<Record<DashboardComponent, { name: string; icon: React.ElementType; color: string }>> = {
   statusCards: { name: 'สถิติ', icon: Activity, color: '#3B82F6' },
   chart: { name: 'กราฟ', icon: BarChart3, color: '#8B5CF6' },
   ranking: { name: 'อันดับค่าสูงสุด 24 ชั่วโมง', icon: Activity, color: '#F59E0B' },
   pinnedSensors: { name: 'เซ็นเซอร์ที่ปักหมุด', icon: Pin, color: '#10B981' },
-  miniMap: { name: 'แผนที่ Sensor', icon: MapPin, color: '#06B6D4' },
-  comparisonChart: { name: 'กราฟเปรียบเทียบ', icon: BarChart3, color: '#EC4899' },
-  statusHistory: { name: 'ประวัติสถานะ', icon: Clock, color: '#8B5CF6' },
   trendAnalysis: { name: 'วิเคราะห์แนวโน้ม', icon: TrendingUp, color: '#14B8A6' },
 };
 
@@ -175,9 +172,9 @@ const defaultPositions: Record<LayoutPosition, DashboardComponent | null> = {
   middleLeft: 'chart',
   middleRight: 'ranking',
   bottom: 'pinnedSensors',
-  bottomLeft: 'miniMap',
-  bottomMiddle: 'comparisonChart',
-  bottomRight: 'statusHistory',
+  bottomLeft: null,
+  bottomMiddle: null,
+  bottomRight: null,
   trendPanel: 'trendAnalysis',
 };
 
@@ -231,6 +228,74 @@ const LayoutSlot = ({
       const newPositions = { ...currentPositions };
       newPositions[draggedFromPosition] = componentId;
       newPositions[position] = draggedComponent;
+
+      updateSettings({
+        dashboardLayout: { positions: newPositions }
+      });
+    }
+    draggedComponent = null;
+    draggedFromPosition = null;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (componentId) {
+      draggedComponent = componentId;
+      draggedFromPosition = position;
+      // Add visual feedback
+      e.currentTarget.style.opacity = '0.5';
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!draggedComponent || !draggedFromPosition) return;
+    
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot = element?.closest('[data-layout-slot]');
+    const targetPos = slot?.getAttribute('data-layout-slot');
+    
+    // Clear all drag-over states first
+    document.querySelectorAll('[data-layout-slot]').forEach(el => {
+      if (el !== e.currentTarget) {
+        (el as HTMLElement).style.borderColor = '';
+        (el as HTMLElement).style.background = '';
+      }
+    });
+    
+    // Set drag-over state on target
+    if (slot && targetPos && targetPos !== position) {
+      (slot as HTMLElement).style.borderColor = '#6366F1';
+      (slot as HTMLElement).style.background = 'rgba(99, 102, 241, 0.2)';
+      setIsDragOver(true);
+    } else {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    // Reset visual feedback
+    e.currentTarget.style.opacity = '1';
+    
+    const touch = e.changedTouches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot = element?.closest('[data-layout-slot]');
+    const targetPosition = slot?.getAttribute('data-layout-slot') as LayoutPosition | null;
+
+    // Clear all drag-over visual states
+    document.querySelectorAll('[data-layout-slot]').forEach(el => {
+      (el as HTMLElement).style.borderColor = '';
+      (el as HTMLElement).style.background = '';
+    });
+    
+    setIsDragOver(false);
+
+    if (draggedComponent && draggedFromPosition && targetPosition && draggedFromPosition !== targetPosition) {
+      const currentPositions = settings.dashboardLayout?.positions || defaultPositions;
+      const targetComponentId = currentPositions[targetPosition];
+
+      const newPositions = { ...currentPositions };
+      newPositions[draggedFromPosition] = targetComponentId;
+      newPositions[targetPosition] = draggedComponent;
 
       updateSettings({
         dashboardLayout: { positions: newPositions }
@@ -375,12 +440,16 @@ const LayoutSlot = ({
 
   return (
     <div
+      data-layout-slot={position}
       draggable={!!componentId}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onDragEnd={() => setIsDragOver(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         background: isDragOver
           ? 'rgba(99, 102, 241, 0.2)'
@@ -394,7 +463,10 @@ const LayoutSlot = ({
           : `1px solid ${component ? `${component.color}40` : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)')}`,
         cursor: componentId ? 'grab' : 'default',
         minHeight: (position === 'top' || position === 'bottom') ? '60px' : (position.startsWith('bottom') ? '70px' : '70px'),
-        transition: 'border-color 0.1s, background 0.1s',
+        transition: 'border-color 0.1s, background 0.1s, opacity 0.2s',
+        touchAction: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
       }}
     >
       {component ? (
@@ -445,12 +517,12 @@ const Card = ({ children, delay = 0, highlight = false }: { children: React.Reac
           ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%)'
           : (isDark ? 'rgba(30, 41, 59, 0.5)' : 'rgba(255, 255, 255, 0.7)'),
         backdropFilter: 'blur(10px)',
-        borderRadius: '16px',
+        borderRadius: 'clamp(12px, 3vw, 16px)',
         border: highlight
           ? '1px solid rgba(245, 158, 11, 0.2)'
           : (isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(255, 255, 255, 0.5)'),
-        padding: '20px',
-        marginBottom: '12px',
+        padding: 'clamp(16px, 4vw, 20px)',
+        marginBottom: 'clamp(10px, 2.5vw, 12px)',
         boxShadow: isDark ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)',
       }}
     >
@@ -480,16 +552,16 @@ const SettingRow = ({ icon: Icon, title, subtitle, color, children }: {
 }) => {
   const { isDark } = useTheme();
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '4px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 2.5vw, 14px)', padding: '4px 0', flexWrap: 'wrap' }}>
       <div style={{
-        width: '40px', height: '40px', borderRadius: '12px', flexShrink: 0,
+        width: 'clamp(36px, 8vw, 40px)', height: 'clamp(36px, 8vw, 40px)', borderRadius: 'clamp(10px, 2.5vw, 12px)', flexShrink: 0,
         background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <Icon size={20} color={color} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: isDark ? '#F1F5F9' : '#1E293B', fontSize: '14px', fontWeight: 500, margin: 0 }}>{title}</p>
-        {subtitle && <p style={{ color: isDark ? '#64748B' : '#94A3B8', fontSize: '12px', margin: '2px 0 0' }}>{subtitle}</p>}
+        <p style={{ color: isDark ? '#F1F5F9' : '#1E293B', fontSize: 'clamp(13px, 2.8vw, 14px)', fontWeight: 500, margin: 0 }}>{title}</p>
+        {subtitle && <p style={{ color: isDark ? '#64748B' : '#94A3B8', fontSize: 'clamp(11px, 2.5vw, 12px)', margin: '2px 0 0' }}>{subtitle}</p>}
       </div>
       {children}
     </div>
@@ -670,7 +742,7 @@ export const SettingsPage = () => {
     <div style={{
       minHeight: '100vh',
       background: pageBg,
-      padding: 'clamp(16px, 4vw, 24px)',
+      padding: 'clamp(12px, 3vw, 24px)',
       transition: 'background 0.3s ease',
     }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -679,8 +751,8 @@ export const SettingsPage = () => {
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           style={{
-            display: 'flex', alignItems: 'center', gap: '16px',
-            marginBottom: '24px', paddingBottom: '20px',
+            display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 16px)',
+            marginBottom: 'clamp(16px, 4vw, 24px)', paddingBottom: 'clamp(12px, 3vw, 20px)',
             borderBottom: `1px solid ${borderColor}`,
           }}
         >
@@ -693,9 +765,9 @@ export const SettingsPage = () => {
               background: buttonBg,
               border: `1px solid ${buttonBorder}`,
               borderRadius: '10px',
-              padding: '10px 16px',
+              padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px)',
               color: textSecondary,
-              fontSize: '14px',
+              fontSize: 'clamp(13px, 2.5vw, 14px)',
               cursor: 'pointer',
               transition: 'all 0.2s',
             }}
@@ -706,50 +778,50 @@ export const SettingsPage = () => {
             <span style={{ display: 'none' }}>กลับ</span>
           </button>
           <div>
-            <h1 style={{ color: textColor, fontSize: 'clamp(18px, 4vw, 20px)', fontWeight: 600, margin: 0 }}>ตั้งค่า</h1>
-            <p style={{ color: textSecondary, fontSize: '13px', margin: '2px 0 0' }}>บันทึกอัตโนมัติ</p>
+            <h1 style={{ color: textColor, fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 600, margin: 0 }}>ตั้งค่า</h1>
+            <p style={{ color: textSecondary, fontSize: 'clamp(12px, 2.5vw, 13px)', margin: '2px 0 0' }}>บันทึกอัตโนมัติ</p>
           </div>
         </motion.header>
 
         {/* Threshold Settings */}
         <Card delay={0.05}>
-          <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ color: textColor, fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600, margin: '0 0 clamp(12px, 3vw, 16px)', display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
             <AlertTriangle size={16} color="#F59E0B" /> ระดับค่าควัน (PPM)
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(20px, 5vw, 24px)' }}>
             {/* Warning Threshold */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '5px', background: '#F59E0B' }} />
-                  <span style={{ color: textColor, fontSize: '14px', fontWeight: 500 }}>เฝ้าระวัง</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(10px, 2.5vw, 12px)', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)' }}>
+                  <div style={{ width: 'clamp(8px, 2vw, 10px)', height: 'clamp(8px, 2vw, 10px)', borderRadius: '50%', background: '#F59E0B' }} />
+                  <span style={{ color: textColor, fontSize: 'clamp(13px, 2.8vw, 14px)', fontWeight: 500 }}>เฝ้าระวัง</span>
                 </div>
                 <div style={{
                   background: 'rgba(245, 158, 11, 0.15)',
                   border: '1px solid rgba(245, 158, 11, 0.3)',
-                  borderRadius: '10px',
-                  padding: '8px 16px',
+                  borderRadius: 'clamp(8px, 2vw, 10px)',
+                  padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: 'clamp(4px, 1vw, 6px)',
                 }}>
                   <input
                     type="number"
                     value={settings.warningThreshold}
                     onChange={(e) => handleThresholdChange('warning', Number(e.target.value) || 0)}
                     style={{
-                      width: '60px',
+                      width: 'clamp(50px, 12vw, 60px)',
                       background: 'transparent',
                       border: 'none',
                       color: '#F59E0B',
-                      fontSize: '18px',
+                      fontSize: 'clamp(16px, 4vw, 18px)',
                       fontWeight: 700,
                       outline: 'none',
                       textAlign: 'right',
                     }}
                   />
-                  <span style={{ color: '#F59E0B', fontSize: '13px', fontWeight: 600 }}>PPM</span>
+                  <span style={{ color: '#F59E0B', fontSize: 'clamp(12px, 2.5vw, 13px)', fontWeight: 600 }}>PPM</span>
                 </div>
               </div>
               <input
@@ -770,38 +842,38 @@ export const SettingsPage = () => {
                   appearance: 'none',
                 }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                <span style={{ color: textSecondary, fontSize: '11px' }}>10 PPM</span>
-                <span style={{ color: textSecondary, fontSize: '11px' }}>500 PPM</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'clamp(6px, 1.5vw, 8px)' }}>
+                <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2.2vw, 11px)' }}>10 PPM</span>
+                <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2.2vw, 11px)' }}>500 PPM</span>
               </div>
             </div>
 
             {/* Danger Threshold */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '5px', background: '#EF4444' }} />
-                  <span style={{ color: textColor, fontSize: '14px', fontWeight: 500 }}>อันตราย</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(10px, 2.5vw, 12px)', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)' }}>
+                  <div style={{ width: 'clamp(8px, 2vw, 10px)', height: 'clamp(8px, 2vw, 10px)', borderRadius: '50%', background: '#EF4444' }} />
+                  <span style={{ color: textColor, fontSize: 'clamp(13px, 2.8vw, 14px)', fontWeight: 500 }}>อันตราย</span>
                 </div>
                 <div style={{
                   background: 'rgba(239, 68, 68, 0.15)',
                   border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: '10px',
-                  padding: '8px 16px',
+                  borderRadius: 'clamp(8px, 2vw, 10px)',
+                  padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: 'clamp(4px, 1vw, 6px)',
                 }}>
                   <input
                     type="number"
                     value={settings.dangerThreshold}
                     onChange={(e) => handleThresholdChange('danger', Number(e.target.value) || 0)}
                     style={{
-                      width: '60px',
+                      width: 'clamp(50px, 12vw, 60px)',
                       background: 'transparent',
                       border: 'none',
                       color: '#EF4444',
-                      fontSize: '18px',
+                      fontSize: 'clamp(16px, 4vw, 18px)',
                       fontWeight: 700,
                       outline: 'none',
                       textAlign: 'right',
@@ -828,9 +900,9 @@ export const SettingsPage = () => {
                   appearance: 'none',
                 }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-                <span style={{ color: textSecondary, fontSize: '11px' }}>50 PPM</span>
-                <span style={{ color: textSecondary, fontSize: '11px' }}>1000 PPM</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'clamp(6px, 1.5vw, 8px)' }}>
+                <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2.2vw, 11px)' }}>50 PPM</span>
+                <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2.2vw, 11px)' }}>1000 PPM</span>
               </div>
             </div>
           </div>
@@ -870,11 +942,11 @@ export const SettingsPage = () => {
         {/* Polling Interval */}
         <Card delay={0.1}>
           <SettingRow icon={Clock} title="ความถี่รีเฟรช" subtitle={`ดึงข้อมูลทุกๆ ${(settings.pollingInterval / 1000).toFixed(1)} วินาที`} color="#3B82F6">
-            <span style={{ color: '#3B82F6', fontSize: '15px', fontWeight: 600, minWidth: '50px', textAlign: 'right' }}>
+            <span style={{ color: '#3B82F6', fontSize: 'clamp(14px, 3vw, 15px)', fontWeight: 600, minWidth: 'clamp(45px, 10vw, 50px)', textAlign: 'right' }}>
               {(settings.pollingInterval / 1000).toFixed(1)}s
             </span>
           </SettingRow>
-          <div style={{ marginTop: '16px', padding: '0 4px' }}>
+          <div style={{ marginTop: 'clamp(12px, 3vw, 16px)', padding: '0 4px' }}>
             <input
               type="range"
               min="0.5"
@@ -896,14 +968,14 @@ export const SettingsPage = () => {
                 appearance: 'none',
               }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-              <span style={{ color: textSecondary, fontSize: '11px' }}>0.5s</span>
-              <span style={{ color: textSecondary, fontSize: '11px' }}>30s</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'clamp(6px, 1.5vw, 8px)' }}>
+              <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2.2vw, 11px)' }}>0.5s</span>
+              <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2.2vw, 11px)' }}>30s</span>
             </div>
           </div>
         </Card>
         <Card delay={0.15}>
-          <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 style={{ color: textColor, fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600, margin: '0 0 clamp(12px, 3vw, 16px)', display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
             <Bell size={16} color="#10B981" /> การแจ้งเตือน
           </h3>
 
@@ -919,9 +991,9 @@ export const SettingsPage = () => {
 
         {}
         <Card delay={0.2}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Server size={16} color="#8B5CF6" /> API Endpoints
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(12px, 3vw, 16px)', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ color: textColor, fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
+              <Server size={16} color="#8B5CF6" /> HTTP Endpoints (สำรอง)
             </h3>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -935,9 +1007,9 @@ export const SettingsPage = () => {
                 updateSettings({ apiEndpoints: [...(settings.apiEndpoints || []), newEndpoint] });
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px',
+                display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)', padding: 'clamp(6px, 1.5vw, 8px) clamp(10px, 2.5vw, 12px)',
                 background: 'rgba(139, 92, 246, 0.15)', border: '1px solid rgba(139, 92, 246, 0.3)',
-                borderRadius: '8px', color: '#A78BFA', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+                borderRadius: 'clamp(6px, 1.5vw, 8px)', color: '#A78BFA', fontSize: 'clamp(12px, 2.5vw, 13px)', fontWeight: 500, cursor: 'pointer',
               }}
             >
               <Plus size={16} /> เพิ่ม
@@ -945,18 +1017,18 @@ export const SettingsPage = () => {
           </div>
 
           {(!settings.apiEndpoints || settings.apiEndpoints.length === 0) ? (
-            <div style={{ padding: '24px', textAlign: 'center', background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', borderRadius: '12px' }}>
-              <Server size={32} color="#475569" style={{ marginBottom: '8px' }} />
-              <p style={{ color: textSecondary, fontSize: '13px', margin: 0 }}>ยังไม่มี API endpoint</p>
+            <div style={{ padding: 'clamp(20px, 5vw, 24px)', textAlign: 'center', background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', borderRadius: 'clamp(10px, 2.5vw, 12px)' }}>
+              <Server size={32} color="#475569" style={{ marginBottom: 'clamp(6px, 1.5vw, 8px)' }} />
+              <p style={{ color: textSecondary, fontSize: 'clamp(12px, 2.5vw, 13px)', margin: 0 }}>ยังไม่มี HTTP endpoint (ใช้ MQTT แทน)</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 2vw, 10px)' }}>
               {settings.apiEndpoints.map((endpoint, index) => (
                 <div key={endpoint.id} style={{
-                  padding: '14px', background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', borderRadius: '12px',
+                  padding: 'clamp(12px, 3vw, 14px)', background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', borderRadius: 'clamp(10px, 2.5vw, 12px)',
                   border: endpoint.enabled ? '1px solid rgba(139, 92, 246, 0.2)' : `1px solid ${inputBorder}`,
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 10px)', marginBottom: 'clamp(8px, 2vw, 10px)', flexWrap: 'wrap' }}>
                     <MapPin size={16} color={endpoint.enabled ? '#8B5CF6' : textSecondary} />
                     <input
                       type="text" value={endpoint.name}
@@ -967,7 +1039,7 @@ export const SettingsPage = () => {
                       }}
                       style={{
                         flex: 1, background: 'transparent', border: 'none', color: textColor,
-                        fontSize: '14px', fontWeight: 500, outline: 'none',
+                        fontSize: 'clamp(13px, 2.8vw, 14px)', fontWeight: 500, outline: 'none', minWidth: '120px',
                       }}
                       placeholder="ชื่อสถานที่"
                     />
@@ -998,9 +1070,9 @@ export const SettingsPage = () => {
                     }}
                     placeholder="http://192.168.1.100/api/sensor"
                     style={{
-                      width: '100%', padding: '10px 12px', background: inputBg,
-                      border: `1px solid ${inputBorder}`, borderRadius: '8px',
-                      color: textSecondary, fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+                      width: '100%', padding: 'clamp(8px, 2vw, 10px) clamp(10px, 2.5vw, 12px)', background: inputBg,
+                      border: `1px solid ${inputBorder}`, borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                      color: textSecondary, fontSize: 'clamp(12px, 2.5vw, 13px)', outline: 'none', boxSizing: 'border-box',
                     }}
                   />
                 </div>
@@ -1027,9 +1099,9 @@ export const SettingsPage = () => {
           </SettingRow>
           
           {settings.mqtt.enabled && (
-            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${borderColor}` }}>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', color: textSecondary, fontSize: '12px', marginBottom: '6px' }}>
+            <div style={{ marginTop: 'clamp(12px, 3vw, 16px)', paddingTop: 'clamp(12px, 3vw, 16px)', borderTop: `1px solid ${borderColor}` }}>
+              <div style={{ marginBottom: 'clamp(10px, 2.5vw, 12px)' }}>
+                <label style={{ display: 'block', color: textSecondary, fontSize: 'clamp(11px, 2.5vw, 12px)', marginBottom: 'clamp(4px, 1vw, 6px)' }}>
                   MQTT Broker URL
                 </label>
                 <input
@@ -1039,18 +1111,19 @@ export const SettingsPage = () => {
                   placeholder="wss://broker.hivemq.com:8884/mqtt"
                   style={{
                     width: '100%',
-                    padding: '10px 12px',
+                    padding: 'clamp(8px, 2vw, 10px) clamp(10px, 2.5vw, 12px)',
                     background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
                     border: `1px solid ${borderColor}`,
-                    borderRadius: '8px',
+                    borderRadius: 'clamp(6px, 1.5vw, 8px)',
                     color: textColor,
-                    fontSize: '13px',
+                    fontSize: 'clamp(12px, 2.5vw, 13px)',
+                    boxSizing: 'border-box',
                   }}
                 />
               </div>
               
               <div>
-                <label style={{ display: 'block', color: textSecondary, fontSize: '12px', marginBottom: '6px' }}>
+                <label style={{ display: 'block', color: textSecondary, fontSize: 'clamp(11px, 2.5vw, 12px)', marginBottom: 'clamp(4px, 1vw, 6px)' }}>
                   MQTT Topics (คั่นด้วยเครื่องหมายจุลภาค)
                 </label>
                 <input
@@ -1063,12 +1136,13 @@ export const SettingsPage = () => {
                   placeholder="mq2/sensor001/data, mq2/sensor002/data"
                   style={{
                     width: '100%',
-                    padding: '10px 12px',
+                    padding: 'clamp(8px, 2vw, 10px) clamp(10px, 2.5vw, 12px)',
                     background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
                     border: `1px solid ${borderColor}`,
-                    borderRadius: '8px',
+                    borderRadius: 'clamp(6px, 1.5vw, 8px)',
                     color: textColor,
-                    fontSize: '13px',
+                    fontSize: 'clamp(12px, 2.5vw, 13px)',
+                    boxSizing: 'border-box',
                   }}
                 />
               </div>
@@ -1078,8 +1152,8 @@ export const SettingsPage = () => {
 
         {}
         <Card delay={0.28}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ color: textColor, fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
               <Layout size={16} color="#EC4899" /> จัดการโซน (Sensor Groups)
             </h3>
             <motion.button
@@ -1095,16 +1169,16 @@ export const SettingsPage = () => {
                 updateSettings({ sensorGroups: [...settings.sensorGroups, newGroup] });
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '6px 12px', background: 'rgba(236, 72, 153, 0.1)',
-                border: '1px solid rgba(236, 72, 153, 0.3)', borderRadius: '8px',
-                color: '#EC4899', fontSize: '12px', fontWeight: 500, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)',
+                padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)', background: 'rgba(236, 72, 153, 0.1)',
+                border: '1px solid rgba(236, 72, 153, 0.3)', borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                color: '#EC4899', fontSize: 'clamp(11px, 2.5vw, 12px)', fontWeight: 500, cursor: 'pointer',
               }}
             >
               <Plus size={14} /> สร้างโซน
             </motion.button>
           </div>
-          <p style={{ color: textSecondary, fontSize: '12px', margin: '0 0 16px' }}>
+          <p style={{ color: textSecondary, fontSize: 'clamp(11px, 2.5vw, 12px)', margin: '0 0 clamp(12px, 3vw, 16px)' }}>
             จัดกลุ่ม Sensor ตามโซนเพื่อกรองดูข้อมูลแยกตามพื้นที่
           </p>
 
@@ -1326,23 +1400,23 @@ export const SettingsPage = () => {
 
         {}
         <Card delay={0.3}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(12px, 3vw, 16px)', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ color: textColor, fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
               <MapPin size={16} color="#10B981" /> พิกัด GPS เซ็นเซอร์
             </h3>
           </div>
 
           {}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: 'clamp(6px, 1.5vw, 8px)', marginBottom: 'clamp(12px, 3vw, 16px)', flexWrap: 'wrap' }}>
             <input
               type="text"
               value={newSensorId}
               onChange={(e) => setNewSensorId(e.target.value)}
               placeholder="เพิ่ม Sensor ID ใหม่..."
               style={{
-                flex: 1, padding: '10px 12px', background: inputBg,
-                border: `1px solid ${inputBorder}`, borderRadius: '8px',
-                color: textColor, fontSize: '13px', outline: 'none',
+                flex: 1, minWidth: '150px', padding: 'clamp(8px, 2vw, 10px) clamp(10px, 2.5vw, 12px)', background: inputBg,
+                border: `1px solid ${inputBorder}`, borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                color: textColor, fontSize: 'clamp(12px, 2.5vw, 13px)', outline: 'none', boxSizing: 'border-box',
               }}
               onKeyDown={(e) => e.key === 'Enter' && addNewSensor()}
             />
@@ -1351,10 +1425,10 @@ export const SettingsPage = () => {
               whileTap={{ scale: 0.95 }}
               onClick={addNewSensor}
               style={{
-                padding: '10px 16px', background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px',
-                color: '#10B981', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px)', background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                color: '#10B981', fontSize: 'clamp(12px, 2.5vw, 13px)', fontWeight: 500, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)',
               }}
             >
               <Plus size={16} /> เพิ่ม
@@ -1611,8 +1685,8 @@ export const SettingsPage = () => {
 
         {}
         <Card delay={0.35}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h3 style={{ color: textColor, fontSize: '14px', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ color: textColor, fontSize: 'clamp(13px, 3vw, 14px)', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}>
               <Layout size={16} color="#6366F1" /> จัดเรียง Layout หน้าหลัก
             </h3>
             <motion.button
@@ -1626,13 +1700,13 @@ export const SettingsPage = () => {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
+                gap: 'clamp(4px, 1vw, 6px)',
+                padding: 'clamp(5px, 1.2vw, 6px) clamp(10px, 2.5vw, 12px)',
                 background: 'rgba(99, 102, 241, 0.1)',
                 border: '1px solid rgba(99, 102, 241, 0.3)',
-                borderRadius: '8px',
+                borderRadius: 'clamp(6px, 1.5vw, 8px)',
                 color: '#818CF8',
-                fontSize: '12px',
+                fontSize: 'clamp(11px, 2.5vw, 12px)',
                 fontWeight: 500,
                 cursor: 'pointer',
               }}
@@ -1641,19 +1715,19 @@ export const SettingsPage = () => {
               รีเซ็ต
             </motion.button>
           </div>
-          <p style={{ color: textSecondary, fontSize: '12px', margin: '0 0 16px' }}>
+          <p style={{ color: textSecondary, fontSize: 'clamp(11px, 2.5vw, 12px)', margin: '0 0 clamp(12px, 3vw, 16px)' }}>
             ลาก component ไปวางแทนที่ตำแหน่งอื่นเพื่อสลับตำแหน่ง
           </p>
 
           {}
           <div style={{
             background: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
-            borderRadius: '16px',
-            padding: '12px',
+            borderRadius: 'clamp(12px, 3vw, 16px)',
+            padding: 'clamp(10px, 2.5vw, 12px)',
             border: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.05)',
           }}>
             {}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(6px, 1.5vw, 8px)' }}>
               {}
               <LayoutSlot
                 position="top"
@@ -1663,7 +1737,7 @@ export const SettingsPage = () => {
               />
 
               {}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(6px, 1.5vw, 8px)' }}>
                 <LayoutSlot
                   position="middleLeft"
                   componentId={settings.dashboardLayout?.positions?.middleLeft || defaultPositions.middleLeft}
@@ -1685,28 +1759,6 @@ export const SettingsPage = () => {
                 settings={settings}
                 updateSettings={updateSettings}
               />
-
-              {}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                <LayoutSlot
-                  position="bottomLeft"
-                  componentId={settings.dashboardLayout?.positions?.bottomLeft || defaultPositions.bottomLeft}
-                  settings={settings}
-                  updateSettings={updateSettings}
-                />
-                <LayoutSlot
-                  position="bottomMiddle"
-                  componentId={settings.dashboardLayout?.positions?.bottomMiddle || defaultPositions.bottomMiddle}
-                  settings={settings}
-                  updateSettings={updateSettings}
-                />
-                <LayoutSlot
-                  position="bottomRight"
-                  componentId={settings.dashboardLayout?.positions?.bottomRight || defaultPositions.bottomRight}
-                  settings={settings}
-                  updateSettings={updateSettings}
-                />
-              </div>
             </div>
           </div>
         </Card>
@@ -1716,16 +1768,16 @@ export const SettingsPage = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          style={{ display: 'flex', gap: '10px', marginTop: '8px' }}
+          style={{ display: 'flex', gap: 'clamp(8px, 2vw, 10px)', marginTop: 'clamp(6px, 1.5vw, 8px)', flexWrap: 'wrap' }}
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={resetSettings}
             style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              padding: '14px', background: buttonBg, border: `1px solid ${buttonBorder}`,
-              borderRadius: '12px', color: textSecondary, fontSize: '14px', fontWeight: 500, cursor: 'pointer',
+              flex: 1, minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px, 1.5vw, 8px)',
+              padding: 'clamp(12px, 3vw, 14px)', background: buttonBg, border: `1px solid ${buttonBorder}`,
+              borderRadius: 'clamp(10px, 2.5vw, 12px)', color: textSecondary, fontSize: 'clamp(13px, 2.8vw, 14px)', fontWeight: 500, cursor: 'pointer',
             }}
           >
             <RotateCcw size={18} /> รีเซ็ต
@@ -1735,9 +1787,9 @@ export const SettingsPage = () => {
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowClearConfirm(true)}
             style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-              padding: '14px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
-              borderRadius: '12px', color: '#EF4444', fontSize: '14px', fontWeight: 500, cursor: 'pointer',
+              flex: 1, minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px, 1.5vw, 8px)',
+              padding: 'clamp(12px, 3vw, 14px)', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+              borderRadius: 'clamp(10px, 2.5vw, 12px)', color: '#EF4444', fontSize: 'clamp(13px, 2.8vw, 14px)', fontWeight: 500, cursor: 'pointer',
             }}
           >
             <Trash size={18} /> ล้างประวัติ

@@ -285,12 +285,14 @@ export const MapPage = () => {
         <div style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '16px 24px',
+          padding: 'clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '12px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 16px)', flexWrap: 'wrap' }}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -299,38 +301,40 @@ export const MapPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '10px 16px',
+                padding: 'clamp(8px, 2vw, 10px) clamp(12px, 3vw, 16px)',
                 borderRadius: '12px',
                 border: `1px solid ${borderColor}`,
                 background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
                 color: textSecondary,
-                fontSize: '14px',
+                fontSize: 'clamp(13px, 2.5vw, 14px)',
                 fontWeight: 500,
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
             >
               <ArrowLeft size={18} />
-              กลับหน้าหลัก
+              <span style={{ display: window.innerWidth < 640 ? 'none' : 'inline' }}>กลับหน้าหลัก</span>
             </motion.button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 12px)' }}>
               <div style={{
-                width: '40px',
-                height: '40px',
+                width: 'clamp(32px, 8vw, 40px)',
+                height: 'clamp(32px, 8vw, 40px)',
                 borderRadius: '10px',
                 background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}>
-                <MapPin size={20} color="#FFF" />
+                <MapPin size={window.innerWidth < 640 ? 16 : 20} color="#FFF" />
               </div>
               <div>
-                <h1 style={{ color: textColor, fontSize: '20px', fontWeight: 700, margin: 0 }}>
+                <h1 style={{ color: textColor, fontSize: 'clamp(16px, 4vw, 20px)', fontWeight: 700, margin: 0 }}>
                   แผนที่ Sensor
                 </h1>
-                <p style={{ color: textSecondary, fontSize: '13px', margin: 0 }}>
-                  {sensorsWithGPS.length} ตำแหน่ง • อัพเดทแบบ Real-time
+                <p style={{ color: textSecondary, fontSize: 'clamp(11px, 2.5vw, 13px)', margin: 0, whiteSpace: 'nowrap' }}>
+                  {sensorsWithGPS.length} ตำแหน่ง • Real-time
                 </p>
               </div>
             </div>
@@ -338,37 +342,38 @@ export const MapPage = () => {
 
           <div style={{
             display: 'flex',
-            gap: '12px',
+            gap: 'clamp(6px, 2vw, 12px)',
             alignItems: 'center',
           }}>
             <div style={{
               display: 'flex',
-              gap: '8px',
-              padding: '8px 12px',
+              gap: 'clamp(4px, 1.5vw, 8px)',
+              padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px)',
               borderRadius: '10px',
               background: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              flexWrap: 'wrap',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10B981' }} />
-                <span style={{ color: textSecondary, fontSize: '12px' }}>ปกติ</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)' }}>
+                <div style={{ width: 'clamp(10px, 2.5vw, 12px)', height: 'clamp(10px, 2.5vw, 12px)', borderRadius: '50%', background: '#10B981', flexShrink: 0 }} />
+                <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2vw, 12px)', whiteSpace: 'nowrap' }}>ปกติ</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#F59E0B' }} />
-                <span style={{ color: textSecondary, fontSize: '12px' }}>เตือน</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)' }}>
+                <div style={{ width: 'clamp(10px, 2.5vw, 12px)', height: 'clamp(10px, 2.5vw, 12px)', borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />
+                <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2vw, 12px)', whiteSpace: 'nowrap' }}>เตือน</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#EF4444' }} />
-                <span style={{ color: textSecondary, fontSize: '12px' }}>อันตราย</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(4px, 1vw, 6px)' }}>
+                <div style={{ width: 'clamp(10px, 2.5vw, 12px)', height: 'clamp(10px, 2.5vw, 12px)', borderRadius: '50%', background: '#EF4444', flexShrink: 0 }} />
+                <span style={{ color: textSecondary, fontSize: 'clamp(10px, 2vw, 12px)', whiteSpace: 'nowrap' }}>อันตราย</span>
               </div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      <div style={{ paddingTop: '80px', height: '100vh', width: '100%', position: 'relative' }}>
+      <div style={{ paddingTop: '72px', height: '100vh', width: '100%', position: 'relative', overflow: 'hidden' }}>
         {sensorsWithGPS.length === 0 ? (
           <div style={{
-            height: 'calc(100vh - 80px)',
+            height: 'calc(100vh - 72px)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -405,7 +410,7 @@ export const MapPage = () => {
             <div 
               ref={mapContainerRef} 
               style={{ 
-                height: 'calc(100vh - 80px)', 
+                height: 'calc(100vh - 72px)', 
                 width: '100%',
                 position: 'relative',
                 touchAction: 'none'
@@ -434,7 +439,7 @@ export const MapPage = () => {
                     style={{
                       position: 'fixed',
                       right: 0,
-                      top: '80px',
+                      top: '72px',
                       bottom: 0,
                       width: '400px',
                       maxWidth: '90vw',
